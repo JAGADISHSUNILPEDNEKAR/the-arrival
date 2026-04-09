@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from "@/lib/gsap";
 
 const Moment04 = () => {
@@ -10,8 +10,17 @@ const Moment04 = () => {
   const feetRef = useRef<HTMLDivElement>(null);
   const figureRef = useRef<HTMLDivElement>(null);
   const petalsRef = useRef<HTMLDivElement[]>([]);
+  const [petals, setPetals] = useState<any[]>([]);
 
   useEffect(() => {
+    // Generate petals only on client
+    setPetals([...Array(6)].map((_, i) => ({
+      left: `${15 + (i * 12) + (Math.random() * 5)}%`,
+      bottom: `${10 + (i * 4) + (Math.random() * 10)}%`,
+      rotate: Math.random() * 30 - 15,
+      delay: i * 0.2
+    })));
+
     const ctx = gsap.context(() => {
       if (!sectionRef.current || !planksContainerRef.current || !planksRef.current || !figureRef.current) return;
 
@@ -159,7 +168,7 @@ const Moment04 = () => {
           />
 
           {/* Frangipani Petals */}
-          {[...Array(6)].map((_, i) => (
+          {petals.map((petal, i) => (
             <div 
               key={i}
               ref={el => { if (el) petalsRef.current[i] = el; }}
@@ -169,10 +178,10 @@ const Moment04 = () => {
                 height: '14px',
                 borderRadius: '60% 40% 60% 40%',
                 background: 'rgba(255, 248, 235, 0.85)',
-                left: `${15 + (i * 12) + (Math.random() * 5)}%`,
-                bottom: `${10 + (i * 4) + (Math.random() * 10)}%`,
-                transform: `rotate(${Math.random() * 30 - 15}deg)`,
-                animation: `floatPetal ${3 + (i * 0.2)}s ease-in-out infinite`
+                left: petal.left,
+                bottom: petal.bottom,
+                transform: `rotate(${petal.rotate}deg)`,
+                animation: `floatPetal ${3 + petal.delay}s ease-in-out infinite`
               }}
             />
           ))}
