@@ -16,6 +16,7 @@ import Moment09 from './moments/Moment09';
 import Moment10 from './moments/Moment10';
 import Moment11 from './moments/Moment11';
 import Preloader from './Preloader';
+import GlobalNav from './GlobalNav';
 
 const ScrollJourney = () => {
   const lenisRef = useRef<Lenis | null>(null);
@@ -56,6 +57,7 @@ const ScrollJourney = () => {
   return (
     <main className="scroll-journey">
       <Preloader />
+      <GlobalNav />
       <Moment01 />
       <Moment02 />
       <Moment03 />
