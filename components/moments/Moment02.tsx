@@ -8,6 +8,7 @@ const Moment02 = () => {
   const islandRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const backgroundRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const ctx = gsap.context(() => {
@@ -47,6 +48,25 @@ const Moment02 = () => {
         }
       );
 
+      gsap.fromTo(textRef.current,
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          force3D: true,
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top center",
+            end: "top top",
+            scrub: 2,
+            onEnter: () => { gsap.set(textRef.current, { willChange: "transform, opacity" }); },
+            onLeave: () => { gsap.set(textRef.current, { clearProps: "willChange" }); },
+            onEnterBack: () => { gsap.set(textRef.current, { willChange: "transform, opacity" }); },
+            onLeaveBack: () => { gsap.set(textRef.current, { clearProps: "willChange" }); },
+          }
+        }
+      );
+
       // --- Scroll-Out Animation (toward Moment03) ---
       const exitTl = gsap.timeline({
         scrollTrigger: {
@@ -55,8 +75,8 @@ const Moment02 = () => {
           end: "bottom top",
           scrub: 2.5,
         },
-        onStart: () => { gsap.set([islandRef.current, backgroundRef.current], { willChange: "transform, opacity" }); },
-        onComplete: () => { gsap.set([islandRef.current, backgroundRef.current], { clearProps: "willChange" }); }
+        onStart: () => { gsap.set([islandRef.current, backgroundRef.current, textRef.current], { willChange: "transform, opacity" }); },
+        onComplete: () => { gsap.set([islandRef.current, backgroundRef.current, textRef.current], { clearProps: "willChange" }); }
       });
 
       exitTl.to(islandRef.current, {
@@ -68,6 +88,13 @@ const Moment02 = () => {
 
       exitTl.to(backgroundRef.current, {
         y: "8%",
+        force3D: true,
+        ease: "none"
+      }, 0);
+
+      exitTl.to(textRef.current, {
+        opacity: 0,
+        y: -30,
         force3D: true,
         ease: "none"
       }, 0);
@@ -100,6 +127,37 @@ const Moment02 = () => {
           background: 'linear-gradient(135deg, rgba(210,160,80,0.08) 0%, transparent 50%)'
         }}
       />
+
+      {/* Context Text */}
+      <div 
+        ref={textRef}
+        className="absolute top-[25%] left-[8%] md:left-[12%] z-10 max-w-[420px] pr-4 pointer-events-none"
+      >
+        <h2 
+          className="italic font-light mb-6 drop-shadow-md"
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
+            color: 'rgba(240, 232, 210, 0.95)',
+            letterSpacing: '0.05em',
+            lineHeight: '1.2'
+          }}
+        >
+          A sanctuary,<br/>woven into the shoreline.
+        </h2>
+        <p
+          className="font-light drop-shadow-sm"
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: 'clamp(0.85rem, 1vw, 1rem)',
+            color: 'rgba(240, 232, 210, 0.7)',
+            letterSpacing: '0.05em',
+            lineHeight: '1.8'
+          }}
+        >
+          Far from the noise, suspended above the turquoise sea. Every detail of this secluded retreat is designed to foster deep stillness and effortless luxury. Your arrival changes everything.
+        </p>
+      </div>
 
       {/* Island Silhouette Container for Shadow */}
       <div 

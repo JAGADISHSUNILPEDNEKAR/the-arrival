@@ -107,22 +107,43 @@ const Moment01 = () => {
       </div>
 
       {/* Centered Text */}
-      <p 
+      <div 
         ref={textRef}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-full px-8 italic font-light text-center"
-        style={{
-          fontFamily: 'var(--font-serif)',
-          fontWeight: 300,
-          fontSize: 'clamp(1.1rem, 2.8vw, 1.9rem)',
-          color: 'rgba(240, 232, 210, 0.92)',
-          letterSpacing: '0.18em',
-          lineHeight: '1.8',
-          maxWidth: '600px',
-          opacity: 1,
-        }}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-full px-8 flex flex-col items-center justify-center gap-8"
+        style={{ opacity: 1 }}
       >
-        You are no longer arriving. You have already arrived.
-      </p>
+        <p 
+          className="italic font-light text-center"
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontWeight: 300,
+            fontSize: 'clamp(1.1rem, 2.8vw, 1.9rem)',
+            color: 'rgba(240, 232, 210, 0.92)',
+            letterSpacing: '0.18em',
+            lineHeight: '1.8',
+            maxWidth: '600px',
+          }}
+        >
+          You are no longer arriving. You have already arrived.
+        </p>
+        <p
+          className="text-center"
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontWeight: 300,
+            fontSize: 'clamp(0.7rem, 1vw, 0.85rem)',
+            color: 'rgba(240, 232, 210, 0.7)',
+            letterSpacing: '0.25em',
+            textTransform: 'uppercase',
+            maxWidth: '500px',
+            animation: 'fadeInUp 2.5s ease-out 1s forwards',
+            opacity: 0,
+            transform: 'translateY(10px)',
+          }}
+        >
+          An exclusive private island & culinary experience
+        </p>
+      </div>
 
       {/* Scroll Indicator */}
       <div 
@@ -142,6 +163,9 @@ const Moment01 = () => {
         @keyframes shimmer {
           from { background-position-x: 0px; }
           to { background-position-x: 200px; }
+        }
+        @keyframes fadeInUp {
+          to { opacity: 1; transform: translateY(0); }
         }
         .scroll-dot {
           position: absolute;
