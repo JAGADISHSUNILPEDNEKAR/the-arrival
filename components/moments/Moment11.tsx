@@ -8,10 +8,6 @@ const Moment11 = () => {
   const backgroundWrapperRef = useRef<HTMLDivElement>(null);
   const horizonRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
-  const lineRef = useRef<HTMLDivElement>(null);
-  
-  const [isIntersecting, setIsIntersecting] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
   const [starsData, setStarsData] = useState<any[]>([]);
 
   useEffect(() => {
@@ -24,21 +20,6 @@ const Moment11 = () => {
       delay: Math.random() * 5,
       duration: 3 + Math.random() * 4,
     })));
-
-    // Intersection Observer for CTALine reveal
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsIntersecting(true);
-          observer.unobserve(entry.target);
-        }
-      },
-      { threshold: 0.5 }
-    );
-
-    if (sectionRef.current) {
-      observer.observe(sectionRef.current);
-    }
 
     const ctx = gsap.context(() => {
       if (!sectionRef.current || !horizonRef.current || !textRef.current || !backgroundWrapperRef.current) return;
@@ -100,7 +81,6 @@ const Moment11 = () => {
 
     return () => {
       ctx.revert();
-      observer.disconnect();
     };
   }, []);
 
@@ -171,51 +151,65 @@ const Moment11 = () => {
         </div>
       </div>
 
-      {/* CALL TO ACTION TEXT & Hit Area */}
+      {/* CALL TO ACTION TEXT & FORM */}
       <div 
-        className="absolute top-[42%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center cursor-default"
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
+        ref={textRef}
+        className="absolute top-[50%] md:top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center w-full max-w-lg px-6 w-full"
       >
         <div 
-          ref={textRef}
-          className="transition-colors duration-[600ms] ease"
           style={{
             fontFamily: 'var(--font-serif)',
             fontWeight: 300,
             fontStyle: 'italic',
-            fontSize: 'clamp(1.2rem, 3vw, 2rem)',
-            color: isHovered ? 'rgba(220,235,245,0.95)' : 'rgba(200,215,230,0.75)',
-            letterSpacing: '0.15em',
+            fontSize: 'clamp(1.5rem, 4vw, 2.8rem)',
+            color: 'rgba(220,235,245,0.95)',
+            letterSpacing: '0.05em',
             textAlign: 'center',
+            marginBottom: '0.5rem',
+            lineHeight: '1.2'
           }}
         >
-          When would you like to return?
+          Reserve Your Island Experience.
         </div>
-
-        {/* Underline */}
-        <div 
-          ref={lineRef}
-          className="mt-[40px] h-[1px]"
-          style={{
-            width: isHovered ? '180px' : isIntersecting ? '120px' : '0px',
-            backgroundColor: 'rgba(180,200,220,0.3)',
-            transition: 'width 0.6s ease, background-color 0.6s ease',
-            animation: isIntersecting && !isHovered ? 'lineReveal 1.5s ease-out forwards' : 'none'
-          }}
-        />
         
-        {/* Hit Area Overlay (300px x 80px) */}
-        <div 
-          className="absolute inset-0 z-30 cursor-pointer"
-          style={{ 
-            width: '300px', 
-            height: '80px', 
-            left: '50%', 
-            top: '50%', 
-            transform: 'translate(-50%, -50%)' 
-          }}
-        />
+        <p 
+          className="text-center font-light mb-8 text-[rgba(200,215,230,0.7)] tracking-wider text-xs md:text-sm"
+          style={{ fontFamily: 'var(--font-sans)' }}
+        >
+          Your table at the edge of the world awaits.
+        </p>
+
+        {/* Glass Form */}
+        <form className="w-full bg-[rgba(10,20,35,0.5)] backdrop-blur-xl border border-[rgba(100,140,170,0.2)] p-6 md:p-8 flex flex-col gap-6 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-sm pointer-events-auto">
+          <div className="flex flex-col gap-2">
+            <label className="text-[10px] uppercase tracking-widest text-[rgba(200,215,230,0.6)]" style={{ fontFamily: 'var(--font-sans)' }}>Guest Name</label>
+            <input type="text" className="w-full bg-transparent border-b border-[rgba(100,140,170,0.3)] pb-2 text-[rgba(230,240,250,0.9)] focus:outline-none focus:border-[rgba(230,240,250,0.6)] transition-colors font-light" placeholder="Your Name" />
+          </div>
+          
+          <div className="flex gap-6">
+            <div className="flex flex-col gap-2 w-1/2">
+              <label className="text-[10px] uppercase tracking-widest text-[rgba(200,215,230,0.6)]" style={{ fontFamily: 'var(--font-sans)' }}>Arrival Date</label>
+              <input type="date" className="w-full bg-transparent border-b border-[rgba(100,140,170,0.3)] pb-2 text-[rgba(230,240,250,0.9)] focus:outline-none focus:border-[rgba(230,240,250,0.6)] transition-colors font-light appearance-none" style={{ colorScheme: 'dark' }} />
+            </div>
+            <div className="flex flex-col gap-2 w-1/2">
+              <label className="text-[10px] uppercase tracking-widest text-[rgba(200,215,230,0.6)]" style={{ fontFamily: 'var(--font-sans)' }}>Party Size</label>
+              <select className="w-full bg-transparent border-b border-[rgba(100,140,170,0.3)] pb-2 text-[rgba(230,240,250,0.9)] focus:outline-none focus:border-[rgba(230,240,250,0.6)] transition-colors font-light appearance-none text-sm">
+                <option value="2" className="bg-[#152235]">2 Guests</option>
+                <option value="4" className="bg-[#152235]">4 Guests</option>
+                <option value="6" className="bg-[#152235]">6 Guests</option>
+                <option value="private" className="bg-[#152235]">Private Buyout</option>
+              </select>
+            </div>
+          </div>
+
+          <button 
+            type="button"
+            className="mt-4 uppercase text-[11px] md:text-xs tracking-widest w-full py-4 bg-[rgba(230,240,250,0.9)] text-[#0a1020] hover:bg-white transition-colors duration-500 font-medium"
+            style={{ fontFamily: 'var(--font-sans)' }}
+          >
+            Secure Reservation
+          </button>
+        </form>
       </div>
 
       {/* FINAL TOUCH: Brand Line */}
@@ -244,13 +238,6 @@ const Moment11 = () => {
         @keyframes twinkleDim {
           0%, 100% { opacity: 0.1; }
           50% { opacity: 0.35; }
-        }
-        .line-revealed {
-          animation: lineReveal 1.5s ease-out forwards;
-        }
-        @keyframes lineReveal {
-          from { width: 0px; }
-          to { width: 120px; }
         }
       ` }} />
     </section>
