@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useEffect, useRef, useMemo, useState } from 'react';
-import { gsap } from "@/lib/gsap";
+import React, { useEffect, useRef, useState } from 'react';
+import { useScroll } from '@/lib/context/ScrollContext';
 
-const Moment09 = () => {
+const Moment09 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const starsRef = useRef<HTMLDivElement>(null);
@@ -13,10 +13,11 @@ const Moment09 = () => {
   const herbsRef = useRef<HTMLDivElement>(null);
   const foamRef = useRef<HTMLDivElement>(null);
   const candleRef = useRef<HTMLDivElement>(null);
-  const glassRef = useRef<HTMLDivElement>(null);
   const steamRef = useRef<HTMLDivElement>(null);
   const [starsData, setStarsData] = useState<any[]>([]);
   const [foamData, setFoamData] = useState<any[]>([]);
+
+  const { masterTl } = useScroll();
 
   useEffect(() => {
     // Generate data only on client
@@ -36,91 +37,79 @@ const Moment09 = () => {
       top: Math.random() * 12 - 6,
       left: Math.random() * 12 - 6
     })));
+  }, []);
 
-    const ctx = gsap.context(() => {
-      if (!sectionRef.current) return;
+  useEffect(() => {
+    if (!masterTl || !sectionRef.current) return;
 
-      // Initialize sauce and other elements for animation
-      gsap.set(sauceRef.current, { x: -30, opacity: 0, scale: 0.8 });
-      gsap.set([fishRef.current, herbsRef.current, foamRef.current], { opacity: 0, y: 15, scale: 0.95 });
+    const label = `moment-09`;
 
-      // Scroll-In Animation
-      const enterTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top bottom",
-          end: "top top",
-          scrub: 1.8,
-          onEnter: () => { gsap.set([plateRef.current, sauceRef.current, fishRef.current, herbsRef.current, foamRef.current], { willChange: "transform, opacity, scale" }); },
-          onLeave: () => { gsap.set([plateRef.current, sauceRef.current, fishRef.current, herbsRef.current, foamRef.current], { clearProps: "willChange" }); },
-          onEnterBack: () => { gsap.set([plateRef.current, sauceRef.current, fishRef.current, herbsRef.current, foamRef.current], { willChange: "transform, opacity, scale" }); },
-          onLeaveBack: () => { gsap.set([plateRef.current, sauceRef.current, fishRef.current, herbsRef.current, foamRef.current], { clearProps: "willChange" }); },
-        }
-      });
-
-      // Plate enters from darkness
-      enterTl.fromTo(plateRef.current,
-        { opacity: 0, scale: 0.92 },
-        { opacity: 1, scale: 1, force3D: true, ease: "power2.out" }
-      );
-
-      // Sauce pools in from left
-      enterTl.to(sauceRef.current, {
-        x: 0,
+    // Entry transition
+    masterTl.fromTo(sectionRef.current,
+      { opacity: 0 },
+      {
         opacity: 1,
+        pointerEvents: 'auto',
+        duration: 2
+      }, `${label}-=1`);
+
+    // Initial state for dish elements
+    masterTl.set(sauceRef.current, { x: -30, opacity: 0, scale: 0.8 }, label);
+    masterTl.set([fishRef.current, herbsRef.current, foamRef.current], { opacity: 0, y: 15, scale: 0.95 }, label);
+
+    // Plate enters
+    masterTl.fromTo(plateRef.current,
+      { opacity: 0, scale: 0.92 },
+      { opacity: 1, scale: 1, force3D: true, ease: "power2.out", duration: 4 }, label);
+
+    // Sauce assembly
+    masterTl.to(sauceRef.current, {
+      x: 0,
+      opacity: 1,
+      scale: 1,
+      force3D: true,
+      ease: "power2.out",
+      duration: 3
+    }, `${label}+=1`);
+
+    // Stagger food elements
+    const foodItems = [fishRef.current, herbsRef.current, foamRef.current].filter(Boolean) as HTMLElement[];
+    foodItems.forEach((item, i) => {
+      masterTl.to(item, {
+        opacity: 1,
+        y: 0,
         scale: 1,
         force3D: true,
-        ease: "power2.out",
-        duration: 0.8
-      }, "-=0.4");
+        ease: "back.out(1.2)",
+        duration: 3
+      }, `${label}+=${2 + i * 0.5}`);
+    });
 
-      // Stagger food elements
-      const foodElements = [fishRef.current, herbsRef.current, foamRef.current].filter(Boolean) as HTMLElement[];
-      foodElements.forEach((item, i) => {
-        enterTl.to(item, {
-          opacity: 1,
-          y: 0,
-          scale: 1,
-          force3D: true,
-          ease: "back.out(1.2)",
-          duration: 0.6
-        }, "-=0.3");
-      });
+    // Main removal (pinned phase)
+    masterTl.to(plateRef.current, {
+      y: -150,
+      opacity: 0,
+      force3D: true,
+      ease: "power2.inOut",
+      duration: 6
+    }, `${label}+=4`);
 
-      // Scroll-Out Animation
-      const pinnedTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "+=3000px",
-          pin: true,
-          scrub: 1.5,
-          anticipatePin: 1,
-        },
-        onStart: () => { gsap.set(plateRef.current, { willChange: "transform, opacity" }); },
-        onComplete: () => { gsap.set(plateRef.current, { clearProps: "willChange" }); }
-      });
+    // Exit transition
+    masterTl.to(sectionRef.current, {
+      opacity: 0,
+      pointerEvents: 'none',
+      duration: 2
+    }, `${label}+=8`);
 
-      // Plate translates upward (being removed) over the last 20%
-      pinnedTl.to(plateRef.current, {
-        y: -150,
-        opacity: 0,
-        force3D: true,
-        ease: "power2.inOut"
-      }, 0.8); // Starts at 80% of the timeline
-
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
+  }, [masterTl]);
 
   return (
     <section 
       ref={sectionRef}
-      className="moment relative h-[100svh] w-screen overflow-hidden" 
+      className="moment relative w-screen overflow-hidden" 
       id="moment-09"
+      style={{ opacity: 0 }}
     >
-      {/* Background (Deep blue-black world) */}
       <div 
         ref={containerRef}
         className="absolute inset-0 w-full h-full"
@@ -128,7 +117,6 @@ const Moment09 = () => {
           background: 'linear-gradient(180deg, #080810 0%, #0c0c18 40%, #080810 100%)'
         }}
       >
-        {/* Night Stars */}
         <div ref={starsRef} className="absolute inset-0 pointer-events-none z-0">
           {starsData.map((star) => (
             <div 
@@ -146,7 +134,6 @@ const Moment09 = () => {
           ))}
         </div>
 
-        {/* Lagoon (Barely visible Presence) */}
         <div 
           className="absolute bottom-0 left-0 w-full h-[30%] z-1"
           style={{
@@ -156,12 +143,10 @@ const Moment09 = () => {
           }}
         />
 
-        {/* Candle (Primary Light Source) - Positioned upper-left of center */}
         <div 
           ref={candleRef}
           className="absolute top-[28%] left-[28%] z-30 flex flex-col items-center"
         >
-          {/* Prominent Glow */}
           <div 
             className="absolute -top-24 w-[300px] h-[400px] pointer-events-none -translate-x-1/2 -translate-y-1/2"
             style={{
@@ -171,13 +156,11 @@ const Moment09 = () => {
               animation: 'candleGlow 4s ease-in-out infinite'
             }}
           />
-          {/* Flame */}
           <div className="w-1.5 h-3.5 bg-[rgba(255,210,80,0.95)] rounded-[50%_50%_30%_30%] mb-1 shadow-[0_0_12px_rgba(255,180,50,0.7)]"
                style={{
                  animation: 'candleFlicker 2.5s ease-in-out infinite'
                }}
           />
-          {/* Candle Body */}
           <div className="w-[8px] h-[45px]"
                style={{
                  background: 'linear-gradient(180deg, #f0e0b0, #dcc080)'
@@ -185,17 +168,6 @@ const Moment09 = () => {
           />
         </div>
 
-        {/* Wine Glass (Quiet witness) */}
-        <div 
-          ref={glassRef}
-          className="absolute top-[35%] left-[38%] flex flex-col items-center pointer-events-none z-20 opacity-30"
-        >
-          <div className="w-7 h-11 rounded-[40%_40%_100%_100%] border border-[rgba(255,255,255,0.05)] bg-[rgba(150,170,200,0.03)]" />
-          <div className="w-[1px] h-9 bg-[rgba(255,255,255,0.06)]" />
-          <div className="w-6 h-[1px] bg-[rgba(255,255,255,0.04)] rounded-full" />
-        </div>
-
-        {/* The Plate (Protagonist) */}
         <div className="absolute inset-0 flex items-center justify-center z-40">
           <div 
             ref={plateRef}
@@ -206,9 +178,7 @@ const Moment09 = () => {
               boxShadow: 'inset -3px -2px 0 rgba(255,200,100,0.15), 0 0 0 1px rgba(255,200,100,0.08), 0 20px 50px rgba(0,0,0,0.7)'
             }}
           >
-            {/* Food Elements Stack */}
             <div className="relative w-full h-full flex items-center justify-center">
-              {/* Pool of Sauce */}
               <div 
                 ref={sauceRef}
                 className="absolute top-[48%] left-[32%] w-[38%] h-[32%] -translate-x-1/2 -translate-y-1/2 pointer-events-none"
@@ -219,7 +189,6 @@ const Moment09 = () => {
                 }}
               />
 
-              {/* The Fish */}
               <div 
                 ref={fishRef}
                 className="absolute top-1/2 left-1/2 w-[55%] h-[28%] -translate-x-1/2 -translate-y-1/2 z-10"
@@ -229,17 +198,14 @@ const Moment09 = () => {
                   boxShadow: 'inset 0 2px 5px rgba(255,255,255,0.15), 0 3px 10px rgba(0,0,0,0.4)'
                 }}
               >
-                {/* Seared top */}
                 <div className="absolute inset-0 w-full h-1/2 bg-white/5 rounded-t-full blur-[2px]" />
               </div>
 
-              {/* Herb Elements */}
               <div ref={herbsRef} className="absolute inset-0 pointer-events-none z-20">
                 <div className="absolute top-[40%] left-[65%] w-[6px] h-[6px] rounded-full bg-[rgba(60,100,40,0.95)]" />
                 <div className="absolute top-[62%] left-[72%] w-[5px] h-[5px] rounded-full bg-[rgba(60,100,40,0.95)]" />
               </div>
 
-              {/* Foam/Emulsion */}
               <div ref={foamRef} className="absolute top-[65%] left-[42%] w-[15px] h-[15px] pointer-events-none z-20">
                 {foamData.map((f, i) => (
                   <div 
@@ -256,7 +222,6 @@ const Moment09 = () => {
                 ))}
               </div>
 
-              {/* Steam Above Main Element */}
               <div ref={steamRef} className="absolute -top-[15%] left-1/2 -translate-x-1/2 w-16 h-24 pointer-events-none flex justify-center gap-3">
                 {[...Array(3)].map((_, i) => (
                   <div 

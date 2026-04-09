@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { gsap } from "@/lib/gsap";
+import { useScroll } from '@/lib/context/ScrollContext';
 
-const Moment08 = () => {
+const Moment08 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLDivElement>(null);
@@ -15,94 +15,85 @@ const Moment08 = () => {
   const textRef = useRef<HTMLDivElement>(null);
   const [menuLines, setMenuLines] = useState<number[]>([]);
 
+  const { masterTl } = useScroll();
+
   useEffect(() => {
     // Generate menu lines only on client
     setMenuLines([...Array(6)].map(() => 60 + Math.random() * 30));
-
-    const ctx = gsap.context(() => {
-      if (!sectionRef.current || !tableRef.current || !containerRef.current || !shadowRef.current) return;
-
-      // Scroll-In: Table fades in from below, items stagger in
-      const enterTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top bottom",
-          end: "top top",
-          scrub: 2,
-          onEnter: () => { gsap.set([tableRef.current, plateRef.current, menuRef.current, candleRef.current, glassRef.current], { willChange: "transform, opacity" }); },
-          onLeave: () => { gsap.set([tableRef.current, plateRef.current, menuRef.current, candleRef.current, glassRef.current], { clearProps: "willChange" }); },
-          onEnterBack: () => { gsap.set([tableRef.current, plateRef.current, menuRef.current, candleRef.current, glassRef.current], { willChange: "transform, opacity" }); },
-          onLeaveBack: () => { gsap.set([tableRef.current, plateRef.current, menuRef.current, candleRef.current, glassRef.current], { clearProps: "willChange" }); },
-        }
-      });
-
-      enterTl.fromTo(tableRef.current, 
-        { y: 30, opacity: 0 },
-        { y: 0, opacity: 1, force3D: true, ease: "power2.out" }
-      );
-
-      // Stagger items
-      [plateRef.current, menuRef.current, candleRef.current, glassRef.current].forEach((item, i) => {
-        if (item) {
-          enterTl.fromTo(item,
-            { opacity: 0, scale: 0.95 },
-            { opacity: 1, scale: 1, force3D: true, ease: "power2.out" },
-            `-=${i === 0 ? 0.4 : 0.4}`
-          );
-        }
-      });
-
-      enterTl.fromTo(textRef.current,
-        { opacity: 0, y: 20 },
-        { opacity: 1, y: 0, force3D: true, ease: "power2.out" },
-        0.5
-      );
-
-      // Scroll-Out: Frame pull back and shadow entry
-      const pinnedTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "+=3000px",
-          pin: true,
-          scrub: 1.5,
-          anticipatePin: 1,
-        },
-        onStart: () => { gsap.set([containerRef.current, shadowRef.current, textRef.current], { willChange: "transform, opacity" }); },
-        onComplete: () => { gsap.set([containerRef.current, shadowRef.current, textRef.current], { clearProps: "willChange" }); }
-      });
-
-      pinnedTl.to(containerRef.current, {
-        scale: 1, // Moving from 1.02 to 1.0
-        force3D: true,
-        ease: "none"
-      }, 0);
-
-      pinnedTl.fromTo(shadowRef.current,
-        { x: "100%", opacity: 0 },
-        { x: "0%", opacity: 0.4, force3D: true, ease: "power1.inOut" },
-        0.2
-      );
-
-      pinnedTl.to(textRef.current, {
-        opacity: 0,
-        y: -20,
-        force3D: true,
-        ease: "none"
-      }, 0);
-
-    }, sectionRef);
-
-    return () => ctx.revert();
   }, []);
+
+  useEffect(() => {
+    if (!masterTl || !sectionRef.current) return;
+
+    const label = `moment-08`;
+
+    // Entry transition
+    masterTl.fromTo(sectionRef.current,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        pointerEvents: 'auto',
+        duration: 2
+      }, `${label}-=1`);
+
+    // Table and items entrance
+    masterTl.fromTo(tableRef.current, 
+      { y: 30, opacity: 0 },
+      { y: 0, opacity: 1, force3D: true, ease: "power2.out", duration: 4 }, label);
+
+    // Stagger items
+    [plateRef.current, menuRef.current, candleRef.current, glassRef.current].forEach((item, i) => {
+      if (item) {
+        masterTl.fromTo(item,
+          { opacity: 0, scale: 0.95 },
+          { opacity: 1, scale: 1, force3D: true, ease: "power2.out", duration: 3 },
+          `${label}+=${0.5 + i * 0.5}`
+        );
+      }
+    });
+
+    masterTl.fromTo(textRef.current,
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, force3D: true, ease: "power2.out", duration: 4 },
+      `${label}+=2`);
+
+    // Pull back and shadow entry (pinned phase)
+    masterTl.to(containerRef.current, {
+      scale: 1, 
+      force3D: true,
+      ease: "none",
+      duration: 10
+    }, label);
+
+    masterTl.fromTo(shadowRef.current,
+      { x: "100%", opacity: 0 },
+      { x: "0%", opacity: 0.4, force3D: true, ease: "power1.inOut", duration: 10 },
+      label);
+
+    masterTl.to(textRef.current, {
+      opacity: 0,
+      y: -20,
+      force3D: true,
+      ease: "none",
+      duration: 4
+    }, `${label}+=6`);
+
+    // Exit transition
+    masterTl.to(sectionRef.current, {
+      opacity: 0,
+      pointerEvents: 'none',
+      duration: 2
+    }, `${label}+=8`);
+
+  }, [masterTl]);
 
   return (
     <section 
       ref={sectionRef}
-      className="moment relative h-[100svh] w-screen overflow-hidden" 
+      className="moment relative w-screen overflow-hidden" 
       id="moment-08"
+      style={{ opacity: 0 }}
     >
-      {/* Testimonial Text */}
       <div 
         ref={textRef}
         className="absolute top-[15%] right-[10%] md:right-[15%] z-30 max-w-[320px] pointer-events-none text-right"
@@ -129,7 +120,6 @@ const Moment08 = () => {
         </p>
       </div>
 
-      {/* Background with overhead soft light */}
       <div 
         ref={containerRef}
         className="relative w-full h-full scale-[1.02]"
@@ -137,14 +127,12 @@ const Moment08 = () => {
           background: 'linear-gradient(135deg, #1a1008 0%, #261808 40%, #1e1408 100%)'
         }}
       >
-        {/* Overhead soft light source */}
         <div className="absolute inset-0 z-10 pointer-events-none"
              style={{
                background: 'radial-gradient(ellipse 60% 70% at 50% -10%, rgba(255,200,100,0.22) 0%, transparent 65%)'
              }}
         />
 
-        {/* Lagoon View (Lower 20%) */}
         <div 
           className="absolute bottom-0 left-0 w-full h-[20%] z-0"
           style={{
@@ -152,13 +140,11 @@ const Moment08 = () => {
           }}
         />
 
-        {/* Shadow Figure (Enters on scroll-out) */}
         <div 
           ref={shadowRef}
           className="absolute right-0 top-0 h-full w-[40%] z-40 pointer-events-none bg-black blur-[100px] opacity-0"
         />
 
-        {/* Centered Table Setting */}
         <div className="absolute inset-0 flex items-center justify-center z-20">
           <div 
             ref={tableRef}
@@ -170,7 +156,6 @@ const Moment08 = () => {
               `
             }}
           >
-            {/* Table Linen */}
             <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[85%] h-[80%] border border-[rgba(220,215,200,0.4)] shadow-sm"
                  style={{
                    background: `
@@ -179,7 +164,6 @@ const Moment08 = () => {
                    `
                  }}
             >
-              {/* Plate */}
               <div 
                 ref={plateRef}
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[clamp(80px,12vw,140px)] h-[clamp(80px,12vw,140px)] shadow-[inset_0_2px_8px_rgba(0,0,0,0.15),0_4px_20px_rgba(0,0,0,0.3)] group cursor-pointer transition-transform duration-500 hover:scale-[1.03]"
@@ -193,7 +177,6 @@ const Moment08 = () => {
                 </div>
               </div>
 
-              {/* Menu Card */}
               <div 
                 ref={menuRef}
                 className="absolute top-[20%] right-[10%] w-[clamp(80px,10vw,120px)] h-[clamp(120px,15vw,180px)] p-4 shadow-[2px_3px_12px_rgba(0,0,0,0.25)] -rotate-[2deg] flex flex-col gap-[14px] group cursor-pointer transition-transform duration-500 hover:rotate-0 hover:-translate-y-2 hover:scale-[1.05]"
@@ -210,25 +193,21 @@ const Moment08 = () => {
                 <div className="mt-auto h-[1px] bg-[rgba(80,60,40,0.5)] w-[40px]" />
               </div>
 
-              {/* Candle */}
               <div 
                 ref={candleRef}
                 className="absolute top-[30%] left-[15%] w-[40px] h-[70px] flex flex-col items-center"
               >
-                {/* Glow */}
                 <div className="absolute -top-4 w-20 h-24 rounded-full pointer-events-none opacity-25"
                      style={{
                        background: 'radial-gradient(ellipse 40px 50px at center, rgba(255,200,80,0.5), transparent)',
                        animation: 'candleFlickerOpacity 2.3s ease-in-out infinite'
                      }}
                 />
-                {/* Flame */}
                 <div className="w-2 h-4 bg-[rgba(255,210,80,0.9)] rounded-[50%_50%_30%_30%] mb-1"
                      style={{
                        animation: 'candleFlicker 2.3s ease-in-out infinite'
                      }}
                 />
-                {/* Candle Body */}
                 <div className="w-[10px] h-[50px]"
                      style={{
                        background: 'linear-gradient(180deg, #f5e8c0, #e8d4a0)'
@@ -236,16 +215,13 @@ const Moment08 = () => {
                 />
               </div>
 
-              {/* Wine Glass Silhouette */}
               <div 
                 ref={glassRef}
                 className="absolute top-[25%] right-[25%] flex flex-col items-center pointer-events-none"
               >
-                {/* Bowl */}
                 <div className="w-8 h-12 rounded-[40%_40%_100%_100%] bg-[rgba(200,190,170,0.3)] overflow-hidden">
                   <div className="w-full h-full" style={{ animation: 'shimmer 4s ease-in-out infinite', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)' }} />
                 </div>
-                {/* Stem */}
                 <div className="w-[2px] h-10 bg-[rgba(200,190,170,0.3)]" />
               </div>
 

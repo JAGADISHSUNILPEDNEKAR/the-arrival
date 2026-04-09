@@ -1,14 +1,15 @@
 "use client";
 
-import React, { useEffect, useRef, useMemo, useState } from 'react';
-import { gsap } from "@/lib/gsap";
+import React, { useEffect, useRef, useState } from 'react';
+import { useScroll } from '@/lib/context/ScrollContext';
 
-const Moment10 = () => {
+const Moment10 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [starsData, setStarsData] = useState<any[]>([]);
+
+  const { masterTl } = useScroll();
 
   useEffect(() => {
     // Generate 55 stars with random properties only on client
@@ -16,7 +17,7 @@ const Moment10 = () => {
       const size = i < 40 ? 1 : i < 50 ? 2 : 3;
       const isBlueTint = Math.random() > 0.7;
       const color = isBlueTint ? 'rgba(220, 230, 255, 0.6)' : `rgba(255, 255, 255, ${0.4 + Math.random() * 0.5})`;
-      const animationType = (i % 3) + 1; // twinkle1, twinkle2, twinkle3
+      const animationType = (i % 3) + 1; 
       const duration = animationType === 1 ? 2 : animationType === 2 ? 3 : 4;
       const delay = Math.random() * 5;
       const hasGlow = size >= 2 && Math.random() > 0.5;
@@ -33,64 +34,58 @@ const Moment10 = () => {
         hasGlow
       };
     }));
+  }, []);
 
-    const ctx = gsap.context(() => {
-      if (!sectionRef.current || !textRef.current || !contentRef.current) return;
+  useEffect(() => {
+    if (!masterTl || !sectionRef.current) return;
 
-      // Ensure content is initialized
-      gsap.set(textRef.current, { opacity: 0 });
-      gsap.set(contentRef.current, { scale: 1.1 });
+    const label = `moment-10`;
 
-      // Main Timeline for the moment (Pinned)
-      const pinnedTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "+=3000px",
-          pin: true,
-          scrub: 1.5,
-          anticipatePin: 1,
-        },
-        onStart: () => { gsap.set([textRef.current, contentRef.current], { willChange: "transform, opacity" }); },
-        onComplete: () => { gsap.set([textRef.current, contentRef.current], { clearProps: "willChange" }); }
-      });
+    // Entry transition
+    masterTl.fromTo(sectionRef.current,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        pointerEvents: 'auto',
+        duration: 2
+      }, `${label}-=1`);
 
-      // Scroll-In: Camera rise (pull back from scale 1.1 to 1)
-      pinnedTl.to(contentRef.current, {
+    // Camera pull back
+    masterTl.fromTo(contentRef.current, 
+      { scale: 1.1 },
+      {
         scale: 1,
         force3D: true,
         ease: "none",
-        duration: 1
-      }, 0);
+        duration: 10
+      }, label);
 
-      // Text Fade-In: At 40% point of the scroll range
-      pinnedTl.to(textRef.current, {
+    // Text Fade-In
+    masterTl.fromTo(textRef.current,
+      { opacity: 0 },
+      {
         opacity: 1,
         force3D: true,
         ease: "power1.inOut",
-        duration: 0.2
-      }, 0.4);
+        duration: 4
+      }, `${label}+=4`);
 
-      // Scroll-Out: Fade section to 0.7 over final 15%
-      pinnedTl.to(sectionRef.current, {
-        opacity: 0.7,
-        force3D: true,
-        ease: "power2.inOut",
-        duration: 0.15
-      }, 0.85);
+    // Exit transition
+    masterTl.to(sectionRef.current, {
+      opacity: 0,
+      pointerEvents: 'none',
+      duration: 2
+    }, `${label}+=8`);
 
-    }, sectionRef);
-
-    return () => ctx.revert();
-  }, []);
+  }, [masterTl]);
 
   return (
     <section 
       ref={sectionRef}
-      className="moment relative h-[100svh] w-screen overflow-hidden bg-[#060810]" 
+      className="moment relative w-screen overflow-hidden bg-[#060810]" 
       id="moment-10"
+      style={{ opacity: 0 }}
     >
-      {/* Background (Deep ocean night) */}
       <div 
         className="absolute inset-0 w-full h-full pointer-events-none"
         style={{
@@ -99,21 +94,18 @@ const Moment10 = () => {
       />
 
       <div ref={contentRef} className="absolute inset-0 w-full h-full">
-        {/* Milky Way */}
         <div 
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-[40%] origin-center pointer-events-none opacity-40"
           style={{
             transform: 'translate(-50%, -70%) rotate(25deg)',
           }}
         >
-          {/* Galactic core texture */}
           <div 
             className="absolute inset-0 w-full h-full"
             style={{
               background: 'repeating-linear-gradient(92deg, transparent 0%, rgba(180,190,220,0.015) 1%, rgba(200,210,240,0.025) 2%, transparent 3%, transparent 6%)'
             }}
           />
-          {/* Soft radial glow */}
           <div 
             className="absolute inset-0 w-full h-full"
             style={{
@@ -123,7 +115,6 @@ const Moment10 = () => {
           />
         </div>
 
-        {/* Individual Stars */}
         <div className="absolute inset-0 pointer-events-none">
           {starsData.map((star) => (
             <div 
@@ -142,7 +133,6 @@ const Moment10 = () => {
           ))}
         </div>
 
-        {/* The Ocean (Subtle gradient around island) */}
         <div 
           className="absolute inset-0 pointer-events-none z-10"
           style={{
@@ -150,11 +140,9 @@ const Moment10 = () => {
           }}
         />
 
-        {/* The Island Below */}
         <div 
           className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[clamp(100px,18vw,240px)] h-[25%] z-20"
         >
-          {/* Island Silhouette */}
           <div 
             className="absolute inset-0"
             style={{
@@ -163,13 +151,11 @@ const Moment10 = () => {
               boxShadow: '0 0 40px 15px rgba(255,185,80,0.15)'
             }}
           >
-            {/* Subtle palm silhouettes from above */}
             <div className="absolute top-[20%] left-[20%] w-[10%] h-[30%] bg-black/40 blur-[2px] rotate-[15deg] rounded-full" />
             <div className="absolute top-[15%] right-[25%] w-[8%] h-[35%] bg-black/40 blur-[2px] rotate-[-10deg] rounded-full" />
             <div className="absolute top-[35%] left-[45%] w-[12%] h-[25%] bg-black/40 blur-[2px] rotate-[5deg] rounded-full" />
           </div>
 
-          {/* Restaurant Light Glow around edges */}
           <div 
             className="absolute inset-0 rounded-full pointer-events-none"
             style={{
@@ -177,7 +163,6 @@ const Moment10 = () => {
             }}
           />
 
-          {/* One Lit Table */}
           <div 
             className="absolute top-[65%] left-[48%] -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] rounded-full z-30"
             style={{
@@ -188,7 +173,6 @@ const Moment10 = () => {
         </div>
       </div>
 
-      {/* Discovery Text */}
       <div 
         ref={textRef}
         className="absolute top-[35%] left-1/2 -translate-x-1/2 z-40 w-full text-center px-6 pointer-events-none"

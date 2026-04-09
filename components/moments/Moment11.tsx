@@ -1,106 +1,78 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { gsap } from "@/lib/gsap";
+import { useScroll } from '@/lib/context/ScrollContext';
 
-const Moment11 = () => {
+const Moment11 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const backgroundWrapperRef = useRef<HTMLDivElement>(null);
   const horizonRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const [starsData, setStarsData] = useState<any[]>([]);
 
+  const { masterTl } = useScroll();
+
   useEffect(() => {
     // Generate 15 stars only on client
     setStarsData(Array.from({ length: 15 }).map((_, i) => ({
       id: i,
-      top: `${Math.random() * 30}%`, // Concentrated in upper 30%
+      top: `${Math.random() * 30}%`,
       left: `${Math.random() * 100}%`,
-      opacity: 0.15 + Math.random() * 0.2, // 0.15-0.35
+      opacity: 0.15 + Math.random() * 0.2,
       delay: Math.random() * 5,
       duration: 3 + Math.random() * 4,
     })));
-
-    const ctx = gsap.context(() => {
-      if (!sectionRef.current || !horizonRef.current || !textRef.current || !backgroundWrapperRef.current) return;
-
-      // Initial states
-      gsap.set(sectionRef.current, { opacity: 0 });
-      gsap.set(textRef.current, { opacity: 0 });
-      gsap.set(horizonRef.current, { scaleX: 0 });
-
-      const pinnedTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "+=3000px",
-          pin: true,
-          scrub: 1.5,
-          anticipatePin: 1,
-        },
-        onStart: () => { gsap.set([sectionRef.current, backgroundWrapperRef.current], { willChange: "opacity, transform" }); },
-        onComplete: () => { gsap.set([sectionRef.current, backgroundWrapperRef.current], { clearProps: "willChange" }); }
-      });
-
-      // Section fades in over the first part of the pinned scroll
-      pinnedTl.to(sectionRef.current, {
-        opacity: 1,
-        force3D: true,
-        ease: "power2.out",
-        duration: 1
-      }, 0);
-
-      // Horizon line draws in from center over 2s
-      gsap.to(horizonRef.current, {
-        scaleX: 1,
-        duration: 2,
-        force3D: true,
-        ease: "power2.inOut",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 80%",
-          onEnter: () => { gsap.set(horizonRef.current, { willChange: "transform" }); },
-          onLeave: () => { gsap.set(horizonRef.current, { clearProps: "willChange" }); },
-        }
-      });
-
-      // Text fades in separately, delayed 0.5s after section appears
-      gsap.to(textRef.current, {
-        opacity: 1,
-        duration: 1.5,
-        delay: 0.5,
-        force3D: true,
-        ease: "power1.out",
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top 60%",
-          onEnter: () => { gsap.set(textRef.current, { willChange: "opacity" }); },
-          onLeave: () => { gsap.set(textRef.current, { clearProps: "willChange" }); },
-        }
-      });
-
-    }, sectionRef);
-
-    return () => {
-      ctx.revert();
-    };
   }, []);
 
+  useEffect(() => {
+    if (!masterTl || !sectionRef.current) return;
 
+    const label = `moment-11`;
+
+    // Entry transition
+    masterTl.fromTo(sectionRef.current,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        pointerEvents: 'auto',
+        duration: 2
+      }, `${label}-=1`);
+
+    // Horizon line draws in
+    masterTl.fromTo(horizonRef.current,
+      { scaleX: 0 },
+      {
+        scaleX: 1,
+        duration: 4,
+        force3D: true,
+        ease: "power2.inOut"
+      }, label);
+
+    // Text and form fade in
+    masterTl.fromTo(textRef.current,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        duration: 4,
+        force3D: true,
+        ease: "power1.out"
+      }, `${label}+=2`);
+
+    // Moment 11 remains visible at the end
+  }, [masterTl]);
 
   return (
     <section 
       ref={sectionRef}
-      className="moment relative h-[100svh] w-screen overflow-hidden" 
+      className="moment relative w-screen overflow-hidden" 
       id="moment-11"
+      style={{ opacity: 0 }}
     >
-      {/* Background Wrapper with Breathe animation */}
       <div 
         ref={backgroundWrapperRef}
         className="absolute inset-0 w-full h-full"
         style={{ animation: 'breatheFinal 8s ease-in-out infinite' }}
       >
-        {/* Layer 1: Pre-dawn Sky Gradient */}
         <div 
           className="absolute inset-0 w-full h-full"
           style={{
@@ -108,7 +80,6 @@ const Moment11 = () => {
           }}
         />
 
-        {/* Layer 2: Residual Stars */}
         <div className="absolute inset-0 w-full h-full pointer-events-none">
           {starsData.map((star) => (
             <div 
@@ -124,7 +95,6 @@ const Moment11 = () => {
           ))}
         </div>
 
-        {/* Layer 3: Horizon Line */}
         <div 
           ref={horizonRef}
           className="absolute left-0 w-full h-[1px] z-10 origin-center"
@@ -134,14 +104,12 @@ const Moment11 = () => {
           }}
         />
 
-        {/* Layer 4: Water (Pre-dawn Lagoon) */}
         <div 
           className="absolute bottom-0 left-0 w-full h-[45%] z-5 overflow-hidden"
           style={{
             background: 'linear-gradient(180deg, rgba(20,45,70,0.8) 0%, rgba(15,35,55,0.9) 40%, rgba(10,25,40,0.95) 100%)'
           }}
         >
-          {/* Subtle Surface Texture */}
           <div 
             className="absolute inset-0 w-full h-full opacity-30"
             style={{
@@ -153,10 +121,9 @@ const Moment11 = () => {
         </div>
       </div>
 
-      {/* CALL TO ACTION TEXT & FORM */}
       <div 
         ref={textRef}
-        className="absolute top-[50%] md:top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center w-full max-w-lg px-6 w-full"
+        className="absolute top-[50%] md:top-[45%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-20 flex flex-col items-center w-full max-w-lg px-6"
       >
         <div 
           style={{
@@ -181,7 +148,6 @@ const Moment11 = () => {
           Your table at the edge of the world awaits.
         </p>
 
-        {/* Glass Form */}
         <form className="w-full bg-[rgba(10,20,35,0.5)] backdrop-blur-xl border border-[rgba(100,140,170,0.2)] p-6 md:p-8 flex flex-col gap-6 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-sm pointer-events-auto">
           <div className="flex flex-col gap-2">
             <label className="text-[10px] uppercase tracking-widest text-[rgba(200,215,230,0.6)]" style={{ fontFamily: 'var(--font-sans)' }}>Guest Name</label>
@@ -214,7 +180,6 @@ const Moment11 = () => {
         </form>
       </div>
 
-      {/* FINAL TOUCH: Brand Line */}
       <div 
         className="absolute bottom-10 left-0 w-full text-center z-20 pointer-events-none"
         style={{
