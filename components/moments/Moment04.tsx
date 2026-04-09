@@ -2,16 +2,18 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from "@/lib/gsap";
+import { useScroll } from '@/lib/context/ScrollContext';
 
-const Moment04 = () => {
+const Moment04 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const planksContainerRef = useRef<HTMLDivElement>(null);
   const planksRef = useRef<HTMLDivElement>(null);
   const feetRef = useRef<HTMLDivElement>(null);
   const figureRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
-  const petalsRef = useRef<HTMLDivElement[]>([]);
   const [petals, setPetals] = useState<any[]>([]);
+
+  const { masterTl } = useScroll();
 
   useEffect(() => {
     // Generate petals only on client
@@ -21,120 +23,100 @@ const Moment04 = () => {
       rotate: Math.random() * 30 - 15,
       delay: i * 0.2
     })));
-
-    const ctx = gsap.context(() => {
-      if (!sectionRef.current || !planksContainerRef.current || !planksRef.current || !figureRef.current) return;
-
-      // --- Scroll-In Animation ---
-      gsap.fromTo(planksContainerRef.current,
-        { y: 40, opacity: 0 },
-        {
-          y: 0,
-          opacity: 1,
-          duration: 1.5,
-          force3D: true,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top bottom-=100",
-            end: "top center",
-            scrub: 1,
-            onEnter: () => { gsap.set(planksContainerRef.current, { willChange: "transform, opacity" }); },
-            onLeave: () => { gsap.set(planksContainerRef.current, { clearProps: "willChange" }); },
-            onEnterBack: () => { gsap.set(planksContainerRef.current, { willChange: "transform, opacity" }); },
-            onLeaveBack: () => { gsap.set(planksContainerRef.current, { clearProps: "willChange" }); }
-          }
-        }
-      );
-
-      gsap.fromTo(feetRef.current,
-        { opacity: 0 },
-        {
-          opacity: 1,
-          duration: 1,
-          force3D: true,
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top bottom-=200",
-            end: "top center",
-            scrub: 1,
-          }
-        }
-      );
-
-      gsap.fromTo(textRef.current,
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          force3D: true,
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top center",
-            end: "top top",
-            scrub: 2,
-            onEnter: () => { gsap.set(textRef.current, { willChange: "transform, opacity" }); },
-            onLeave: () => { gsap.set(textRef.current, { clearProps: "willChange" }); },
-            onEnterBack: () => { gsap.set(textRef.current, { willChange: "transform, opacity" }); },
-            onLeaveBack: () => { gsap.set(textRef.current, { clearProps: "willChange" }); }
-          }
-        }
-      );
-
-      // --- Pinned Timeline Animation ---
-      const pinnedTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "+=3000px",
-          pin: true,
-          scrub: 1.5,
-          anticipatePin: 1,
-        },
-        onStart: () => { gsap.set([planksRef.current, planksContainerRef.current, figureRef.current, textRef.current], { willChange: "transform, opacity" }); },
-        onComplete: () => { gsap.set([planksRef.current, planksContainerRef.current, figureRef.current, textRef.current], { clearProps: "willChange" }); }
-      });
-
-      // Perspective intensifies and everything translates upward
-      pinnedTl.to(planksRef.current, {
-        rotateX: "35deg",
-        ease: "none",
-        force3D: true
-      }, 0);
-
-      pinnedTl.to(planksContainerRef.current, {
-        y: "-15vh",
-        ease: "none",
-        force3D: true
-      }, 0);
-
-      // Distant figure grows slightly
-      pinnedTl.to(figureRef.current, {
-        scale: 1.5,
-        y: "-20px",
-        force3D: true,
-        ease: "none"
-      }, 0);
-
-      pinnedTl.to(textRef.current, {
-        opacity: 0,
-        y: -30,
-        force3D: true,
-        ease: "none"
-      }, 0);
-
-    }, sectionRef);
-
-    return () => ctx.revert();
   }, []);
+
+  useEffect(() => {
+    if (!masterTl || !sectionRef.current) return;
+
+    const label = `moment-04`;
+
+    // Entry transition
+    masterTl.fromTo(sectionRef.current,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        pointerEvents: 'auto',
+        duration: 2
+      }, `${label}-=1`);
+
+    // Planks and feet entrance
+    masterTl.fromTo(planksContainerRef.current,
+      { y: 40, opacity: 0 },
+      {
+        y: 0,
+        opacity: 1,
+        duration: 4,
+        force3D: true,
+        ease: "power2.out"
+      }, label);
+
+    masterTl.fromTo(feetRef.current,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        duration: 3,
+        force3D: true
+      }, label);
+
+    // Text content animation
+    masterTl.fromTo(textRef.current,
+      { opacity: 0, y: 30 },
+      {
+        opacity: 1,
+        y: 0,
+        force3D: true,
+        duration: 4
+      }, `${label}+=2`);
+
+    // Main perspective and movement
+    masterTl.to(planksRef.current, {
+      rotateX: "35deg",
+      ease: "none",
+      force3D: true,
+      duration: 10
+    }, label);
+
+    masterTl.to(planksContainerRef.current, {
+      y: "-15vh",
+      ease: "none",
+      force3D: true,
+      duration: 10
+    }, label);
+
+    // Distant figure growth
+    masterTl.to(figureRef.current, {
+      scale: 1.5,
+      y: "-20px",
+      force3D: true,
+      ease: "none",
+      duration: 10
+    }, label);
+
+    masterTl.to(textRef.current, {
+      opacity: 0,
+      y: -30,
+      force3D: true,
+      ease: "none",
+      duration: 4
+    }, `${label}+=6`);
+
+    // Exit transition
+    masterTl.to(sectionRef.current, {
+      opacity: 0,
+      pointerEvents: 'none',
+      duration: 2
+    }, `${label}+=8`);
+
+  }, [masterTl]);
 
   return (
     <section 
       ref={sectionRef}
-      className="moment relative h-[100svh] w-screen overflow-hidden" 
+      className="moment relative w-screen overflow-hidden" 
       id="moment-04"
       style={{
-        background: 'linear-gradient(180deg, #5aadbe 0%, #7dc4cf 30%, #a8d8e0 55%, #d0ecf0 80%, #e8f6f8 100%)'
+        background: 'linear-gradient(180deg, #5aadbe 0%, #7dc4cf 30%, #a8d8e0 55%, #d0ecf0 80%, #e8f6f8 100%)',
+        opacity: 0
       }}
     >
       {/* Context Text & Soft CTA */}
@@ -169,9 +151,6 @@ const Moment04 = () => {
         <button 
           className="uppercase text-xs tracking-widest px-6 py-3 border border-[rgba(25,65,85,0.4)] text-[rgba(25,65,85,0.9)] hover:bg-[rgba(25,65,85,0.05)] transition-colors duration-500 backdrop-blur-sm"
           style={{ fontFamily: 'var(--font-sans)' }}
-          onClick={() => {
-            window.scrollBy({ top: window.innerHeight * 1.5, behavior: 'smooth' });
-          }}
         >
           Discover The Estate
         </button>
@@ -188,7 +167,6 @@ const Moment04 = () => {
           className="relative w-full h-full origin-bottom"
           style={{ transform: 'rotateX(25deg)' }}
         >
-          {/* Plank Background & Water Gaps */}
           <div 
             className="absolute inset-0 w-full h-full"
             style={{
@@ -205,10 +183,6 @@ const Moment04 = () => {
             }}
           />
           
-          {/* Water Gaps (Overlaying with specific height if gradient isn't enough, 
-              but the background above handles the shadow/plank look well) */}
-
-          {/* Wood Grain Overlay */}
           <div 
             className="absolute inset-0 w-full h-full pointer-events-none"
             style={{
@@ -224,7 +198,6 @@ const Moment04 = () => {
             }}
           />
 
-          {/* Distant Figure */}
           <div 
             ref={figureRef}
             className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[20px] z-[4]"
@@ -236,11 +209,9 @@ const Moment04 = () => {
             }}
           />
 
-          {/* Frangipani Petals */}
           {petals.map((petal, i) => (
             <div 
               key={i}
-              ref={el => { if (el) petalsRef.current[i] = el; }}
               className="absolute"
               style={{
                 width: '8px',
@@ -255,9 +226,7 @@ const Moment04 = () => {
             />
           ))}
 
-          {/* Barefoot Steps */}
           <div ref={feetRef} className="absolute inset-0 z-[5] pointer-events-none">
-            {/* Left Foot */}
             <div 
               className="absolute left-[38%] bottom-[15%]"
               style={{
@@ -268,7 +237,6 @@ const Moment04 = () => {
                 animation: 'stepBreath 1.5s ease-in-out infinite alternate'
               }}
             />
-            {/* Right Foot */}
             <div 
               className="absolute left-[58%] bottom-[22%]"
               style={{

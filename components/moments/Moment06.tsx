@@ -1,14 +1,12 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { gsap } from "@/lib/gsap";
+import { useScroll } from '@/lib/context/ScrollContext';
 
-const Moment06 = () => {
+const Moment06 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const containerRef = useRef<HTMLDivElement>(null);
   const structureRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
-  const dappleRefs = useRef<HTMLDivElement[]>([]);
   const postRefs = useRef<HTMLDivElement[]>([]);
   const roofRef = useRef<HTMLDivElement>(null);
   const platformRef = useRef<HTMLDivElement>(null);
@@ -16,22 +14,24 @@ const Moment06 = () => {
   const palmLeftRef = useRef<HTMLDivElement>(null);
   const palmRightRef = useRef<HTMLDivElement>(null);
 
+  const { masterTl } = useScroll();
+
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      if (!sectionRef.current || !structureRef.current || !glowRef.current) return;
+    if (!masterTl || !sectionRef.current) return;
 
-      // --- Animation Timeline: Reveal ---
-      const revealTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top center",
-          end: "top top",
-          scrub: 2.5,
-        }
-      });
+    const label = `moment-06`;
 
-      // Target elements for staggered reveal
-      const revealElements = [
+    // Entry transition
+    masterTl.fromTo(sectionRef.current,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        pointerEvents: 'auto',
+        duration: 2
+      }, `${label}-=1`);
+
+    // Staggered reveal of architectural elements
+    const revealElements = [
         palmLeftRef.current,
         palmRightRef.current,
         platformRef.current,
@@ -39,59 +39,49 @@ const Moment06 = () => {
         roofRef.current,
         glowRef.current,
         lightsRef.current
-      ].filter(Boolean) as HTMLElement[];
+    ].filter(Boolean) as HTMLElement[];
 
-      revealTl.fromTo(revealElements, 
-        { 
-          opacity: 0, 
-          scale: 0.95, 
-          y: 20 
-        }, 
-        { 
-          opacity: 1, 
-          scale: 1, 
-          y: 0, 
-          stagger: 0.15,
-          force3D: true,
-          ease: "power2.out",
-          onStart: () => { gsap.set(revealElements, { willChange: "transform, opacity" }); },
-          onComplete: () => { gsap.set(revealElements, { clearProps: "willChange" }); }
-        }
-      );
-
-      // --- Pinned Timeline Animation: Push ---
-      const pinnedTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "+=3000px",
-          pin: true,
-          scrub: 1.5,
-          anticipatePin: 1,
-        },
-        onStart: () => { gsap.set([structureRef.current, glowRef.current], { willChange: "transform, opacity, filter" }); },
-        onComplete: () => { gsap.set([structureRef.current, glowRef.current], { clearProps: "willChange" }); }
-      });
-
-      pinnedTl.to(structureRef.current, {
-        scale: 1.05,
+    masterTl.fromTo(revealElements, 
+      { 
+        opacity: 0, 
+        scale: 0.95, 
+        y: 20 
+      }, 
+      { 
+        opacity: 1, 
+        scale: 1, 
+        y: 0, 
+        stagger: 0.5,
         force3D: true,
-        ease: "none"
-      }, 0);
+        ease: "power2.out",
+        duration: 4
+      }, label);
 
-      pinnedTl.to(glowRef.current, {
-        opacity: 0.25,
-        filter: "blur(20px)",
-        force3D: true,
-        ease: "none"
-      }, 0);
+    // Main structural push
+    masterTl.to(structureRef.current, {
+      scale: 1.05,
+      force3D: true,
+      ease: "none",
+      duration: 10
+    }, label);
 
-    }, sectionRef);
+    masterTl.to(glowRef.current, {
+      opacity: 0.25,
+      filter: "blur(20px)",
+      force3D: true,
+      ease: "none",
+      duration: 10
+    }, label);
 
-    return () => ctx.revert();
-  }, []);
+    // Exit transition
+    masterTl.to(sectionRef.current, {
+      opacity: 0,
+      pointerEvents: 'none',
+      duration: 2
+    }, `${label}+=8`);
 
-  // 6 large soft ellipses for dappled light
+  }, [masterTl]);
+
   const dapples = [
     { top: '10%', left: '15%', size: '300px', delay: '0s', dur: '8s' },
     { top: '25%', left: '60%', size: '350px', delay: '-2s', dur: '10s' },
@@ -104,13 +94,13 @@ const Moment06 = () => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative h-[100svh] w-screen overflow-hidden" 
+      className="moment relative w-screen overflow-hidden" 
       id="moment-06"
       style={{
-        background: 'linear-gradient(180deg, #1a3020 0%, #243828 35%, #1c2e22 65%, #141e18 100%)'
+        background: 'linear-gradient(180deg, #1a3020 0%, #243828 35%, #1c2e22 65%, #141e18 100%)',
+        opacity: 0
       }}
     >
-      {/* DAPPLED OVERHEAD LIGHT */}
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
         {dapples.map((d, i) => (
           <div 
@@ -129,33 +119,27 @@ const Moment06 = () => {
         ))}
       </div>
 
-      {/* THE RESTAURANT STRUCTURE */}
       <div 
         ref={structureRef}
         className="absolute inset-0 flex items-center justify-center pointer-events-none z-10"
       >
         <div className="relative w-full max-w-[800px] h-[400px]">
-          
-          {/* WATER BEYOND (Below Platform) */}
           <div 
             className="absolute bottom-0 left-[-50%] w-[200%] h-[40%] bg-[#28647866] opacity-40 z-0"
             style={{ filter: 'blur(40px)' }}
           />
 
-          {/* INTERIOR GLOW */}
           <div 
             ref={glowRef}
             className="absolute bottom-[20%] left-1/2 -translate-x-1/2 w-[80%] h-[40%] bg-[#ffc864] opacity-[0.12] z-0"
             style={{ filter: 'blur(15px)' }}
           />
 
-          {/* MAIN PLATFORM / FLOOR */}
           <div 
             ref={platformRef}
             className="absolute bottom-[20%] left-1/2 -translate-x-1/2 w-[60vw] max-w-[800px] h-[2px] bg-[rgba(180,150,100,0.6)] z-20 shadow-[0_0_10px_rgba(180,150,100,0.3)]"
           />
 
-          {/* VERTICAL POSTS */}
           {[...Array(4)].map((_, i) => (
             <div 
               key={i}
@@ -168,7 +152,6 @@ const Moment06 = () => {
             />
           ))}
 
-          {/* ROOF */}
           <div 
             ref={roofRef}
             className="absolute bottom-[55%] left-1/2 -translate-x-1/2 w-[65vw] max-w-[850px] h-[100px] z-30"
@@ -178,7 +161,6 @@ const Moment06 = () => {
             }}
           />
 
-          {/* STRING LIGHTS */}
           <div 
             ref={lightsRef}
             className="absolute top-[35%] left-[15%] w-[70%] h-[60px] z-25 pointer-events-none"
@@ -193,20 +175,17 @@ const Moment06 = () => {
               />
             ))}
           </div>
-
         </div>
       </div>
 
-      {/* PALMS FRAMING */}
       <div 
         ref={palmLeftRef}
         className="absolute left-0 bottom-[-10%] w-[12px] h-[120%] bg-[#1a2e22] z-40"
         style={{
-          clipPath: 'polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)', // Slanted trunk
+          clipPath: 'polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)',
           transform: 'rotate(2deg)'
         }}
       >
-        {/* Palm Fronds Left */}
         <div 
           className="absolute top-0 left-[-50px] w-[120px] h-[100px] bg-[#141e18]"
           style={{ clipPath: 'polygon(50% 100%, 0% 0%, 15% 0%, 50% 80%, 85% 0%, 100% 0%)' }}
@@ -217,11 +196,10 @@ const Moment06 = () => {
         ref={palmRightRef}
         className="absolute right-0 bottom-[-10%] w-[12px] h-[120%] bg-[#1a2e22] z-40"
         style={{
-          clipPath: 'polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)', // Slanted trunk
+          clipPath: 'polygon(20% 0%, 80% 0%, 100% 100%, 0% 100%)',
           transform: 'rotate(-2deg)'
         }}
       >
-        {/* Palm Fronds Right */}
         <div 
           className="absolute top-0 right-[-50px] w-[120px] h-[100px] bg-[#141e18]"
           style={{ clipPath: 'polygon(50% 100%, 0% 0%, 15% 0%, 50% 80%, 85% 0%, 100% 0%)' }}

@@ -1,107 +1,93 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { gsap } from "@/lib/gsap";
+import { useScroll } from '@/lib/context/ScrollContext';
 
-const Moment07 = () => {
+const Moment07 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const floorRef = useRef<HTMLDivElement>(null);
   const ceilingRef = useRef<HTMLDivElement>(null);
-  const tableRef = useRef<HTMLDivElement>(null); // Nearest table
+  const tableRef = useRef<HTMLDivElement>(null); 
   const textRef = useRef<HTMLDivElement>(null);
   const candleRefs = useRef<HTMLDivElement[]>([]);
 
+  const { masterTl } = useScroll();
+
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      if (!sectionRef.current || !containerRef.current) return;
+    if (!masterTl || !sectionRef.current) return;
 
-      // --- SCROLL-IN ANIMATION ---
-      gsap.fromTo(containerRef.current,
-        { 
-          filter: "brightness(0.7)", 
-          scale: 0.97 
-        },
-        {
-          filter: "brightness(1)",
-          scale: 1,
-          force3D: true,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top bottom",
-            end: "top top",
-            scrub: 2.5,
-            onEnter: () => { gsap.set(containerRef.current, { willChange: "filter, transform" }); },
-            onLeave: () => { gsap.set(containerRef.current, { clearProps: "willChange" }); },
-            onEnterBack: () => { gsap.set(containerRef.current, { willChange: "filter, transform" }); },
-            onLeaveBack: () => { gsap.set(containerRef.current, { clearProps: "willChange" }); },
-          }
-        }
-      );
+    const label = `moment-07`;
 
-      gsap.fromTo(textRef.current,
-        { opacity: 0, x: -30 },
-        {
-          opacity: 1,
-          x: 0,
-          force3D: true,
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top center",
-            end: "top top",
-            scrub: 2.5,
-            onEnter: () => { gsap.set(textRef.current, { willChange: "transform, opacity" }); },
-            onLeave: () => { gsap.set(textRef.current, { clearProps: "willChange" }); },
-            onEnterBack: () => { gsap.set(textRef.current, { willChange: "transform, opacity" }); },
-            onLeaveBack: () => { gsap.set(textRef.current, { clearProps: "willChange" }); }
-          }
-        }
-      );
+    // Entry transition
+    masterTl.fromTo(sectionRef.current,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        pointerEvents: 'auto',
+        duration: 2
+      }, `${label}-=1`);
 
-      // --- Pinned Timeline Animation ---
-      const pinnedTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "+=3000px",
-          pin: true,
-          scrub: 1.5,
-          anticipatePin: 1,
-        },
-        onStart: () => { gsap.set([containerRef.current, tableRef.current, textRef.current], { willChange: "transform, opacity, filter" }); },
-        onComplete: () => { gsap.set([containerRef.current, tableRef.current, textRef.current], { clearProps: "willChange" }); }
-      });
-
-      if (tableRef.current) {
-        pinnedTl.to(tableRef.current, {
-          scale: 1.08,
-          y: -10,
-          opacity: 0.8,
-          force3D: true,
-          ease: "power1.inOut"
-        }, 0);
-      }
-
-      pinnedTl.to(containerRef.current, {
-        scale: 1.03,
+    // Container initial reveal (brightness/scale)
+    masterTl.fromTo(containerRef.current,
+      { 
+        filter: "brightness(0.7)", 
+        scale: 0.97 
+      },
+      {
+        filter: "brightness(1)",
+        scale: 1,
         force3D: true,
-        ease: "none"
-      }, 0);
+        ease: "power2.out",
+        duration: 4
+      }, label);
 
-      pinnedTl.to(textRef.current, {
-        opacity: 0,
-        x: -50,
+    // Narrative text entrance
+    masterTl.fromTo(textRef.current,
+      { opacity: 0, x: -30 },
+      {
+        opacity: 1,
+        x: 0,
         force3D: true,
-        ease: "none"
-      }, 0);
+        duration: 4
+      }, `${label}+=1`);
 
-    }, sectionRef);
+    // Main pinned animations: table and container growth
+    if (tableRef.current) {
+      masterTl.to(tableRef.current, {
+        scale: 1.08,
+        y: -10,
+        opacity: 0.8,
+        force3D: true,
+        ease: "power1.inOut",
+        duration: 10
+      }, label);
+    }
 
-    return () => ctx.revert();
-  }, []);
+    masterTl.to(containerRef.current, {
+      scale: 1.03,
+      force3D: true,
+      ease: "none",
+      duration: 10
+    }, label);
 
-  // 4 light pools: absolutely positioned ellipses
+    masterTl.to(textRef.current, {
+      opacity: 0,
+      x: -50,
+      force3D: true,
+      ease: "none",
+      duration: 4
+    }, `${label}+=6`);
+
+    // Exit transition
+    masterTl.to(sectionRef.current, {
+      opacity: 0,
+      pointerEvents: 'none',
+      duration: 2
+    }, `${label}+=8`);
+
+  }, [masterTl]);
+
   const candles = [
     { left: '25%', top: '45%', width: '120px', height: '60px', dur: '3.2s', delay: '0s' },
     { left: '60%', top: '55%', width: '140px', height: '70px', dur: '4.5s', delay: '-1.2s' },
@@ -109,18 +95,18 @@ const Moment07 = () => {
     { left: '75%', top: '40%', width: '110px', height: '55px', dur: '3.8s', delay: '-2s' },
   ];
 
-  // Table data
   const tables = [
     { left: '20%', bottom: '25%', width: '100px', height: '8px', brightness: 0.18, isNearest: false },
     { left: '70%', bottom: '28%', width: '80px', height: '6px', brightness: 0.12, isNearest: false },
-    { left: '45%', bottom: '18%', width: '130px', height: '10px', brightness: 0.22, isNearest: true }, // Nearest
+    { left: '45%', bottom: '18%', width: '130px', height: '10px', brightness: 0.22, isNearest: true },
   ];
 
   return (
     <section 
       ref={sectionRef}
-      className="moment relative h-[100svh] w-screen overflow-hidden" 
+      className="moment relative w-screen overflow-hidden" 
       id="moment-07"
+      style={{ opacity: 0 }}
     >
       <div 
         ref={containerRef}
@@ -129,7 +115,6 @@ const Moment07 = () => {
           background: 'linear-gradient(180deg, #2a1e12 0%, #3a2818 25%, #2e2015 60%, #1e1408 100%)'
         }}
       >
-        {/* Narrative Context */}
         <div 
           ref={textRef}
           className="absolute top-[40%] left-[8%] md:left-[15%] z-30 max-w-[350px] pointer-events-none"
@@ -160,7 +145,6 @@ const Moment07 = () => {
           </p>
         </div>
 
-        {/* CEILING STRUCTURE (Upper 25%) */}
         <div 
           ref={ceilingRef}
           className="absolute top-0 left-0 w-full h-[25%] z-20 pointer-events-none"
@@ -172,7 +156,6 @@ const Moment07 = () => {
             `
           }}
         >
-          {/* Pendant Lamp Bases */}
           {[...Array(5)].map((_, i) => (
             <div 
               key={i}
@@ -188,7 +171,6 @@ const Moment07 = () => {
           ))}
         </div>
 
-        {/* OPEN SIDE / THE VIEW (Right 30%) */}
         <div 
           className="absolute top-0 right-0 w-[30%] h-full z-10 pointer-events-none"
           style={{
@@ -196,7 +178,6 @@ const Moment07 = () => {
           }}
         />
 
-        {/* FLOOR / WOODEN DECKING (Lower 35%) */}
         <div 
           className="absolute bottom-0 left-0 w-full h-[35%] z-20"
           style={{ perspective: '1200px' }}
@@ -209,7 +190,6 @@ const Moment07 = () => {
               background: 'repeating-linear-gradient(0deg, rgba(120,80,40,0.9) 0px, rgba(140,95,50,0.85) 14px, rgba(100,65,30,0.7) 15px, rgba(100,65,30,0.7) 17px, rgba(120,80,40,0.9) 18px)'
             }}
           >
-            {/* LAGOON VISIBLE BELOW (Gaps in floor) */}
             <div className="absolute inset-0 w-full h-full pointer-events-none">
               {[...Array(3)].map((_, i) => (
                 <div 
@@ -222,7 +202,6 @@ const Moment07 = () => {
           </div>
         </div>
 
-        {/* AMBIENT CANDLE LIGHTS */}
         <div className="absolute inset-0 z-15 pointer-events-none">
           {candles.map((c, i) => (
             <div 
@@ -242,7 +221,6 @@ const Moment07 = () => {
           ))}
         </div>
 
-        {/* TABLES (Glimpsed Silhouettes) */}
         <div className="absolute inset-0 z-25 pointer-events-none">
           {tables.map((t, i) => (
             <div 
@@ -255,7 +233,6 @@ const Moment07 = () => {
                 opacity: 0.9
               }}
             >
-              {/* Table Top */}
               <div 
                 style={{
                   width: t.width,
@@ -264,7 +241,6 @@ const Moment07 = () => {
                   borderRadius: '1px'
                 }}
               />
-              {/* Table Leg */}
               <div 
                 style={{
                   width: '2px',

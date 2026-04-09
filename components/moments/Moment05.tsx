@@ -1,18 +1,17 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { gsap } from "@/lib/gsap";
+import { useScroll } from '@/lib/context/ScrollContext';
 
-const Moment05 = () => {
+const Moment05 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const sunSideRef = useRef<HTMLDivElement>(null);
   const shadeSideRef = useRef<HTMLDivElement>(null);
   const boundaryRef = useRef<HTMLDivElement>(null);
-  const mainPalmRef = useRef<HTMLDivElement>(null);
-  const secondaryPalmRef = useRef<HTMLDivElement>(null);
-  const roofRef = useRef<HTMLDivElement>(null);
   const dappleRefs = useRef<HTMLDivElement[]>([]);
   const [bougainvilleaData, setBougainvilleaData] = useState<any[]>([]);
+
+  const { masterTl } = useScroll();
 
   useEffect(() => {
     // Generate bougainvillea data only on client
@@ -23,75 +22,75 @@ const Moment05 = () => {
       rotate: Math.random() * 360,
       delay: Math.random() * 2
     })));
-
-    const ctx = gsap.context(() => {
-      if (!sectionRef.current || !shadeSideRef.current || !sunSideRef.current || !boundaryRef.current) return;
-
-      // --- Scroll-In Animation ---
-      gsap.fromTo(shadeSideRef.current,
-        { filter: "brightness(0.7)" },
-        {
-          filter: "brightness(1)",
-          force3D: true,
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top center",
-            end: "top top",
-            scrub: 2.5,
-          }
-        }
-      );
-
-      // --- Pinned Timeline Animation ---
-      const pinnedTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "+=3000px",
-          pin: true,
-          scrub: 1.5,
-          anticipatePin: 1,
-        },
-        onStart: () => { gsap.set([shadeSideRef.current, sunSideRef.current, boundaryRef.current], { willChange: "width, left, filter" }); },
-        onComplete: () => { gsap.set([shadeSideRef.current, sunSideRef.current, boundaryRef.current], { clearProps: "willChange" }); }
-      });
-      
-      pinnedTl.to(shadeSideRef.current, {
-        width: "65%",
-        force3D: true,
-        ease: "none"
-      }, 0);
-
-      pinnedTl.to(sunSideRef.current, {
-        width: "37%",
-        force3D: true,
-        ease: "none"
-      }, 0);
-
-      pinnedTl.to(boundaryRef.current, {
-        left: "35%",
-        force3D: true,
-        ease: "none"
-      }, 0);
-
-      // Dappled lights intensify
-      dappleRefs.current.forEach((dapple) => {
-        if (dapple) {
-          pinnedTl.to(dapple, {
-            opacity: "+=0.1",
-            scale: 1.1,
-            force3D: true,
-            ease: "none"
-          }, 0);
-        }
-      });
-
-    }, sectionRef);
-
-    return () => ctx.revert();
   }, []);
 
-  // Irregular palm shadow shapes for the boundary
+  useEffect(() => {
+    if (!masterTl || !sectionRef.current) return;
+
+    const label = `moment-05`;
+
+    // Entry transition
+    masterTl.fromTo(sectionRef.current,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        pointerEvents: 'auto',
+        duration: 2
+      }, `${label}-=1`);
+
+    // Shade side initial brightness (from previous)
+    masterTl.fromTo(shadeSideRef.current,
+      { filter: "brightness(0.7)" },
+      {
+        filter: "brightness(1)",
+        force3D: true,
+        duration: 4
+      }, label);
+
+    // Main split animation (the shift)
+    masterTl.to(shadeSideRef.current, {
+      width: "65%",
+      force3D: true,
+      ease: "none",
+      duration: 10
+    }, label);
+
+    masterTl.to(sunSideRef.current, {
+      width: "37%",
+      force3D: true,
+      ease: "none",
+      duration: 10
+    }, label);
+
+    masterTl.to(boundaryRef.current, {
+      left: "35%",
+      force3D: true,
+      ease: "none",
+      duration: 10
+    }, label);
+
+    // Dappled lights intensify
+    dappleRefs.current.forEach((dapple) => {
+      if (dapple) {
+        masterTl.to(dapple, {
+          opacity: "+=0.1",
+          scale: 1.1,
+          force3D: true,
+          ease: "none",
+          duration: 10
+        }, label);
+      }
+    });
+
+    // Exit transition
+    masterTl.to(sectionRef.current, {
+      opacity: 0,
+      pointerEvents: 'none',
+      duration: 2
+    }, `${label}+=8`);
+
+  }, [masterTl]);
+
   const palmShadows = [
     { width: 12, height: 100, top: 0, left: 0, opacity: 0.8 },
     { width: 25, height: 80, top: 10, left: 10, opacity: 0.9, clip: "polygon(0 0, 100% 0, 85% 100%, 15% 100%)" },
@@ -103,7 +102,6 @@ const Moment05 = () => {
     { width: 10, height: 100, top: 0, left: 88, opacity: 0.9 },
   ];
 
-  // Dappled lights
   const dappledLights = [
     { top: '15%', left: '25%', w: 40, h: 60, dur: 4 },
     { top: '40%', left: '60%', w: 30, h: 50, dur: 3.5 },
@@ -115,15 +113,13 @@ const Moment05 = () => {
     { top: '75%', left: '55%', w: 35, h: 55, dur: 4.8 },
   ];
 
-
-
   return (
     <section 
       ref={sectionRef}
-      className="moment relative h-[100svh] w-screen overflow-hidden" 
+      className="moment relative w-screen overflow-hidden" 
       id="moment-05"
+      style={{ opacity: 0 }}
     >
-      {/* THE SPLIT: Sun Side */}
       <div 
         ref={sunSideRef}
         className="absolute top-0 left-0 h-full w-[52%] z-[1]"
@@ -132,7 +128,6 @@ const Moment05 = () => {
         }}
       />
 
-      {/* THE SPLIT: Shade Side */}
       <div 
         ref={shadeSideRef}
         className="absolute top-0 right-0 h-full w-[50%] z-[1]"
@@ -140,7 +135,6 @@ const Moment05 = () => {
           background: 'linear-gradient(180deg, #1a3020 0%, #2a4a30 30%, #1e3828 60%, #162a1e 100%)'
         }}
       >
-        {/* DAPPLED LIGHT */}
         {dappledLights.map((light, i) => (
           <div 
             key={i}
@@ -158,7 +152,6 @@ const Moment05 = () => {
           />
         ))}
 
-        {/* BOUGAINVILLEA */}
         <div className="absolute top-0 right-0 w-full h-full pointer-events-none">
           {bougainvilleaData.map((petal, i) => (
             <div 
@@ -177,25 +170,13 @@ const Moment05 = () => {
           ))}
         </div>
 
-        {/* SAND PATH */}
         <div className="absolute bottom-0 left-0 w-full h-[40%] pointer-events-none overflow-hidden">
-          {/* Path background */}
           <div 
             className="absolute bottom-[-10%] left-[10%] w-[120%] h-[120%] bg-[#dcc8a026]"
             style={{ borderRadius: '50% 50% 0 0', transform: 'rotate(-5deg)' }}
           />
-          {/* Path edges */}
-          <div 
-            className="absolute bottom-[-5%] left-[5%] w-[110%] h-[2px] bg-[#d2bea240]"
-            style={{ borderRadius: '50%', transform: 'rotate(-4deg)' }}
-          />
-          <div 
-            className="absolute bottom-[35%] left-[15%] w-[90%] h-[2px] bg-[#d2bea240]"
-            style={{ borderRadius: '50%', transform: 'rotate(-6deg)' }}
-          />
         </div>
 
-        {/* ROOF STRUCTURE */}
         <div 
           className="absolute top-[5%] right-[10%] w-[40%] h-[15%] bg-[#8c64324d] rounded-b-[4px]"
           style={{
@@ -204,7 +185,6 @@ const Moment05 = () => {
         />
       </div>
 
-      {/* THE PALM EDGE (Boundary) */}
       <div 
         ref={boundaryRef}
         className="absolute top-0 left-[48%] w-[8%] h-full z-[3] overflow-visible pointer-events-none"
