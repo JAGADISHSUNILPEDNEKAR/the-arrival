@@ -12,8 +12,19 @@ const Moment11 = () => {
   
   const [isIntersecting, setIsIntersecting] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
+  const [starsData, setStarsData] = useState<any[]>([]);
 
   useEffect(() => {
+    // Generate 15 stars only on client
+    setStarsData(Array.from({ length: 15 }).map((_, i) => ({
+      id: i,
+      top: `${Math.random() * 30}%`, // Concentrated in upper 30%
+      left: `${Math.random() * 100}%`,
+      opacity: 0.15 + Math.random() * 0.2, // 0.15-0.35
+      delay: Math.random() * 5,
+      duration: 3 + Math.random() * 4,
+    })));
+
     // Intersection Observer for CTALine reveal
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -93,15 +104,7 @@ const Moment11 = () => {
     };
   }, []);
 
-  // Generate 15 stars
-  const stars = Array.from({ length: 15 }).map((_, i) => ({
-    id: i,
-    top: `${Math.random() * 30}%`, // Concentrated in upper 30%
-    left: `${Math.random() * 100}%`,
-    opacity: 0.15 + Math.random() * 0.2, // 0.15-0.35
-    delay: Math.random() * 5,
-    duration: 3 + Math.random() * 4,
-  }));
+
 
   return (
     <section 
@@ -125,7 +128,7 @@ const Moment11 = () => {
 
         {/* Layer 2: Residual Stars */}
         <div className="absolute inset-0 w-full h-full pointer-events-none">
-          {stars.map((star) => (
+          {starsData.map((star) => (
             <div 
               key={star.id}
               className="absolute w-[1px] h-[1px] bg-white rounded-full"
