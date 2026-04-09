@@ -42,31 +42,33 @@ const Moment05 = () => {
         }
       );
 
-      // --- Scroll-Out Animation ---
-      const exitTl = gsap.timeline({
+      // --- Pinned Timeline Animation ---
+      const pinnedTl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "bottom top",
-          scrub: 2.5,
+          end: "+=3000px",
+          pin: true,
+          scrub: 1.5,
+          anticipatePin: 1,
         },
         onStart: () => { gsap.set([shadeSideRef.current, sunSideRef.current, boundaryRef.current], { willChange: "width, left, filter" }); },
         onComplete: () => { gsap.set([shadeSideRef.current, sunSideRef.current, boundaryRef.current], { clearProps: "willChange" }); }
       });
       
-      exitTl.to(shadeSideRef.current, {
+      pinnedTl.to(shadeSideRef.current, {
         width: "65%",
         force3D: true,
         ease: "none"
       }, 0);
 
-      exitTl.to(sunSideRef.current, {
+      pinnedTl.to(sunSideRef.current, {
         width: "37%",
         force3D: true,
         ease: "none"
       }, 0);
 
-      exitTl.to(boundaryRef.current, {
+      pinnedTl.to(boundaryRef.current, {
         left: "35%",
         force3D: true,
         ease: "none"
@@ -75,7 +77,7 @@ const Moment05 = () => {
       // Dappled lights intensify
       dappleRefs.current.forEach((dapple) => {
         if (dapple) {
-          exitTl.to(dapple, {
+          pinnedTl.to(dapple, {
             opacity: "+=0.1",
             scale: 1.1,
             force3D: true,
@@ -118,7 +120,7 @@ const Moment05 = () => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative h-screen w-screen overflow-hidden" 
+      className="moment relative h-[100svh] w-screen overflow-hidden" 
       id="moment-05"
     >
       {/* THE SPLIT: Sun Side */}

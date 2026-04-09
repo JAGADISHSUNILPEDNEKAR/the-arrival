@@ -59,20 +59,22 @@ const Moment07 = () => {
         }
       );
 
-      // --- SCROLL-OUT ANIMATION ---
-      const exitTl = gsap.timeline({
+      // --- Pinned Timeline Animation ---
+      const pinnedTl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "bottom top",
-          scrub: 2.5,
+          end: "+=3000px",
+          pin: true,
+          scrub: 1.5,
+          anticipatePin: 1,
         },
         onStart: () => { gsap.set([containerRef.current, tableRef.current, textRef.current], { willChange: "transform, opacity, filter" }); },
         onComplete: () => { gsap.set([containerRef.current, tableRef.current, textRef.current], { clearProps: "willChange" }); }
       });
 
       if (tableRef.current) {
-        exitTl.to(tableRef.current, {
+        pinnedTl.to(tableRef.current, {
           scale: 1.08,
           y: -10,
           opacity: 0.8,
@@ -81,13 +83,13 @@ const Moment07 = () => {
         }, 0);
       }
 
-      exitTl.to(containerRef.current, {
+      pinnedTl.to(containerRef.current, {
         scale: 1.03,
         force3D: true,
         ease: "none"
       }, 0);
 
-      exitTl.to(textRef.current, {
+      pinnedTl.to(textRef.current, {
         opacity: 0,
         x: -50,
         force3D: true,
@@ -117,7 +119,7 @@ const Moment07 = () => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative h-screen w-screen overflow-hidden" 
+      className="moment relative h-[100svh] w-screen overflow-hidden" 
       id="moment-07"
     >
       <div 

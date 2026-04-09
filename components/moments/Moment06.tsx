@@ -59,25 +59,27 @@ const Moment06 = () => {
         }
       );
 
-      // --- Animation Timeline: Push ---
-      const pushTl = gsap.timeline({
+      // --- Pinned Timeline Animation: Push ---
+      const pinnedTl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "bottom top",
-          scrub: 2.5,
+          end: "+=3000px",
+          pin: true,
+          scrub: 1.5,
+          anticipatePin: 1,
         },
         onStart: () => { gsap.set([structureRef.current, glowRef.current], { willChange: "transform, opacity, filter" }); },
         onComplete: () => { gsap.set([structureRef.current, glowRef.current], { clearProps: "willChange" }); }
       });
 
-      pushTl.to(structureRef.current, {
+      pinnedTl.to(structureRef.current, {
         scale: 1.05,
         force3D: true,
         ease: "none"
       }, 0);
 
-      pushTl.to(glowRef.current, {
+      pinnedTl.to(glowRef.current, {
         opacity: 0.25,
         filter: "blur(20px)",
         force3D: true,
@@ -102,7 +104,7 @@ const Moment06 = () => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative h-screen w-screen overflow-hidden" 
+      className="moment relative h-[100svh] w-screen overflow-hidden" 
       id="moment-06"
       style={{
         background: 'linear-gradient(180deg, #1a3020 0%, #243828 35%, #1c2e22 65%, #141e18 100%)'

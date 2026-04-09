@@ -59,30 +59,32 @@ const Moment08 = () => {
       );
 
       // Scroll-Out: Frame pull back and shadow entry
-      const exitTl = gsap.timeline({
+      const pinnedTl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "bottom top",
-          scrub: 2,
+          end: "+=3000px",
+          pin: true,
+          scrub: 1.5,
+          anticipatePin: 1,
         },
         onStart: () => { gsap.set([containerRef.current, shadowRef.current, textRef.current], { willChange: "transform, opacity" }); },
         onComplete: () => { gsap.set([containerRef.current, shadowRef.current, textRef.current], { clearProps: "willChange" }); }
       });
 
-      exitTl.to(containerRef.current, {
+      pinnedTl.to(containerRef.current, {
         scale: 1, // Moving from 1.02 to 1.0
         force3D: true,
         ease: "none"
       }, 0);
 
-      exitTl.fromTo(shadowRef.current,
+      pinnedTl.fromTo(shadowRef.current,
         { x: "100%", opacity: 0 },
         { x: "0%", opacity: 0.4, force3D: true, ease: "power1.inOut" },
         0.2
       );
 
-      exitTl.to(textRef.current, {
+      pinnedTl.to(textRef.current, {
         opacity: 0,
         y: -20,
         force3D: true,
@@ -97,7 +99,7 @@ const Moment08 = () => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative min-h-[100svh] w-screen overflow-hidden" 
+      className="moment relative h-[100svh] w-screen overflow-hidden" 
       id="moment-08"
     >
       {/* Testimonial Text */}
