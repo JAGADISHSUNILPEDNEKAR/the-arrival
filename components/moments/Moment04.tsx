@@ -81,40 +81,42 @@ const Moment04 = () => {
         }
       );
 
-      // --- Scroll-Out Animation ---
-      const exitTl = gsap.timeline({
+      // --- Pinned Timeline Animation ---
+      const pinnedTl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "bottom top",
-          scrub: 2.5,
+          end: "+=3000px",
+          pin: true,
+          scrub: 1.5,
+          anticipatePin: 1,
         },
         onStart: () => { gsap.set([planksRef.current, planksContainerRef.current, figureRef.current, textRef.current], { willChange: "transform, opacity" }); },
         onComplete: () => { gsap.set([planksRef.current, planksContainerRef.current, figureRef.current, textRef.current], { clearProps: "willChange" }); }
       });
 
       // Perspective intensifies and everything translates upward
-      exitTl.to(planksRef.current, {
+      pinnedTl.to(planksRef.current, {
         rotateX: "35deg",
         ease: "none",
         force3D: true
       }, 0);
 
-      exitTl.to(planksContainerRef.current, {
+      pinnedTl.to(planksContainerRef.current, {
         y: "-15vh",
         ease: "none",
         force3D: true
       }, 0);
 
       // Distant figure grows slightly
-      exitTl.to(figureRef.current, {
+      pinnedTl.to(figureRef.current, {
         scale: 1.5,
         y: "-20px",
         force3D: true,
         ease: "none"
       }, 0);
 
-      exitTl.to(textRef.current, {
+      pinnedTl.to(textRef.current, {
         opacity: 0,
         y: -30,
         force3D: true,
@@ -129,7 +131,7 @@ const Moment04 = () => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative min-h-[100svh] w-screen overflow-hidden" 
+      className="moment relative h-[100svh] w-screen overflow-hidden" 
       id="moment-04"
       style={{
         background: 'linear-gradient(180deg, #5aadbe 0%, #7dc4cf 30%, #a8d8e0 55%, #d0ecf0 80%, #e8f6f8 100%)'

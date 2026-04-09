@@ -67,32 +67,34 @@ const Moment02 = () => {
         }
       );
 
-      // --- Scroll-Out Animation (toward Moment03) ---
-      const exitTl = gsap.timeline({
+      // --- Pinned Timeline Animation ---
+      const pinnedTl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "bottom top",
-          scrub: 2.5,
+          end: "+=3000px",
+          pin: true,
+          scrub: 1.5,
+          anticipatePin: 1,
         },
         onStart: () => { gsap.set([islandRef.current, backgroundRef.current, textRef.current], { willChange: "transform, opacity" }); },
         onComplete: () => { gsap.set([islandRef.current, backgroundRef.current, textRef.current], { clearProps: "willChange" }); }
       });
 
-      exitTl.to(islandRef.current, {
+      pinnedTl.to(islandRef.current, {
         scale: 1.6,
         x: "-8vw",
         force3D: true,
         ease: "none"
       }, 0);
 
-      exitTl.to(backgroundRef.current, {
+      pinnedTl.to(backgroundRef.current, {
         y: "8%",
         force3D: true,
         ease: "none"
       }, 0);
 
-      exitTl.to(textRef.current, {
+      pinnedTl.to(textRef.current, {
         opacity: 0,
         y: -30,
         force3D: true,
@@ -107,7 +109,7 @@ const Moment02 = () => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative min-h-[100svh] w-screen overflow-hidden" 
+      className="moment relative h-[100svh] w-screen overflow-hidden" 
       id="moment-02"
     >
       {/* Background Base */}

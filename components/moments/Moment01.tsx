@@ -23,8 +23,10 @@ const Moment01 = () => {
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "bottom top",
-          scrub: 2.5,
+          end: "+=3000px",
+          pin: true,
+          scrub: 1.5,
+          anticipatePin: 1,
         },
         onStart: () => {
           gsap.set([backgroundGradRef.current, glowRef.current, contentRef.current, ctaRef.current, proofsRef.current], { willChange: "transform, opacity" });
@@ -68,7 +70,7 @@ const Moment01 = () => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative min-h-[100svh] w-screen overflow-hidden" 
+      className="moment relative h-[100svh] w-screen overflow-hidden" 
       id="moment-01"
     >
       <HeroBackground 

@@ -41,34 +41,36 @@ const Moment03 = () => {
         }
       );
 
-      // --- Scroll-Out Animation ---
-      const exitTl = gsap.timeline({
+      // --- Pinned Timeline Animation ---
+      const pinnedTl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "bottom top",
-          scrub: 2.5,
+          end: "+=3000px",
+          pin: true,
+          scrub: 1.5,
+          anticipatePin: 1,
         },
         onStart: () => { gsap.set([backgroundGroupRef.current, causticsRef.current, islandRef.current], { willChange: "transform, opacity" }); },
         onComplete: () => { gsap.set([backgroundGroupRef.current, causticsRef.current, islandRef.current], { clearProps: "willChange" }); }
       });
 
       // Background translates Y +6%
-      exitTl.to(backgroundGroupRef.current, {
+      pinnedTl.to(backgroundGroupRef.current, {
         y: "6%",
         force3D: true,
         ease: "none"
       }, 0);
 
       // Caustic layer opacity
-      exitTl.to(causticsRef.current, {
+      pinnedTl.to(causticsRef.current, {
         opacity: 0,
         force3D: true,
         ease: "none"
       }, 0);
 
       // Island scales 1->2 and moves toward viewer (translateY)
-      exitTl.to(islandRef.current, {
+      pinnedTl.to(islandRef.current, {
         scale: 2,
         y: "-30vh",
         opacity: 0,
@@ -84,7 +86,7 @@ const Moment03 = () => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative min-h-[100svh] w-screen overflow-hidden bg-[#1a4060]" 
+      className="moment relative h-[100svh] w-screen overflow-hidden bg-[#1a4060]" 
       id="moment-03"
     >
       {/* Background Layers Group for combined movement */}
