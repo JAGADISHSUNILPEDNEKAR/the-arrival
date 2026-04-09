@@ -9,6 +9,7 @@ const Moment07 = () => {
   const floorRef = useRef<HTMLDivElement>(null);
   const ceilingRef = useRef<HTMLDivElement>(null);
   const tableRef = useRef<HTMLDivElement>(null); // Nearest table
+  const textRef = useRef<HTMLDivElement>(null);
   const candleRefs = useRef<HTMLDivElement[]>([]);
 
   useEffect(() => {
@@ -39,6 +40,25 @@ const Moment07 = () => {
         }
       );
 
+      gsap.fromTo(textRef.current,
+        { opacity: 0, x: -30 },
+        {
+          opacity: 1,
+          x: 0,
+          force3D: true,
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top center",
+            end: "top top",
+            scrub: 2.5,
+            onEnter: () => { gsap.set(textRef.current, { willChange: "transform, opacity" }); },
+            onLeave: () => { gsap.set(textRef.current, { clearProps: "willChange" }); },
+            onEnterBack: () => { gsap.set(textRef.current, { willChange: "transform, opacity" }); },
+            onLeaveBack: () => { gsap.set(textRef.current, { clearProps: "willChange" }); }
+          }
+        }
+      );
+
       // --- SCROLL-OUT ANIMATION ---
       const exitTl = gsap.timeline({
         scrollTrigger: {
@@ -47,8 +67,8 @@ const Moment07 = () => {
           end: "bottom top",
           scrub: 2.5,
         },
-        onStart: () => { gsap.set([containerRef.current, tableRef.current], { willChange: "transform, opacity, filter" }); },
-        onComplete: () => { gsap.set([containerRef.current, tableRef.current], { clearProps: "willChange" }); }
+        onStart: () => { gsap.set([containerRef.current, tableRef.current, textRef.current], { willChange: "transform, opacity, filter" }); },
+        onComplete: () => { gsap.set([containerRef.current, tableRef.current, textRef.current], { clearProps: "willChange" }); }
       });
 
       if (tableRef.current) {
@@ -63,6 +83,13 @@ const Moment07 = () => {
 
       exitTl.to(containerRef.current, {
         scale: 1.03,
+        force3D: true,
+        ease: "none"
+      }, 0);
+
+      exitTl.to(textRef.current, {
+        opacity: 0,
+        x: -50,
         force3D: true,
         ease: "none"
       }, 0);
@@ -100,6 +127,37 @@ const Moment07 = () => {
           background: 'linear-gradient(180deg, #2a1e12 0%, #3a2818 25%, #2e2015 60%, #1e1408 100%)'
         }}
       >
+        {/* Narrative Context */}
+        <div 
+          ref={textRef}
+          className="absolute top-[40%] left-[8%] md:left-[15%] z-30 max-w-[350px] pointer-events-none"
+        >
+          <h2 
+            className="italic font-light mb-6 drop-shadow-md"
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
+              color: 'rgba(240, 210, 160, 0.95)',
+              letterSpacing: '0.05em',
+              lineHeight: '1.2'
+            }}
+          >
+            A table waiting.
+          </h2>
+          <p
+            className="font-light"
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 'clamp(0.85rem, 1vw, 1rem)',
+              color: 'rgba(240, 210, 160, 0.7)',
+              letterSpacing: '0.05em',
+              lineHeight: '1.8'
+            }}
+          >
+            Sourced entirely from the island and immediate ocean. Every dish is an expression of the environment, served in the suspended glow of the dining pavilion.
+          </p>
+        </div>
+
         {/* CEILING STRUCTURE (Upper 25%) */}
         <div 
           ref={ceilingRef}

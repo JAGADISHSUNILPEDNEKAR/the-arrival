@@ -9,6 +9,7 @@ const Moment04 = () => {
   const planksRef = useRef<HTMLDivElement>(null);
   const feetRef = useRef<HTMLDivElement>(null);
   const figureRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
   const petalsRef = useRef<HTMLDivElement[]>([]);
   const [petals, setPetals] = useState<any[]>([]);
 
@@ -61,6 +62,25 @@ const Moment04 = () => {
         }
       );
 
+      gsap.fromTo(textRef.current,
+        { opacity: 0, y: 30 },
+        {
+          opacity: 1,
+          y: 0,
+          force3D: true,
+          scrollTrigger: {
+            trigger: sectionRef.current,
+            start: "top center",
+            end: "top top",
+            scrub: 2,
+            onEnter: () => { gsap.set(textRef.current, { willChange: "transform, opacity" }); },
+            onLeave: () => { gsap.set(textRef.current, { clearProps: "willChange" }); },
+            onEnterBack: () => { gsap.set(textRef.current, { willChange: "transform, opacity" }); },
+            onLeaveBack: () => { gsap.set(textRef.current, { clearProps: "willChange" }); }
+          }
+        }
+      );
+
       // --- Scroll-Out Animation ---
       const exitTl = gsap.timeline({
         scrollTrigger: {
@@ -69,8 +89,8 @@ const Moment04 = () => {
           end: "bottom top",
           scrub: 2.5,
         },
-        onStart: () => { gsap.set([planksRef.current, planksContainerRef.current, figureRef.current], { willChange: "transform, opacity" }); },
-        onComplete: () => { gsap.set([planksRef.current, planksContainerRef.current, figureRef.current], { clearProps: "willChange" }); }
+        onStart: () => { gsap.set([planksRef.current, planksContainerRef.current, figureRef.current, textRef.current], { willChange: "transform, opacity" }); },
+        onComplete: () => { gsap.set([planksRef.current, planksContainerRef.current, figureRef.current, textRef.current], { clearProps: "willChange" }); }
       });
 
       // Perspective intensifies and everything translates upward
@@ -94,6 +114,13 @@ const Moment04 = () => {
         ease: "none"
       }, 0);
 
+      exitTl.to(textRef.current, {
+        opacity: 0,
+        y: -30,
+        force3D: true,
+        ease: "none"
+      }, 0);
+
     }, sectionRef);
 
     return () => ctx.revert();
@@ -108,6 +135,46 @@ const Moment04 = () => {
         background: 'linear-gradient(180deg, #5aadbe 0%, #7dc4cf 30%, #a8d8e0 55%, #d0ecf0 80%, #e8f6f8 100%)'
       }}
     >
+      {/* Context Text & Soft CTA */}
+      <div 
+        ref={textRef}
+        className="absolute top-[20%] left-[10%] md:left-[15%] z-20 max-w-[400px] pointer-events-auto"
+      >
+        <h2 
+          className="italic font-light mb-6 drop-shadow-md"
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
+            color: 'rgba(25, 65, 85, 0.95)',
+            letterSpacing: '0.05em',
+            lineHeight: '1.2'
+          }}
+        >
+          Leave the noise behind.
+        </h2>
+        <p
+          className="font-light mb-8 drop-shadow-sm"
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: 'clamp(0.85rem, 1vw, 1rem)',
+            color: 'rgba(25, 65, 85, 0.8)',
+            letterSpacing: '0.05em',
+            lineHeight: '1.8'
+          }}
+        >
+          Your barefoot journey begins the moment you step onto the weathered jetty. Feel the rhythm of the tides matching your pulse as you cross into absolute privacy.
+        </p>
+        <button 
+          className="uppercase text-xs tracking-widest px-6 py-3 border border-[rgba(25,65,85,0.4)] text-[rgba(25,65,85,0.9)] hover:bg-[rgba(25,65,85,0.05)] transition-colors duration-500 backdrop-blur-sm"
+          style={{ fontFamily: 'var(--font-sans)' }}
+          onClick={() => {
+            window.scrollBy({ top: window.innerHeight * 1.5, behavior: 'smooth' });
+          }}
+        >
+          Discover The Estate
+        </button>
+      </div>
+
       {/* Jetty Planks Section */}
       <div 
         ref={planksContainerRef}
