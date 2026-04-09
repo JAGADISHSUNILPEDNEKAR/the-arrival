@@ -30,17 +30,12 @@ html, body {
 .moment {
   position: relative;
   width: 100%;
-  min-height: 100svh;
-  margin-top: -5vh; /* Soft overlap for dissolves */
+  height: 100svh;
   z-index: 1;
 }
 
-.moment:first-child {
-  margin-top: 0;
-}
-
 .moment-content {
-  min-height: 100svh;
+  height: 100svh;
   display: flex;
   flex-direction: column;
 }
