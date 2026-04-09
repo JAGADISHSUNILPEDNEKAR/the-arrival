@@ -41,12 +41,17 @@ const ScrollJourneyContent = () => {
     gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);
 
+    // Sync ScrollTrigger with Lenis
+    lenis.on('scroll', ScrollTrigger.update);
+
     const masterTl = gsap.timeline({
       scrollTrigger: {
         trigger: scrollerRef.current,
         start: "top top",
         end: "bottom bottom",
         scrub: 1.2,
+        fastScrollEnd: true,
+        preventOverlaps: true,
       }
     });
 
@@ -57,6 +62,9 @@ const ScrollJourneyContent = () => {
     }
 
     setMasterTl(masterTl);
+    
+    // Refresh ScrollTrigger to ensure all dimensions are correct
+    ScrollTrigger.refresh();
 
     return () => {
       lenis.destroy();
