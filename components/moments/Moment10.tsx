@@ -41,22 +41,22 @@ const Moment10 = () => {
       gsap.set(textRef.current, { opacity: 0 });
       gsap.set(contentRef.current, { scale: 1.1 });
 
-      // Main Timeline for the moment
-      const mainTl = gsap.timeline({
+      // Main Timeline for the moment (Pinned)
+      const pinnedTl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: 3, // Slowest, meditative pacing
-          onEnter: () => { gsap.set([textRef.current, contentRef.current], { willChange: "transform, opacity" }); },
-          onLeave: () => { gsap.set([textRef.current, contentRef.current], { clearProps: "willChange" }); },
-          onEnterBack: () => { gsap.set([textRef.current, contentRef.current], { willChange: "transform, opacity" }); },
-          onLeaveBack: () => { gsap.set([textRef.current, contentRef.current], { clearProps: "willChange" }); },
-        }
+          start: "top top",
+          end: "+=3000px",
+          pin: true,
+          scrub: 1.5,
+          anticipatePin: 1,
+        },
+        onStart: () => { gsap.set([textRef.current, contentRef.current], { willChange: "transform, opacity" }); },
+        onComplete: () => { gsap.set([textRef.current, contentRef.current], { clearProps: "willChange" }); }
       });
 
       // Scroll-In: Camera rise (pull back from scale 1.1 to 1)
-      mainTl.to(contentRef.current, {
+      pinnedTl.to(contentRef.current, {
         scale: 1,
         force3D: true,
         ease: "none",
@@ -64,7 +64,7 @@ const Moment10 = () => {
       }, 0);
 
       // Text Fade-In: At 40% point of the scroll range
-      mainTl.to(textRef.current, {
+      pinnedTl.to(textRef.current, {
         opacity: 1,
         force3D: true,
         ease: "power1.inOut",
@@ -72,7 +72,7 @@ const Moment10 = () => {
       }, 0.4);
 
       // Scroll-Out: Fade section to 0.7 over final 15%
-      mainTl.to(sectionRef.current, {
+      pinnedTl.to(sectionRef.current, {
         opacity: 0.7,
         force3D: true,
         ease: "power2.inOut",
@@ -87,7 +87,7 @@ const Moment10 = () => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative min-h-[100svh] w-screen overflow-hidden bg-[#060810]" 
+      className="moment relative h-[100svh] w-screen overflow-hidden bg-[#060810]" 
       id="moment-10"
     >
       {/* Background (Deep ocean night) */}

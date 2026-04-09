@@ -29,19 +29,21 @@ const Moment11 = () => {
       gsap.set(textRef.current, { opacity: 0 });
       gsap.set(horizonRef.current, { scaleX: 0 });
 
-      const tl = gsap.timeline({
+      const pinnedTl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
-          start: "top bottom",
-          end: "top 30%",
-          scrub: 1,
-          onEnter: () => { gsap.set([sectionRef.current, backgroundWrapperRef.current], { willChange: "opacity, transform" }); },
-          onLeave: () => { gsap.set([sectionRef.current, backgroundWrapperRef.current], { clearProps: "willChange" }); },
-        }
+          start: "top top",
+          end: "+=3000px",
+          pin: true,
+          scrub: 1.5,
+          anticipatePin: 1,
+        },
+        onStart: () => { gsap.set([sectionRef.current, backgroundWrapperRef.current], { willChange: "opacity, transform" }); },
+        onComplete: () => { gsap.set([sectionRef.current, backgroundWrapperRef.current], { clearProps: "willChange" }); }
       });
 
-      // Section fades in over first 30% of scroll entry
-      tl.to(sectionRef.current, {
+      // Section fades in over the first part of the pinned scroll
+      pinnedTl.to(sectionRef.current, {
         opacity: 1,
         force3D: true,
         ease: "power2.out",
@@ -89,7 +91,7 @@ const Moment11 = () => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative h-screen w-screen overflow-hidden" 
+      className="moment relative h-[100svh] w-screen overflow-hidden" 
       id="moment-11"
     >
       {/* Background Wrapper with Breathe animation */}

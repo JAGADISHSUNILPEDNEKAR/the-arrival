@@ -88,19 +88,21 @@ const Moment09 = () => {
       });
 
       // Scroll-Out Animation
-      const exitTl = gsap.timeline({
+      const pinnedTl = gsap.timeline({
         scrollTrigger: {
           trigger: sectionRef.current,
           start: "top top",
-          end: "bottom top",
-          scrub: 1.8,
+          end: "+=3000px",
+          pin: true,
+          scrub: 1.5,
+          anticipatePin: 1,
         },
         onStart: () => { gsap.set(plateRef.current, { willChange: "transform, opacity" }); },
         onComplete: () => { gsap.set(plateRef.current, { clearProps: "willChange" }); }
       });
 
       // Plate translates upward (being removed) over the last 20%
-      exitTl.to(plateRef.current, {
+      pinnedTl.to(plateRef.current, {
         y: -150,
         opacity: 0,
         force3D: true,
@@ -115,7 +117,7 @@ const Moment09 = () => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative min-h-[100svh] w-screen overflow-hidden" 
+      className="moment relative h-[100svh] w-screen overflow-hidden" 
       id="moment-09"
     >
       {/* Background (Deep blue-black world) */}
