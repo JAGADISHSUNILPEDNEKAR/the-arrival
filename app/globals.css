@@ -21,22 +21,48 @@
 }
 
 html, body {
-  overflow-x: hidden;
+  overflow: hidden;
   background: #060e1a;
   color: white;
-  min-height: 100%;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* The actual scrollable area (invisible) */
+.virtual-scroller {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 1px;
+  /* (number of moments * height per moment) */
+  height: 1100vh; 
+  pointer-events: none;
+  visibility: hidden;
+  z-index: -1;
+}
+
+/* Fixed container for all content */
+.scroll-container {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100vh;
+  overflow: hidden;
 }
 
 .moment {
-  position: relative;
+  position: absolute;
+  inset: 0;
   width: 100%;
-  height: 100svh;
+  height: 100vh;
+  opacity: 0; /* Hidden by default, controlled by TL */
+  pointer-events: none;
   z-index: 1;
 }
 
-.moment-content {
-  height: 100svh;
-  display: flex;
-  flex-direction: column;
+.moment.active {
+  pointer-events: auto;
 }
 

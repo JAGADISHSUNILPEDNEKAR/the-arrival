@@ -18,59 +18,83 @@ import Moment11 from './moments/Moment11';
 import Preloader from './Preloader';
 import GlobalNav from './GlobalNav';
 
-const ScrollJourney = () => {
-  const lenisRef = useRef<Lenis | null>(null);
+import { ScrollProvider, useScroll } from '@/lib/context/ScrollContext';
+
+const ScrollJourneyContent = () => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const scrollerRef = useRef<HTMLDivElement>(null);
+  const { setMasterTl } = useScroll();
 
   useEffect(() => {
-    // Initialize Lenis
     const lenis = new Lenis({
-      duration: 2.4,
+      duration: 1.8,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
       orientation: 'vertical',
       smoothWheel: true,
+      wheelMultiplier: 1.1,
+      lerp: 0.1,
     });
 
-    lenisRef.current = lenis;
-
-    // Sync Lenis to GSAP ticker
     const raf = (time: number) => {
       lenis.raf(time * 1000);
     };
-
     gsap.ticker.add(raf);
     gsap.ticker.lagSmoothing(0);
 
-    // Normalize scroll for mobile browser chrome issues
-    ScrollTrigger.normalizeScroll(true);
-    ScrollTrigger.config({ ignoreMobileResize: true });
+    const masterTl = gsap.timeline({
+      scrollTrigger: {
+        trigger: scrollerRef.current,
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 1.2,
+      }
+    });
 
-    // Register ScrollTrigger with Lenis
-    lenis.on('scroll', ScrollTrigger.update);
+    // Create labels for each moment to allow precise positioning
+    // Each moment gets 10 units of "time" for clarity
+    for (let i = 1; i <= 11; i++) {
+        masterTl.addLabel(`moment-${i.toString().padStart(2, '0')}`, (i - 1) * 10);
+    }
 
-    // Cleanup
+    setMasterTl(masterTl);
+
     return () => {
       lenis.destroy();
       gsap.ticker.remove(raf);
+      masterTl.kill();
+      ScrollTrigger.getAll().forEach(t => t.kill());
     };
-  }, []);
+  }, [setMasterTl]);
 
   return (
-    <main className="scroll-journey">
+    <main className="scroll-journey relative">
       <Preloader />
       <GlobalNav />
-      <Moment01 />
-      <Moment02 />
-      <Moment03 />
-      <Moment04 />
-      <Moment05 />
-      <Moment06 />
-      <Moment07 />
-      <Moment08 />
-      <Moment09 />
-      <Moment10 />
-      <Moment11 />
+      <div ref={scrollerRef} className="virtual-scroller" />
+      
+      <div ref={containerRef} className="scroll-container">
+        <div className="moments-wrapper relative w-full h-full">
+          <Moment01 index={0} />
+          <Moment02 index={1} />
+          <Moment03 index={2} />
+          <Moment04 index={3} />
+          <Moment05 index={4} />
+          <Moment06 index={5} />
+          <Moment07 index={6} />
+          <Moment08 index={7} />
+          <Moment09 index={8} />
+          <Moment10 index={9} />
+          <Moment11 index={10} />
+        </div>
+      </div>
     </main>
   );
 };
+
+const ScrollJourney = () => (
+  <ScrollProvider>
+    <ScrollJourneyContent />
+  </ScrollProvider>
+);
 
 export default ScrollJourney;
