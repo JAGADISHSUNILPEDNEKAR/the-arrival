@@ -2,6 +2,10 @@
 
 import React, { useEffect, useRef } from 'react';
 import { useScroll } from '@/lib/context/ScrollContext';
+import HeroBackground from '../hero/HeroBackground';
+import HeroContent from '../hero/HeroContent';
+import HeroCTA from '../hero/HeroCTA';
+import HeroProofPoints from '../hero/HeroProofPoints';
 
 const Moment01 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
