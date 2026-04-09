@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { gsap } from "@/lib/gsap";
 
 const Moment09 = () => {
@@ -15,10 +15,12 @@ const Moment09 = () => {
   const candleRef = useRef<HTMLDivElement>(null);
   const glassRef = useRef<HTMLDivElement>(null);
   const steamRef = useRef<HTMLDivElement>(null);
+  const [starsData, setStarsData] = useState<any[]>([]);
+  const [foamData, setFoamData] = useState<any[]>([]);
 
-  // Generate stars once
-  const stars = useMemo(() => {
-    return Array.from({ length: 20 }).map((_, i) => ({
+  useEffect(() => {
+    // Generate data only on client
+    setStarsData(Array.from({ length: 20 }).map((_, i) => ({
       id: i,
       top: `${Math.random() * 60}%`,
       left: `${Math.random() * 100}%`,
@@ -26,10 +28,15 @@ const Moment09 = () => {
       opacity: 0.3 + Math.random() * 0.4,
       duration: 2 + Math.random() * 4,
       delay: Math.random() * 2,
-    }));
-  }, []);
+    })));
 
-  useEffect(() => {
+    setFoamData([...Array(6)].map((_, i) => ({
+      width: 3 + Math.random() * 2,
+      height: 3 + Math.random() * 2,
+      top: Math.random() * 12 - 6,
+      left: Math.random() * 12 - 6
+    })));
+
     const ctx = gsap.context(() => {
       if (!sectionRef.current) return;
 
@@ -121,7 +128,7 @@ const Moment09 = () => {
       >
         {/* Night Stars */}
         <div ref={starsRef} className="absolute inset-0 pointer-events-none z-0">
-          {stars.map((star) => (
+          {starsData.map((star) => (
             <div 
               key={star.id}
               className="absolute bg-white rounded-full"
@@ -232,15 +239,15 @@ const Moment09 = () => {
 
               {/* Foam/Emulsion */}
               <div ref={foamRef} className="absolute top-[65%] left-[42%] w-[15px] h-[15px] pointer-events-none z-20">
-                {[...Array(6)].map((_, i) => (
+                {foamData.map((f, i) => (
                   <div 
                     key={i} 
                     className="absolute bg-[rgba(245,240,220,0.85)] rounded-full backdrop-blur-[1px]"
                     style={{
-                      width: `${3 + Math.random() * 2}px`,
-                      height: `${3 + Math.random() * 2}px`,
-                      top: `${Math.random() * 12 - 6}px`,
-                      left: `${Math.random() * 12 - 6}px`,
+                      width: `${f.width}px`,
+                      height: `${f.height}px`,
+                      top: `${f.top}px`,
+                      left: `${f.left}px`,
                       boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
                     }}
                   />
