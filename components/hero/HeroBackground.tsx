@@ -3,8 +3,8 @@
 import React, { forwardRef } from 'react';
 
 interface HeroBackgroundProps {
-  glowRef: React.RefObject<HTMLDivElement>;
-  backgroundGradRef: React.RefObject<HTMLDivElement>;
+  glowRef: React.RefObject<HTMLDivElement | null>;
+  backgroundGradRef: React.RefObject<HTMLDivElement | null>;
 }
 
 const HeroBackground = forwardRef<HTMLDivElement, HeroBackgroundProps>(
