@@ -1,9 +1,9 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { gsap } from "@/lib/gsap";
+import { useScroll } from '@/lib/context/ScrollContext';
 
-const Moment03 = () => {
+const Moment03 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const backgroundGroupRef = useRef<HTMLDivElement>(null);
   const skyRef = useRef<HTMLDivElement>(null);
@@ -14,85 +14,78 @@ const Moment03 = () => {
   const islandRef = useRef<HTMLDivElement>(null);
   const jettyRef = useRef<HTMLDivElement>(null);
 
+  const { masterTl } = useScroll();
+
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      if (!sectionRef.current) return;
+    if (!masterTl || !sectionRef.current) return;
 
-      // --- Scroll-In Animation ---
-      // Island and jetty fade in and move up slightly
-      gsap.fromTo([islandRef.current, jettyRef.current],
-        { opacity: 0, y: 20 },
-        { 
-          opacity: 1, 
-          y: 0,
-          duration: 1.5,
-          force3D: true,
-          ease: "power2.out",
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top bottom-=100",
-            end: "top center",
-            scrub: 1,
-            onEnter: () => { gsap.set([islandRef.current, jettyRef.current], { willChange: "transform, opacity" }); },
-            onLeave: () => { gsap.set([islandRef.current, jettyRef.current], { clearProps: "willChange" }); },
-            onEnterBack: () => { gsap.set([islandRef.current, jettyRef.current], { willChange: "transform, opacity" }); },
-            onLeaveBack: () => { gsap.set([islandRef.current, jettyRef.current], { clearProps: "willChange" }); },
-          }
-        }
-      );
+    const label = `moment-03`;
 
-      // --- Pinned Timeline Animation ---
-      const pinnedTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "+=3000px",
-          pin: true,
-          scrub: 1.5,
-          anticipatePin: 1,
-        },
-        onStart: () => { gsap.set([backgroundGroupRef.current, causticsRef.current, islandRef.current], { willChange: "transform, opacity" }); },
-        onComplete: () => { gsap.set([backgroundGroupRef.current, causticsRef.current, islandRef.current], { clearProps: "willChange" }); }
-      });
+    // Entry transition
+    masterTl.fromTo(sectionRef.current,
+      { opacity: 0 },
+      {
+        opacity: 1,
+        pointerEvents: 'auto',
+        duration: 2
+      }, `${label}-=1`);
 
-      // Background translates Y +6%
-      pinnedTl.to(backgroundGroupRef.current, {
-        y: "6%",
+    // Island and jetty entrance
+    masterTl.fromTo([islandRef.current, jettyRef.current],
+      { opacity: 0, y: 20 },
+      { 
+        opacity: 1, 
+        y: 0,
+        duration: 4,
         force3D: true,
-        ease: "none"
-      }, 0);
+        ease: "power2.out"
+      }, label);
 
-      // Caustic layer opacity
-      pinnedTl.to(causticsRef.current, {
-        opacity: 0,
-        force3D: true,
-        ease: "none"
-      }, 0);
+    // Background movement
+    masterTl.to(backgroundGroupRef.current, {
+      y: "6%",
+      force3D: true,
+      ease: "none",
+      duration: 10
+    }, label);
 
-      // Island scales 1->2 and moves toward viewer (translateY)
-      pinnedTl.to(islandRef.current, {
-        scale: 2,
-        y: "-30vh",
-        opacity: 0,
-        force3D: true,
-        ease: "power1.in"
-      }, 0);
+    // Caustics fade out
+    masterTl.to(causticsRef.current, {
+      opacity: 0,
+      force3D: true,
+      ease: "none",
+      duration: 10
+    }, label);
 
-    }, sectionRef);
+    // Island zoom and fade out (main action)
+    masterTl.to(islandRef.current, {
+      scale: 2,
+      y: "-30vh",
+      opacity: 0,
+      force3D: true,
+      ease: "power1.in",
+      duration: 6
+    }, `${label}+=4`);
 
-    return () => ctx.revert();
-  }, []);
+    // Exit transition
+    masterTl.to(sectionRef.current, {
+      opacity: 0,
+      pointerEvents: 'none',
+      duration: 2
+    }, `${label}+=8`);
+
+  }, [masterTl]);
 
   return (
     <section 
       ref={sectionRef}
-      className="moment relative h-[100svh] w-screen overflow-hidden bg-[#1a4060]" 
+      className="moment relative w-screen overflow-hidden bg-[#1a4060]" 
       id="moment-03"
+      style={{ opacity: 0 }}
     >
-      {/* Background Layers Group for combined movement */}
+      {/* Background Layers Group */}
       <div ref={backgroundGroupRef} className="absolute inset-0 w-full h-full">
-        
-        {/* Layer 1: Sky */}
+        {/* Sky */}
         <div 
           ref={skyRef}
           className="absolute top-0 left-0 w-full h-[42%] z-0"
@@ -101,7 +94,7 @@ const Moment03 = () => {
           }}
         />
 
-        {/* Layer 2: Deep water horizon */}
+        {/* Deep water horizon */}
         <div 
           ref={deepWaterRef}
           className="absolute top-[35%] left-0 w-full h-[25%] z-[1]"
@@ -110,7 +103,7 @@ const Moment03 = () => {
           }}
         />
 
-        {/* Layer 3: Shallow lagoon */}
+        {/* Shallow lagoon */}
         <div 
           ref={shallowLagoonRef}
           className="absolute bottom-0 left-0 w-full h-[50%] z-[2]"
@@ -119,7 +112,7 @@ const Moment03 = () => {
           }}
         />
 
-        {/* Layer 4: Sand beneath water */}
+        {/* Sand beneath water */}
         <div 
           ref={sandRef}
           className="absolute bottom-0 left-0 w-full h-[30%] z-[3]"
@@ -128,7 +121,7 @@ const Moment03 = () => {
           }}
         />
 
-        {/* Layer 5: Caustic light patterns */}
+        {/* Caustic light patterns */}
         <div 
           ref={causticsRef}
           className="absolute inset-0 w-full h-full z-[4] pointer-events-none"

@@ -1,121 +1,104 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { gsap } from "@/lib/gsap";
+import { useScroll } from '@/lib/context/ScrollContext';
 
-const Moment02 = () => {
+const Moment02 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const islandRef = useRef<HTMLDivElement>(null);
   const overlayRef = useRef<HTMLDivElement>(null);
   const backgroundRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
 
+  const { masterTl } = useScroll();
+
   useEffect(() => {
-    const ctx = gsap.context(() => {
-      if (!sectionRef.current || !islandRef.current || !overlayRef.current || !backgroundRef.current) return;
+    if (!masterTl || !sectionRef.current) return;
 
-      // --- Scroll-In Animation (from Moment01) ---
-      gsap.fromTo(islandRef.current, 
-        { x: 40, opacity: 0 },
-        { 
-          x: 0, 
-          opacity: 1,
-          force3D: true,
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top bottom",
-            end: "top top",
-            scrub: 2,
-            onEnter: () => { gsap.set(islandRef.current, { willChange: "transform, opacity" }); },
-            onLeave: () => { gsap.set(islandRef.current, { clearProps: "willChange" }); },
-            onEnterBack: () => { gsap.set(islandRef.current, { willChange: "transform, opacity" }); },
-            onLeaveBack: () => { gsap.set(islandRef.current, { clearProps: "willChange" }); },
-          }
-        }
-      );
+    const label = `moment-02`;
 
-      gsap.fromTo(overlayRef.current,
-        { opacity: 0 },
-        {
-          opacity: 0.6,
-          force3D: true,
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top bottom",
-            end: "top top",
-            scrub: 2,
-          }
-        }
-      );
+    // Entry transition from previous moment
+    masterTl.fromTo(sectionRef.current, 
+      { opacity: 0 }, 
+      { 
+        opacity: 1, 
+        pointerEvents: 'auto',
+        duration: 2 
+      }, `${label}-=1`); // Slight overlap for smooth transition
 
-      gsap.fromTo(textRef.current,
-        { opacity: 0, y: 30 },
-        {
-          opacity: 1,
-          y: 0,
-          force3D: true,
-          scrollTrigger: {
-            trigger: sectionRef.current,
-            start: "top center",
-            end: "top top",
-            scrub: 2,
-            onEnter: () => { gsap.set(textRef.current, { willChange: "transform, opacity" }); },
-            onLeave: () => { gsap.set(textRef.current, { clearProps: "willChange" }); },
-            onEnterBack: () => { gsap.set(textRef.current, { willChange: "transform, opacity" }); },
-            onLeaveBack: () => { gsap.set(textRef.current, { clearProps: "willChange" }); },
-          }
-        }
-      );
-
-      // --- Pinned Timeline Animation ---
-      const pinnedTl = gsap.timeline({
-        scrollTrigger: {
-          trigger: sectionRef.current,
-          start: "top top",
-          end: "+=3000px",
-          pin: true,
-          scrub: 1.5,
-          anticipatePin: 1,
-        },
-        onStart: () => { gsap.set([islandRef.current, backgroundRef.current, textRef.current], { willChange: "transform, opacity" }); },
-        onComplete: () => { gsap.set([islandRef.current, backgroundRef.current, textRef.current], { clearProps: "willChange" }); }
-      });
-
-      pinnedTl.to(islandRef.current, {
-        scale: 1.6,
-        x: "-8vw",
+    // Island entrance and main move
+    masterTl.fromTo(islandRef.current, 
+      { x: 40, opacity: 0 },
+      { 
+        x: 0, 
+        opacity: 1,
         force3D: true,
-        ease: "none"
-      }, 0);
+        duration: 4
+      }, label);
 
-      pinnedTl.to(backgroundRef.current, {
-        y: "8%",
+    masterTl.to(islandRef.current, {
+      scale: 1.6,
+      x: "-8vw",
+      force3D: true,
+      ease: "none",
+      duration: 6
+    }, `${label}+=4`);
+
+    // Background movement
+    masterTl.to(backgroundRef.current, {
+      y: "8%",
+      force3D: true,
+      ease: "none",
+      duration: 10
+    }, label);
+
+    // Warm Overlay fade in
+    masterTl.fromTo(overlayRef.current,
+      { opacity: 0 },
+      {
+        opacity: 0.6,
         force3D: true,
-        ease: "none"
-      }, 0);
+        duration: 4
+      }, label);
 
-      pinnedTl.to(textRef.current, {
+    // Text content animation
+    masterTl.fromTo(textRef.current,
+      { opacity: 0, y: 30 },
+      {
+        opacity: 1,
+        y: 0,
+        force3D: true,
+        duration: 4
+      }, `${label}+=2`);
+
+    masterTl.to(textRef.current, {
         opacity: 0,
         y: -30,
         force3D: true,
-        ease: "none"
-      }, 0);
+        ease: "none",
+        duration: 4
+    }, `${label}+=6`);
 
-    }, sectionRef);
+    // Exit transition
+    masterTl.to(sectionRef.current, {
+      opacity: 0,
+      pointerEvents: 'none',
+      duration: 2
+    }, `${label}+=8`);
 
-    return () => ctx.revert();
-  }, []);
+  }, [masterTl]);
 
   return (
     <section 
       ref={sectionRef}
-      className="moment relative h-[100svh] w-screen overflow-hidden" 
+      className="moment relative w-screen overflow-hidden" 
       id="moment-02"
+      style={{ opacity: 0 }}
     >
       {/* Background Base */}
       <div 
         ref={backgroundRef}
-        className="absolute inset-0 w-full h-[110%] -top-[5%]" // Extra height for Y translation
+        className="absolute inset-0 w-full h-[110%] -top-[5%]" 
         style={{
           background: 'linear-gradient(180deg, #0e2038 0%, #1c4d70 30%, #3a8aaa 60%, #89c0d0 82%, #d4eaf0 100%)'
         }}
@@ -161,7 +144,7 @@ const Moment02 = () => {
         </p>
       </div>
 
-      {/* Island Silhouette Container for Shadow */}
+      {/* Island Silhouette Container */}
       <div 
         ref={islandRef}
         className="absolute bottom-[38%] right-[28%] z-[2]"
