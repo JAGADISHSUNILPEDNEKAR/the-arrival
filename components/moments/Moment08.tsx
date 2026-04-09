@@ -12,6 +12,7 @@ const Moment08 = () => {
   const candleRef = useRef<HTMLDivElement>(null);
   const glassRef = useRef<HTMLDivElement>(null);
   const shadowRef = useRef<HTMLDivElement>(null);
+  const textRef = useRef<HTMLDivElement>(null);
   const [menuLines, setMenuLines] = useState<number[]>([]);
 
   useEffect(() => {
@@ -51,6 +52,12 @@ const Moment08 = () => {
         }
       });
 
+      enterTl.fromTo(textRef.current,
+        { opacity: 0, y: 20 },
+        { opacity: 1, y: 0, force3D: true, ease: "power2.out" },
+        0.5
+      );
+
       // Scroll-Out: Frame pull back and shadow entry
       const exitTl = gsap.timeline({
         scrollTrigger: {
@@ -59,8 +66,8 @@ const Moment08 = () => {
           end: "bottom top",
           scrub: 2,
         },
-        onStart: () => { gsap.set([containerRef.current, shadowRef.current], { willChange: "transform, opacity" }); },
-        onComplete: () => { gsap.set([containerRef.current, shadowRef.current], { clearProps: "willChange" }); }
+        onStart: () => { gsap.set([containerRef.current, shadowRef.current, textRef.current], { willChange: "transform, opacity" }); },
+        onComplete: () => { gsap.set([containerRef.current, shadowRef.current, textRef.current], { clearProps: "willChange" }); }
       });
 
       exitTl.to(containerRef.current, {
@@ -75,6 +82,13 @@ const Moment08 = () => {
         0.2
       );
 
+      exitTl.to(textRef.current, {
+        opacity: 0,
+        y: -20,
+        force3D: true,
+        ease: "none"
+      }, 0);
+
     }, sectionRef);
 
     return () => ctx.revert();
@@ -86,6 +100,33 @@ const Moment08 = () => {
       className="moment relative min-h-[100svh] w-screen overflow-hidden" 
       id="moment-08"
     >
+      {/* Testimonial Text */}
+      <div 
+        ref={textRef}
+        className="absolute top-[15%] right-[10%] md:right-[15%] z-30 max-w-[320px] pointer-events-none text-right"
+      >
+        <p
+          className="italic font-light mb-4 drop-shadow-md"
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: 'clamp(1rem, 2vw, 1.4rem)',
+            color: 'rgba(230, 210, 180, 0.9)',
+            lineHeight: '1.4'
+          }}
+        >
+          "An experience that completely redefines the concept of private dining."
+        </p>
+        <p
+          className="uppercase tracking-[0.2em] text-[10px]"
+          style={{
+            fontFamily: 'var(--font-sans)',
+            color: 'rgba(230, 210, 180, 0.5)',
+          }}
+        >
+          — The Times Luxury
+        </p>
+      </div>
+
       {/* Background with overhead soft light */}
       <div 
         ref={containerRef}
@@ -139,21 +180,28 @@ const Moment08 = () => {
               {/* Plate */}
               <div 
                 ref={plateRef}
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[clamp(80px,12vw,140px)] h-[clamp(80px,12vw,140px)] shadow-[inset_0_2px_8px_rgba(0,0,0,0.15),0_4px_20px_rgba(0,0,0,0.3)]"
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[clamp(80px,12vw,140px)] h-[clamp(80px,12vw,140px)] shadow-[inset_0_2px_8px_rgba(0,0,0,0.15),0_4px_20px_rgba(0,0,0,0.3)] group cursor-pointer transition-transform duration-500 hover:scale-[1.03]"
                 style={{
                   background: 'linear-gradient(145deg, #d4c8a8, #c8bca0, #dcd0b0)',
                   borderRadius: '51% 49% 52% 48% / 49% 51% 48% 52%'
                 }}
-              />
+              >
+                <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 bg-[rgba(0,0,0,0.1)] rounded-[inherit]">
+                  <span className="text-[9px] uppercase tracking-widest text-[#fff] font-light drop-shadow-md" style={{ fontFamily: 'var(--font-sans)' }}>Explore Dish</span>
+                </div>
+              </div>
 
               {/* Menu Card */}
               <div 
                 ref={menuRef}
-                className="absolute top-[20%] right-[10%] w-[clamp(80px,10vw,120px)] h-[clamp(120px,15vw,180px)] p-4 shadow-[2px_3px_12px_rgba(0,0,0,0.25)] -rotate-[2deg] flex flex-col gap-[14px]"
+                className="absolute top-[20%] right-[10%] w-[clamp(80px,10vw,120px)] h-[clamp(120px,15vw,180px)] p-4 shadow-[2px_3px_12px_rgba(0,0,0,0.25)] -rotate-[2deg] flex flex-col gap-[14px] group cursor-pointer transition-transform duration-500 hover:rotate-0 hover:-translate-y-2 hover:scale-[1.05]"
                 style={{
                   background: 'rgba(248,244,234,0.96)'
                 }}
               >
+                <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-500 z-10 bg-[rgba(248,244,234,0.95)] px-2">
+                   <p className="text-[8px] uppercase tracking-widest text-center text-[#4a3820]" style={{ fontFamily: 'var(--font-sans)' }}>Tasting Menu<br/><span className="italic normal-case text-[10px] mt-2 block opacity-70" style={{ fontFamily: 'var(--font-serif)' }}>Inspired by the Tides</span></p>
+                </div>
                 {menuLines.map((width, i) => (
                   <div key={i} className="h-[1px] bg-[rgba(100,80,60,0.3)]" style={{ width: `${width}%` }} />
                 ))}
