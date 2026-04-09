@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from "@/lib/gsap";
 
 const Moment08 = () => {
@@ -12,8 +12,12 @@ const Moment08 = () => {
   const candleRef = useRef<HTMLDivElement>(null);
   const glassRef = useRef<HTMLDivElement>(null);
   const shadowRef = useRef<HTMLDivElement>(null);
+  const [menuLines, setMenuLines] = useState<number[]>([]);
 
   useEffect(() => {
+    // Generate menu lines only on client
+    setMenuLines([...Array(6)].map(() => 60 + Math.random() * 30));
+
     const ctx = gsap.context(() => {
       if (!sectionRef.current || !tableRef.current || !containerRef.current || !shadowRef.current) return;
 
@@ -150,8 +154,8 @@ const Moment08 = () => {
                   background: 'rgba(248,244,234,0.96)'
                 }}
               >
-                {[...Array(6)].map((_, i) => (
-                  <div key={i} className="h-[1px] bg-[rgba(100,80,60,0.3)]" style={{ width: `${60 + Math.random() * 30}%` }} />
+                {menuLines.map((width, i) => (
+                  <div key={i} className="h-[1px] bg-[rgba(100,80,60,0.3)]" style={{ width: `${width}%` }} />
                 ))}
                 <div className="mt-auto h-[1px] bg-[rgba(80,60,40,0.5)] w-[40px]" />
               </div>
