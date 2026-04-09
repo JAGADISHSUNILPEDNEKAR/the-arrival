@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef, useMemo } from 'react';
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { gsap } from "@/lib/gsap";
 
 const Moment10 = () => {
@@ -8,10 +8,11 @@ const Moment10 = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const [starsData, setStarsData] = useState<any[]>([]);
 
-  // Generate 55 stars with random properties
-  const starsInfo = useMemo(() => {
-    return Array.from({ length: 55 }).map((_, i) => {
+  useEffect(() => {
+    // Generate 55 stars with random properties only on client
+    setStarsData(Array.from({ length: 55 }).map((_, i) => {
       const size = i < 40 ? 1 : i < 50 ? 2 : 3;
       const isBlueTint = Math.random() > 0.7;
       const color = isBlueTint ? 'rgba(220, 230, 255, 0.6)' : `rgba(255, 255, 255, ${0.4 + Math.random() * 0.5})`;
@@ -31,10 +32,8 @@ const Moment10 = () => {
         delay,
         hasGlow
       };
-    });
-  }, []);
+    }));
 
-  useEffect(() => {
     const ctx = gsap.context(() => {
       if (!sectionRef.current || !textRef.current || !contentRef.current) return;
 
@@ -126,7 +125,7 @@ const Moment10 = () => {
 
         {/* Individual Stars */}
         <div className="absolute inset-0 pointer-events-none">
-          {starsInfo.map((star) => (
+          {starsData.map((star) => (
             <div 
               key={star.id}
               className="absolute rounded-full"
