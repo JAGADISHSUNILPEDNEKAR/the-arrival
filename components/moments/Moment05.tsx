@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from "@/lib/gsap";
 
 const Moment05 = () => {
@@ -12,8 +12,18 @@ const Moment05 = () => {
   const secondaryPalmRef = useRef<HTMLDivElement>(null);
   const roofRef = useRef<HTMLDivElement>(null);
   const dappleRefs = useRef<HTMLDivElement[]>([]);
+  const [bougainvilleaData, setBougainvilleaData] = useState<any[]>([]);
 
   useEffect(() => {
+    // Generate bougainvillea data only on client
+    setBougainvilleaData([...Array(12)].map((_, i) => ({
+      size: 6 + Math.random() * 8,
+      top: 15 + Math.random() * 20,
+      right: 10 + Math.random() * 15,
+      rotate: Math.random() * 360,
+      delay: Math.random() * 2
+    })));
+
     const ctx = gsap.context(() => {
       if (!sectionRef.current || !shadeSideRef.current || !sunSideRef.current || !boundaryRef.current) return;
 
@@ -103,14 +113,7 @@ const Moment05 = () => {
     { top: '75%', left: '55%', w: 35, h: 55, dur: 4.8 },
   ];
 
-  // Bougainvillea cluster
-  const bougainvillea = [...Array(12)].map((_, i) => ({
-    size: 6 + Math.random() * 8,
-    top: 15 + Math.random() * 20,
-    right: 10 + Math.random() * 15,
-    rotate: Math.random() * 360,
-    delay: Math.random() * 2
-  }));
+
 
   return (
     <section 
@@ -155,7 +158,7 @@ const Moment05 = () => {
 
         {/* BOUGAINVILLEA */}
         <div className="absolute top-0 right-0 w-full h-full pointer-events-none">
-          {bougainvillea.map((petal, i) => (
+          {bougainvilleaData.map((petal, i) => (
             <div 
               key={i}
               className="absolute bg-[#c8345a]"
