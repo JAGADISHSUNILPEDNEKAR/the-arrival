@@ -8,7 +8,11 @@ const Moment11 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const backgroundWrapperRef = useRef<HTMLDivElement>(null);
   const horizonRef = useRef<HTMLDivElement>(null);
+  const waterRef = useRef<HTMLDivElement>(null);
+  const waterPatternRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
+  const starRefs = useRef<HTMLDivElement[]>([]);
+  const formRef = useRef<HTMLFormElement>(null);
   const [starsData, setStarsData] = useState<any[]>([]);
 
 
@@ -19,8 +23,6 @@ const Moment11 = ({ index }: { index: number }) => {
       top: `${Math.random() * 30}%`,
       left: `${Math.random() * 100}%`,
       opacity: 0.15 + Math.random() * 0.2,
-      delay: Math.random() * 5,
-      duration: 3 + Math.random() * 4,
     })));
   }, []);
 
@@ -31,10 +33,10 @@ const Moment11 = ({ index }: { index: number }) => {
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: "+=150%", // Last moment pinning
+        end: "+=200%", // Extended for the final moment
         pin: true,
-        pinSpacing: true, // Last one should space naturally
-        scrub: 1,
+        pinSpacing: true, 
+        scrub: true,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -45,33 +47,77 @@ const Moment11 = ({ index }: { index: number }) => {
       }
     });
 
-    // Entry Reveal
+    // 1. Entry Reveal
     tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
 
-    // Horizon line draws in
+    // 2. Horizon Reveal - Drawing from center
     tl.fromTo(horizonRef.current,
-      { scaleX: 0 },
+      { scaleX: 0, opacity: 0 },
       {
         scaleX: 1,
+        opacity: 0.8,
         force3D: true,
-        ease: "power2.inOut"
+        ease: "power2.inOut",
+        duration: 0.3
       }, 0);
 
-    // Text and form fade in
+    // 3. Background Atmospheric Pulse - Converted from CSS to GSAP
+    tl.to(backgroundWrapperRef.current, {
+        scale: 1.05,
+        y: "-2vh",
+        ease: "none"
+    }, 0);
+
+    // 4. Text and Form reveal kinetics
     tl.fromTo(textRef.current,
-      { opacity: 0, y: 30 },
+      { opacity: 0, y: 50, scale: 0.95 },
       {
         opacity: 1,
         y: 0,
+        scale: 1,
         force3D: true,
-        ease: "power1.out"
-      }, 0.2);
+        ease: "power2.out",
+        duration: 0.4
+      }, 0.15);
+
+    tl.fromTo(formRef.current,
+        { opacity: 0, y: 30, skewY: 2 },
+        { 
+            opacity: 1, 
+            y: 0, 
+            skewY: 0, 
+            duration: 0.4, 
+            ease: "power2.out" 
+        }, 0.25);
+
+    // 5. Water Kinetic - Converted from CSS to GSAP Scroll-driven
+    tl.to(waterPatternRef.current, {
+        backgroundPositionX: "120px",
+        ease: "none"
+    }, 0);
+
+    tl.to(waterRef.current, {
+        y: "-2%",
+        scaleY: 1.05,
+        ease: "none"
+    }, 0);
+
+    // 6. Stars Twinkle Dim - Converted to GSAP
+    starRefs.current.forEach((star, i) => {
+        if (star) {
+            tl.to(star, {
+                opacity: 0.6,
+                scale: 1.5,
+                ease: "none"
+            }, 0);
+        }
+    });
 
     return () => {
       tl.kill();
       ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
     };
-  }, []);
+  }, [starsData]);
 
 
   return (
@@ -84,7 +130,6 @@ const Moment11 = ({ index }: { index: number }) => {
       <div 
         ref={backgroundWrapperRef}
         className="absolute inset-0 w-full h-full"
-        style={{ animation: 'breatheFinal 8s ease-in-out infinite' }}
       >
         <div 
           className="absolute inset-0 w-full h-full"
@@ -94,15 +139,15 @@ const Moment11 = ({ index }: { index: number }) => {
         />
 
         <div className="absolute inset-0 w-full h-full pointer-events-none">
-          {starsData.map((star) => (
+          {starsData.map((star, i) => (
             <div 
               key={star.id}
+              ref={el => { if (el) starRefs.current[i] = el; }}
               className="absolute w-[1px] h-[1px] bg-white rounded-full"
               style={{
                 top: star.top,
                 left: star.left,
                 opacity: star.opacity,
-                animation: `twinkleDim ${star.duration}s ease-in-out ${star.delay}s infinite alternate`
               }}
             />
           ))}
@@ -118,17 +163,18 @@ const Moment11 = ({ index }: { index: number }) => {
         />
 
         <div 
+          ref={waterRef}
           className="absolute bottom-0 left-0 w-full h-[45%] z-5 overflow-hidden"
           style={{
             background: 'linear-gradient(180deg, rgba(20,45,70,0.8) 0%, rgba(15,35,55,0.9) 40%, rgba(10,25,40,0.95) 100%)'
           }}
         >
           <div 
+            ref={waterPatternRef}
             className="absolute inset-0 w-full h-full opacity-30"
             style={{
               background: 'repeating-linear-gradient(92deg, transparent 0%, rgba(255,255,255,0.008) 50%, transparent 100%)',
               backgroundSize: '80px 100%',
-              animation: 'preDawnWater 12s linear infinite'
             }}
           />
         </div>
@@ -161,7 +207,10 @@ const Moment11 = ({ index }: { index: number }) => {
           Your table at the edge of the world awaits.
         </p>
 
-        <form className="w-full bg-[rgba(10,20,35,0.5)] backdrop-blur-xl border border-[rgba(100,140,170,0.2)] p-6 md:p-8 flex flex-col gap-6 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-sm pointer-events-auto">
+        <form 
+            ref={formRef}
+            className="w-full bg-[rgba(10,20,35,0.5)] backdrop-blur-xl border border-[rgba(100,140,170,0.2)] p-6 md:p-8 flex flex-col gap-6 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-sm pointer-events-auto"
+        >
           <div className="flex flex-col gap-2">
             <label className="text-[10px] uppercase tracking-widest text-[rgba(200,215,230,0.6)]" style={{ fontFamily: 'var(--font-sans)' }}>Guest Name</label>
             <input type="text" className="w-full bg-transparent border-b border-[rgba(100,140,170,0.3)] pb-2 text-[rgba(230,240,250,0.9)] focus:outline-none focus:border-[rgba(230,240,250,0.6)] transition-colors font-light" placeholder="Your Name" />
@@ -206,22 +255,9 @@ const Moment11 = ({ index }: { index: number }) => {
         THE ARRIVAL — A MALDIVES EXPERIENCE
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes breatheFinal {
-          0%, 100% { transform: translateY(0px); }
-          50% { transform: translateY(-5px); }
-        }
-        @keyframes preDawnWater {
-          0% { background-position-x: 0px; }
-          100% { background-position-x: 80px; }
-        }
-        @keyframes twinkleDim {
-          0%, 100% { opacity: 0.1; }
-          50% { opacity: 0.35; }
-        }
-      ` }} />
     </section>
   );
 };
 
 export default Moment11;
+

@@ -7,14 +7,18 @@ import { gsap, ScrollTrigger } from '@/lib/gsap';
 const Moment09 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
-  const starsRef = useRef<HTMLDivElement>(null);
+  const starRefs = useRef<HTMLDivElement[]>([]);
   const plateRef = useRef<HTMLDivElement>(null);
   const sauceRef = useRef<HTMLDivElement>(null);
   const fishRef = useRef<HTMLDivElement>(null);
   const herbsRef = useRef<HTMLDivElement>(null);
+  const herbItemsRef = useRef<HTMLDivElement[]>([]);
   const foamRef = useRef<HTMLDivElement>(null);
   const candleRef = useRef<HTMLDivElement>(null);
   const steamRef = useRef<HTMLDivElement>(null);
+  const steamItemsRef = useRef<HTMLDivElement[]>([]);
+  const candleFlameRef = useRef<HTMLDivElement>(null);
+  const candleGlowRef = useRef<HTMLDivElement>(null);
   const [starsData, setStarsData] = useState<any[]>([]);
   const [foamData, setFoamData] = useState<any[]>([]);
 
@@ -27,8 +31,6 @@ const Moment09 = ({ index }: { index: number }) => {
       left: `${Math.random() * 100}%`,
       size: `${1 + Math.random() * 1.5}px`,
       opacity: 0.3 + Math.random() * 0.4,
-      duration: 2 + Math.random() * 4,
-      delay: Math.random() * 2,
     })));
 
     setFoamData([...Array(6)].map((_, i) => ({
@@ -49,7 +51,7 @@ const Moment09 = ({ index }: { index: number }) => {
         end: "+=200%",
         pin: true,
         pinSpacing: false,
-        scrub: 1,
+        scrub: true,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -60,48 +62,83 @@ const Moment09 = ({ index }: { index: number }) => {
       }
     });
 
-    // Entry Reveal
+    // 1. Entry Reveal
     tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
 
-    // Initial state for dish elements
+    // 2. Initial state for dish elements
     tl.set(sauceRef.current, { x: -30, opacity: 0, scale: 0.8 }, 0);
-    tl.set([fishRef.current, herbsRef.current, foamRef.current], { opacity: 0, y: 15, scale: 0.95 }, 0);
+    tl.set([fishRef.current, herbsRef.current, foamRef.current], { opacity: 0, y: 30, scale: 0.9, filter: 'blur(5px)' }, 0);
 
-    // Plate enters
+    // 3. Plate Entry with Depth
     tl.fromTo(plateRef.current,
-      { opacity: 0, scale: 0.92 },
-      { opacity: 1, scale: 1, force3D: true, ease: "power2.out" }, 0);
+      { opacity: 0, scale: 0.85, y: 100 },
+      { opacity: 1, scale: 1, y: 0, force3D: true, ease: "power2.out", duration: 0.4 }, 0);
 
-    // Sauce assembly
+    // 4. Sauce "Pour"
     tl.to(sauceRef.current, {
       x: 0,
       opacity: 1,
       scale: 1,
       force3D: true,
-      ease: "power2.out",
-    }, 0.1);
+      ease: "power2.inOut",
+      duration: 0.3
+    }, 0.2);
 
-    // Stagger food elements
+    // 5. Staggered reveal of dish components
     const foodItems = [fishRef.current, herbsRef.current, foamRef.current].filter(Boolean) as HTMLElement[];
     foodItems.forEach((item, i) => {
       tl.to(item, {
         opacity: 1,
         y: 0,
         scale: 1,
+        filter: 'blur(0px)',
         force3D: true,
-        ease: "back.out(1.2)",
-      }, 0.2 + i * 0.1);
+        ease: "back.out(1.4)",
+        duration: 0.3
+      }, 0.3 + i * 0.1);
     });
 
-    // Main removal (pinned phase)
-    tl.to(plateRef.current, {
-      y: -150,
-      opacity: 0,
-      force3D: true,
-      ease: "power2.inOut",
-    }, 0.5);
+    // 6. Kinetic Enhancements
+    // Herbs bounce
+    herbItemsRef.current.forEach((herb, i) => {
+        if (herb) tl.to(herb, { y: -5, opacity: 1, delay: i * 0.05, ease: "back.out" }, 0.4);
+    });
 
-    // Exit transition (fade out)
+    // Steam Drift - Converted from CSS to GSAP Scroll-driven
+    steamItemsRef.current.forEach((steam, i) => {
+      if (steam) {
+        tl.fromTo(steam, 
+          { y: 0, opacity: 0 },
+          { y: -60, opacity: 0.2, ease: "none", duration: 0.4 }, 0.2 + i * 0.1);
+      }
+    });
+
+    // 7. Celestial & Ambience
+    // Stars Twinkle - Converted to GSAP
+    starRefs.current.forEach((star, i) => {
+      if (star) {
+        tl.to(star, {
+          opacity: 1,
+          scale: 1.5,
+          ease: "none",
+        }, 0);
+      }
+    });
+
+    // Candle Flicker
+    tl.to(candleFlameRef.current, { scale: 1.3, x: 2, ease: "none" }, 0.2);
+    tl.to(candleGlowRef.current, { opacity: 1, scale: 1.2, ease: "none" }, 0);
+
+    // 8. Exit transition (Fly away)
+    tl.to(plateRef.current, {
+      y: -250,
+      opacity: 0,
+      scale: 0.7,
+      rotateX: -30,
+      force3D: true,
+      ease: "power2.in",
+    }, 0.8);
+
     tl.to(sectionRef.current, {
       opacity: 0,
       ease: "none",
@@ -111,7 +148,7 @@ const Moment09 = ({ index }: { index: number }) => {
       tl.kill();
       ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
     };
-  }, []);
+  }, [starsData, foamData]);
 
 
   return (
@@ -128,10 +165,11 @@ const Moment09 = ({ index }: { index: number }) => {
           background: 'linear-gradient(180deg, #080810 0%, #0c0c18 40%, #080810 100%)'
         }}
       >
-        <div ref={starsRef} className="absolute inset-0 pointer-events-none z-0">
-          {starsData.map((star) => (
+        <div className="absolute inset-0 pointer-events-none z-0">
+          {starsData.map((star, i) => (
             <div 
               key={star.id}
+              ref={el => { if (el) starRefs.current[i] = el; }}
               className="absolute bg-white rounded-full"
               style={{
                 top: star.top,
@@ -139,7 +177,6 @@ const Moment09 = ({ index }: { index: number }) => {
                 width: star.size,
                 height: star.size,
                 opacity: star.opacity,
-                animation: `twinkle ${star.duration}s ease-in-out ${star.delay}s infinite alternate`
               }}
             />
           ))}
@@ -159,18 +196,18 @@ const Moment09 = ({ index }: { index: number }) => {
           className="absolute top-[28%] left-[28%] z-30 flex flex-col items-center"
         >
           <div 
+            ref={candleGlowRef}
             className="absolute -top-24 w-[300px] h-[400px] pointer-events-none -translate-x-1/2 -translate-y-1/2"
             style={{
               left: '50%',
               top: '10px',
               background: 'radial-gradient(ellipse 120px 180px at center, rgba(255,185,70,0.3) 0%, rgba(255,160,50,0.08) 50%, transparent 75%)',
-              animation: 'candleGlow 4s ease-in-out infinite'
+              opacity: 0.7
             }}
           />
-          <div className="w-1.5 h-3.5 bg-[rgba(255,210,80,0.95)] rounded-[50%_50%_30%_30%] mb-1 shadow-[0_0_12px_rgba(255,180,50,0.7)]"
-               style={{
-                 animation: 'candleFlicker 2.5s ease-in-out infinite'
-               }}
+          <div 
+            ref={candleFlameRef}
+            className="w-1.5 h-3.5 bg-[rgba(255,210,80,0.95)] rounded-[50%_50%_30%_30%] mb-1 shadow-[0_0_12px_rgba(255,180,50,0.7)]"
           />
           <div className="w-[8px] h-[45px]"
                style={{
@@ -213,8 +250,14 @@ const Moment09 = ({ index }: { index: number }) => {
               </div>
 
               <div ref={herbsRef} className="absolute inset-0 pointer-events-none z-20">
-                <div className="absolute top-[40%] left-[65%] w-[6px] h-[6px] rounded-full bg-[rgba(60,100,40,0.95)]" />
-                <div className="absolute top-[62%] left-[72%] w-[5px] h-[5px] rounded-full bg-[rgba(60,100,40,0.95)]" />
+                <div 
+                    ref={el => { if (el) herbItemsRef.current[0] = el; }}
+                    className="absolute top-[40%] left-[65%] w-[6px] h-[6px] rounded-full bg-[rgba(60,100,40,0.95)] opacity-0" 
+                />
+                <div 
+                    ref={el => { if (el) herbItemsRef.current[1] = el; }}
+                    className="absolute top-[62%] left-[72%] w-[5px] h-[5px] rounded-full bg-[rgba(60,100,40,0.95)] opacity-0" 
+                />
               </div>
 
               <div ref={foamRef} className="absolute top-[65%] left-[42%] w-[15px] h-[15px] pointer-events-none z-20">
@@ -237,10 +280,10 @@ const Moment09 = ({ index }: { index: number }) => {
                 {[...Array(3)].map((_, i) => (
                   <div 
                     key={i}
+                    ref={el => { if (el) steamItemsRef.current[i] = el; }}
                     className="w-[2px] h-[25px]"
                     style={{
                       background: 'linear-gradient(180deg, rgba(255,255,255,0), rgba(255,255,255,0.12), rgba(255,255,255,0))',
-                      animation: `steamMove 3s ease-out ${i * 0.8}s infinite`
                     }}
                   />
                 ))}
@@ -250,29 +293,9 @@ const Moment09 = ({ index }: { index: number }) => {
         </div>
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes twinkle {
-          0% { opacity: 0.2; transform: scale(0.9); }
-          100% { opacity: 0.8; transform: scale(1.1); }
-        }
-        @keyframes steamMove {
-          0% { transform: translateY(0); opacity: 0; }
-          40% { opacity: 0.15; }
-          100% { transform: translateY(-35px); opacity: 0; }
-        }
-        @keyframes candleFlicker {
-          0%, 100% { transform: scale(0.9) skewX(0deg); opacity: 0.9; }
-          25% { transform: scale(1.1) skewX(1deg); opacity: 1; }
-          50% { transform: scale(0.95) skewX(-1deg); opacity: 0.85; }
-          75% { transform: scale(1.05) skewX(0.5deg); opacity: 1; }
-        }
-        @keyframes candleGlow {
-          0%, 100% { opacity: 0.7; transform: translate(-50%, -50%) scale(1); }
-          50% { opacity: 1; transform: translate(-50%, -50%) scale(1.05); }
-        }
-      ` }} />
     </section>
   );
 };
 
 export default Moment09;
+

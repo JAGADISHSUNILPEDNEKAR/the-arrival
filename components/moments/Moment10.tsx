@@ -8,6 +8,9 @@ const Moment10 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
+  const starRefs = useRef<HTMLDivElement[]>([]);
+  const silhouetteRef = useRef<HTMLDivElement>(null);
+  const nebulaRef = useRef<HTMLDivElement>(null);
   const [starsData, setStarsData] = useState<any[]>([]);
 
 
@@ -17,9 +20,6 @@ const Moment10 = ({ index }: { index: number }) => {
       const size = i < 40 ? 1 : i < 50 ? 2 : 3;
       const isBlueTint = Math.random() > 0.7;
       const color = isBlueTint ? 'rgba(220, 230, 255, 0.6)' : `rgba(255, 255, 255, ${0.4 + Math.random() * 0.5})`;
-      const animationType = (i % 3) + 1; 
-      const duration = animationType === 1 ? 2 : animationType === 2 ? 3 : 4;
-      const delay = Math.random() * 5;
       const hasGlow = size >= 2 && Math.random() > 0.5;
 
       return {
@@ -28,9 +28,6 @@ const Moment10 = ({ index }: { index: number }) => {
         left: `${Math.random() * 100}%`,
         size: `${size}px`,
         color,
-        animationName: `twinkle${animationType}`,
-        duration,
-        delay,
         hasGlow
       };
     }));
@@ -46,7 +43,7 @@ const Moment10 = ({ index }: { index: number }) => {
         end: "+=200%",
         pin: true,
         pinSpacing: false,
-        scrub: 1,
+        scrub: true,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -57,28 +54,67 @@ const Moment10 = ({ index }: { index: number }) => {
       }
     });
 
-    // Entry Reveal
+    // 1. Entry Reveal
     tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
 
-    // Camera pull back
+    // 2. Camera Depth - Pull back and parallax
     tl.fromTo(contentRef.current, 
-      { scale: 1.1 },
+      { scale: 1.15, y: "5vh" },
       {
         scale: 1,
+        y: 0,
         force3D: true,
         ease: "none",
       }, 0);
 
-    // Text Fade-In
+    // 3. Narrative Text entrance & persistence
     tl.fromTo(textRef.current,
-      { opacity: 0 },
+      { opacity: 0, scale: 0.9, y: 30 },
       {
         opacity: 1,
+        scale: 1,
+        y: 0,
         force3D: true,
-        ease: "power1.inOut",
-      }, 0.4);
+        ease: "power2.out",
+        duration: 0.4
+      }, 0.1);
 
-    // Exit transition (fade out)
+    // 4. Stars Celestial Kinetics - Converted from CSS to GSAP
+    starRefs.current.forEach((star, i) => {
+      if (star) {
+        tl.to(star, {
+          opacity: 1,
+          scale: (i % 3 === 0 ? 1.8 : 1.4),
+          x: (i % 2 === 0 ? 30 : -30),
+          y: (i % 3 === 0 ? 20 : -20),
+          ease: "none",
+        }, 0);
+      }
+    });
+
+    // 5. Nebula & Silhouette Parallax
+    tl.to(nebulaRef.current, {
+        rotate: 35,
+        opacity: 0.6,
+        scale: 1.2,
+        ease: "none"
+    }, 0);
+
+    tl.to(silhouetteRef.current, {
+        y: "-5vh",
+        scale: 1.1,
+        ease: "none"
+    }, 0);
+
+    // 6. Text Exit - Floating away
+    tl.to(textRef.current, {
+        opacity: 0,
+        y: -60,
+        scale: 1.2,
+        ease: "none"
+    }, 0.7);
+
+    // 7. Exit transition
     tl.to(sectionRef.current, {
       opacity: 0,
       ease: "none",
@@ -88,7 +124,7 @@ const Moment10 = ({ index }: { index: number }) => {
       tl.kill();
       ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
     };
-  }, []);
+  }, [starsData]);
 
 
   return (
@@ -107,6 +143,7 @@ const Moment10 = ({ index }: { index: number }) => {
 
       <div ref={contentRef} className="absolute inset-0 w-full h-full">
         <div 
+          ref={nebulaRef}
           className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-[200%] h-[40%] origin-center pointer-events-none opacity-40"
           style={{
             transform: 'translate(-50%, -70%) rotate(25deg)',
@@ -128,9 +165,10 @@ const Moment10 = ({ index }: { index: number }) => {
         </div>
 
         <div className="absolute inset-0 pointer-events-none">
-          {starsData.map((star) => (
+          {starsData.map((star, i) => (
             <div 
               key={star.id}
+              ref={el => { if (el) starRefs.current[i] = el; }}
               className="absolute rounded-full"
               style={{
                 top: star.top,
@@ -139,7 +177,6 @@ const Moment10 = ({ index }: { index: number }) => {
                 height: star.size,
                 backgroundColor: star.color,
                 boxShadow: star.hasGlow ? '0 0 3px rgba(220, 230, 255, 0.4)' : 'none',
-                animation: `${star.animationName} ${star.duration}s ease-in-out ${star.delay}s infinite alternate`
               }}
             />
           ))}
@@ -153,6 +190,7 @@ const Moment10 = ({ index }: { index: number }) => {
         />
 
         <div 
+          ref={silhouetteRef}
           className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[clamp(100px,18vw,240px)] h-[25%] z-20"
         >
           <div 
@@ -199,22 +237,9 @@ const Moment10 = ({ index }: { index: number }) => {
         </p>
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes twinkle1 {
-          0%, 100% { opacity: 0.4; transform: scale(0.95); }
-          50% { opacity: 0.9; transform: scale(1.05); }
-        }
-        @keyframes twinkle2 {
-          0%, 100% { opacity: 0.5; transform: scale(1); }
-          50% { opacity: 0.8; transform: scale(1.1); }
-        }
-        @keyframes twinkle3 {
-          0%, 100% { opacity: 0.3; transform: scale(1); }
-          50% { opacity: 1; transform: scale(1.15); }
-        }
-      ` }} />
     </section>
   );
 };
 
 export default Moment10;
+
