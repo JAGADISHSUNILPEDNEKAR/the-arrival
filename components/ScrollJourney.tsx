@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import Lenis from '@studio-freight/lenis';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
 
 import Moment01 from './moments/Moment01';
@@ -26,24 +25,7 @@ const ScrollJourneyContent = () => {
   const { setMasterTl } = useScroll();
 
   useEffect(() => {
-    const lenis = new Lenis({
-      duration: 1.8,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-      orientation: 'vertical',
-      smoothWheel: true,
-      wheelMultiplier: 1.1,
-      lerp: 0.1,
-    });
-
-    const raf = (time: number) => {
-      lenis.raf(time * 1000);
-    };
-    gsap.ticker.add(raf);
-    gsap.ticker.lagSmoothing(0);
-
-    // Sync ScrollTrigger with Lenis
-    lenis.on('scroll', ScrollTrigger.update);
-
+    // Master timeline for the cinematic scrollytelling
     const masterTl = gsap.timeline({
       scrollTrigger: {
         trigger: scrollerRef.current,
@@ -64,10 +46,9 @@ const ScrollJourneyContent = () => {
     setMasterTl(masterTl);
     
     // Refresh ScrollTrigger to ensure all dimensions are correct
-    // We wait a bit longer to ensure all child components have registered their tweens
     const timer = setTimeout(() => {
       ScrollTrigger.refresh();
-      console.log('ScrollTrigger refreshed');
+      console.log('ScrollTrigger refreshed from ScrollJourney');
     }, 500);
 
     const handleResize = () => {
@@ -81,8 +62,6 @@ const ScrollJourneyContent = () => {
       clearTimeout(timer);
       window.removeEventListener('load', handleResize);
       window.removeEventListener('resize', handleResize);
-      lenis.destroy();
-      gsap.ticker.remove(raf);
       masterTl.kill();
       ScrollTrigger.getAll().forEach(t => t.kill());
     };
