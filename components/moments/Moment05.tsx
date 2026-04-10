@@ -45,27 +45,34 @@ const Moment05 = ({ index }: { index: number }) => {
       }
     });
 
-    // 1. Entry Reveal
-    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+    // 1. Entry Reveal - standardized fade + transform
+    tl.fromTo(sectionRef.current,
+      { opacity: 0, scale: 1.05 },
+      { 
+        opacity: 1, 
+        scale: 1,
+        ease: "power2.out",
+        duration: 0.2 
+      }, 0);
 
-    // 2. Main split animation (the shift) with Parallax
+    // 2. Main split animation (the shift) with Parallax - slightly delayed to start during/after entry
     tl.to(shadeSideRef.current, {
       width: "68%",
       force3D: true,
       ease: "power1.inOut",
-    }, 0);
+    }, 0.1);
 
     tl.to(sunSideRef.current, {
       width: "35%",
       force3D: true,
       ease: "power1.inOut",
-    }, 0);
+    }, 0.1);
 
     tl.to(boundaryRef.current, {
       left: "32%",
       force3D: true,
       ease: "power1.inOut",
-    }, 0);
+    }, 0.1);
 
     // 3. Dappled lights scroll-driven flutter
     dappleRefs.current.forEach((dapple, i) => {
@@ -100,11 +107,13 @@ const Moment05 = ({ index }: { index: number }) => {
       ease: "none"
     }, 0);
 
-    // 6. Exit transition
+    // 6. Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      ease: "none",
-    }, 0.9);
+      scale: 0.95,
+      y: -30,
+      ease: "power2.inOut",
+    }, 0.85);
 
     return () => {
       tl.kill();

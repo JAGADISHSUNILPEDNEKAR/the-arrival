@@ -36,15 +36,22 @@ const Moment03 = ({ index }: { index: number }) => {
       }
     });
 
-    // 1. Entry Reveal
-    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+    // 1. Entry Reveal - standardized fade + transform
+    tl.fromTo(sectionRef.current,
+      { opacity: 0, scale: 1.05 },
+      { 
+        opacity: 1, 
+        scale: 1,
+        ease: "power2.out",
+        duration: 0.2 
+      }, 0);
 
     // 2. Parallax Layers
     tl.fromTo(skyRef.current, { y: "-5%" }, { y: "5%", ease: "none" }, 0);
     tl.fromTo(deepWaterRef.current, { y: "2%" }, { y: "-2%", ease: "none" }, 0);
     tl.fromTo(shallowLagoonRef.current, { y: "5%" }, { y: "-5%", ease: "none" }, 0);
 
-    // 3. Island and Jetty entrance with Depth
+    // 3. Island and Jetty entrance with Depth - moved slightly to start after entry reveal
     tl.fromTo(islandRef.current,
       { opacity: 0, scale: 0.7, y: 50 },
       { 
@@ -54,7 +61,7 @@ const Moment03 = ({ index }: { index: number }) => {
         force3D: true,
         ease: "power2.out",
         duration: 0.4
-      }, 0);
+      }, 0.1);
 
     tl.fromTo(jettyRef.current,
       { opacity: 0, scaleY: 0 },
@@ -64,7 +71,7 @@ const Moment03 = ({ index }: { index: number }) => {
         force3D: true,
         ease: "power2.out",
         duration: 0.3
-      }, 0.1);
+      }, 0.2);
 
     // 4. Caustics - Converted from CSS to GSAP Scroll-driven
     tl.to(causticsRef.current, {
@@ -90,11 +97,13 @@ const Moment03 = ({ index }: { index: number }) => {
       ease: "power1.in",
     }, 0.5);
 
-    // 6. Exit transition
+    // 6. Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      ease: "none",
-    }, 0.9);
+      scale: 0.95,
+      y: -30,
+      ease: "power2.inOut",
+    }, 0.85);
 
     return () => {
       tl.kill();

@@ -39,12 +39,15 @@ const Moment01 = ({ index }: { index: number }) => {
       }
     });
 
-    // 1. Entry Reveal - opacity tied to scroll
-    tl.to(sectionRef.current, { 
-      opacity: 1, 
-      ease: "none",
-      duration: 0.1 
-    }, 0);
+    // 1. Entry Reveal - standardized fade + transform
+    tl.fromTo(sectionRef.current,
+      { opacity: 0, scale: 1.05 },
+      { 
+        opacity: 1, 
+        scale: 1,
+        ease: "power2.out",
+        duration: 0.2 
+      }, 0);
 
     // 2. Parallax Background - movement speed differentiation
     tl.to(backgroundGradRef.current, {
@@ -67,7 +70,7 @@ const Moment01 = ({ index }: { index: number }) => {
       ease: "none",
     }, 0);
 
-    // 4. Content Reveal (Layered)
+    // 4. Content Reveal (Layered) - delayed slightly for better reveal
     tl.fromTo([contentRef.current, ctaRef.current, proofsRef.current], 
       { opacity: 0, y: 40, scale: 0.95 },
       {
@@ -77,7 +80,7 @@ const Moment01 = ({ index }: { index: number }) => {
         duration: 0.3,
         stagger: 0.05,
         ease: "power2.out"
-      }, 0.1);
+      }, 0.2);
 
     // 5. Exit Transition - UI Elements fade out first
     tl.to([contentRef.current, ctaRef.current, proofsRef.current], {
@@ -87,13 +90,15 @@ const Moment01 = ({ index }: { index: number }) => {
       force3D: true,
       ease: "power2.in",
       stagger: 0.05
-    }, 0.6);
+    }, 0.7);
 
-    // 6. Final Moment Fade
+    // 6. Final Moment Fade - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      ease: "none",
-    }, 0.9);
+      scale: 0.95,
+      y: -30,
+      ease: "power2.inOut",
+    }, 0.85);
 
     return () => {
       tl.kill();
@@ -107,7 +112,7 @@ const Moment01 = ({ index }: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-screen overflow-hidden" 
       id="moment-01"
-      style={{ opacity: 0 }} // Start hidden
+       // Start hidden
     >
       <HeroBackground 
         ref={backgroundContainerRef} 
