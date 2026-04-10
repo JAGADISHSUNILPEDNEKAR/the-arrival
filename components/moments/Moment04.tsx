@@ -58,89 +58,96 @@ const Moment04 = ({ index }: { index: number }) => {
         duration: 0.2 
       }, 0);
 
-    // 2. Planks and feet entrance
+    // 2. Planks and feet entrance - Staggered midground reveal
     tl.fromTo(planksContainerRef.current,
-      { y: 80, opacity: 0 },
+      { y: 120, opacity: 0, scale: 0.9 },
       {
         y: 0,
         opacity: 1,
+        scale: 1,
         force3D: true,
         ease: "power2.out",
-        duration: 0.4
+        duration: 0.5
       }, 0.1);
 
     tl.fromTo(feetRef.current,
-      { opacity: 0, y: 20 },
+      { opacity: 0, y: 40 },
       {
         opacity: 1,
         y: 0,
         force3D: true,
-        duration: 0.3
-      }, 0.2);
+        duration: 0.4,
+        ease: "power2.out"
+      }, 0.25);
 
-    // 3. Text content reveal
+    // 3. Text content reveal - Foreground depth (steeper curve)
     tl.fromTo(textRef.current,
-      { opacity: 0, y: 50, scale: 0.9 },
+      { opacity: 0, y: 100, scale: 0.9, rotate: -2 },
       {
         opacity: 1,
         y: 0,
         scale: 1,
+        rotate: 0,
         force3D: true,
-        duration: 0.3
-      }, 0.3);
+        duration: 0.5,
+        ease: "power2.out"
+      }, 0.35);
 
-    // 4. Main perspective and movement (Parallax)
+    // 4. Main perspective and movement (Parallax mapping)
     tl.to(planksRef.current, {
-      rotateX: "45deg",
+      rotateX: "50deg", // More pronounced angle
       ease: "none",
       force3D: true,
     }, 0);
 
     tl.to(planksContainerRef.current, {
-      y: "-20vh",
-      scale: 1.1,
+      y: "-25vh",
+      scale: 1.15,
       ease: "none",
       force3D: true,
     }, 0);
 
-    // Distant figure growth (Depth)
+    // Distant figure remains slower for scale depth
     tl.to(figureRef.current, {
-      scale: 2.2,
-      y: "-40px",
-      opacity: 0.2, // Fade out as we get "too close"
+      scale: 2.5,
+      y: "-60px",
+      opacity: 0.1, // Near-complete fade as we pass through
       force3D: true,
       ease: "none",
-    }, 0.3);
+    }, 0.2);
 
-    // 5. Petals and Feet (Subtle scroll-driven motion)
+    // 5. Petals (Multi-speed 3D drift)
     petalsRef.current.forEach((petal, i) => {
       if (petal) {
         tl.to(petal, {
-          y: -40 - (i * 10),
-          rotation: (i % 2 === 0 ? 45 : -45),
+          y: -150 - (i * 20),
+          x: (i % 2 === 0 ? 40 : -40), // Side drift
+          rotation: (i % 2 === 0 ? 120 : -120),
           opacity: 0,
+          scale: 1.5,
           ease: "none"
-        }, 0.2);
+        }, 0.1 + (i * 0.05));
       }
     });
 
-    tl.to(feetLeftRef.current, { scale: 1.05, opacity: 0.8, y: -5, ease: "none" }, 0.2);
-    tl.to(feetRightRef.current, { scale: 1.05, opacity: 0.8, y: -5, ease: "none" }, 0.35);
+    tl.to(feetLeftRef.current, { scale: 1.1, opacity: 0.7, y: -10, ease: "none" }, 0.2);
+    tl.to(feetRightRef.current, { scale: 1.1, opacity: 0.7, y: -10, ease: "none" }, 0.35);
 
-    // 6. Text Exit
+    // 6. Text Exit - Extremely fast "camera pass"
     tl.to(textRef.current, {
       opacity: 0,
-      y: -50,
-      scale: 1.1,
+      y: -180, 
+      scale: 1.2,
+      rotate: 2,
       force3D: true,
-      ease: "none",
-    }, 0.7);
+      ease: "power2.in",
+    }, 0.65);
 
     // 7. Final Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95,
-      y: -30,
+      scale: 0.9,
+      y: -60,
       ease: "power2.inOut",
     }, 0.85);
 

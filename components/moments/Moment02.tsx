@@ -43,70 +43,77 @@ const Moment02 = ({ index }: { index: number }) => {
         duration: 0.2 
       }, 0);
 
-    // 2. Island entrance and Parallax depth
+    // 2. Island entrance and Parallax depth - Midground speed
     tl.fromTo(islandRef.current, 
-      { x: 60, opacity: 0, scale: 0.8 },
+      { x: 100, opacity: 0, scale: 0.8 },
       { 
         x: 0, 
         opacity: 1,
         scale: 1,
         force3D: true,
-        duration: 0.4
-      }, 0);
+        duration: 0.5,
+        ease: "power2.out"
+      }, 0.1);
 
     tl.to(islandRef.current, {
-      scale: 1.8,
-      x: "-12vw",
-      y: "5vh",
+      scale: 1.9,
+      x: "-15vw",
+      y: "8vh",
       force3D: true,
       ease: "none",
-    }, 0.4);
+    }, 0.5);
 
-    // 3. Background parallax
+    // 3. Background parallax - Very slow deep background
     tl.to(backgroundRef.current, {
-      y: "12%",
-      scale: 1.1,
+      y: "6%", // Slower than before
+      scale: 1.08,
       force3D: true,
       ease: "none",
     }, 0);
 
-    // 4. Water Shimmer - Converted from CSS to GSAP Scroll-driven
+    // 4. Water Shimmer - Mid-slow speed
     tl.to(waterShimmerRef.current, {
-      backgroundPositionX: "300px",
+      backgroundPositionX: "400px",
+      y: "2%",
       ease: "none",
     }, 0);
 
     // 5. Warm Overlay fade in
     tl.fromTo(overlayRef.current,
-      { opacity: 0 },
+      { opacity: 0, scale: 1.1 },
       {
-        opacity: 0.7,
+        opacity: 0.75,
+        scale: 1,
         force3D: true,
+        ease: "none"
       }, 0);
 
-    // 6. Text content animation
+    // 6. Text content animation - Foreground (fastest)
     tl.fromTo(textRef.current,
-      { opacity: 0, y: 50, scale: 0.95 },
+      { opacity: 0, y: 80, scale: 0.92, skewX: 2 },
       {
         opacity: 1,
         y: 0,
         scale: 1,
+        skewX: 0,
         force3D: true,
-      }, 0.2);
+        duration: 0.4,
+        ease: "power2.out"
+      }, 0.25);
 
     tl.to(textRef.current, {
         opacity: 0,
-        y: -50,
-        scale: 1.05,
+        y: -140, // Fast exit for depth
+        scale: 1.15,
         force3D: true,
-        ease: "none",
+        ease: "power2.in",
     }, 0.7);
 
     // 7. Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95,
-      y: -30,
+      scale: 0.92,
+      y: -50,
       ease: "power2.inOut",
     }, 0.85);
 

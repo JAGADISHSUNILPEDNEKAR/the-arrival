@@ -51,42 +51,43 @@ const Moment01 = ({ index }: { index: number }) => {
 
     // 2. Parallax Background - movement speed differentiation
     tl.to(backgroundGradRef.current, {
-      y: "15%",
+      y: "8%", // Very slow deep background
       force3D: true,
       ease: "none",
     }, 0);
 
     tl.to(backgroundContainerRef.current, {
-      scale: 1.1,
+      scale: 1.12, // Subtle zoom
       force3D: true,
       ease: "none",
     }, 0);
 
-    // 3. Horizon glow parallax
+    // 3. Horizon glow parallax - Midground speed
     tl.to(glowRef.current, {
-      scaleY: 1.4,
-      y: "-5%",
+      scaleY: 1.5,
+      y: "-8%", 
+      opacity: 0.8,
       force3D: true,
       ease: "none",
     }, 0);
 
     // 4. Content Reveal (Layered) - delayed slightly for better reveal
     tl.fromTo([contentRef.current, ctaRef.current, proofsRef.current], 
-      { opacity: 0, y: 40, scale: 0.95 },
+      { opacity: 0, y: 60, scale: 0.98 },
       {
         opacity: 1,
         y: 0,
         scale: 1,
-        duration: 0.3,
-        stagger: 0.05,
+        duration: 0.4,
+        stagger: 0.08,
         ease: "power2.out"
-      }, 0.2);
+      }, 0.15);
 
-    // 5. Exit Transition - UI Elements fade out first
+    // 5. Exit Transition - Foreground elements move faster for depth
     tl.to([contentRef.current, ctaRef.current, proofsRef.current], {
       opacity: 0,
-      y: -60,
-      scale: 1.05,
+      y: -120, // Faster exit for "foreground" feel
+      scale: 1.1,
       force3D: true,
       ease: "power2.in",
       stagger: 0.05
@@ -95,8 +96,8 @@ const Moment01 = ({ index }: { index: number }) => {
     // 6. Final Moment Fade - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95,
-      y: -30,
+      scale: 0.92, // Slight shrink back
+      y: -50,
       ease: "power2.inOut",
     }, 0.85);
 

@@ -46,52 +46,55 @@ const Moment03 = ({ index }: { index: number }) => {
         duration: 0.2 
       }, 0);
 
-    // 2. Parallax Layers
-    tl.fromTo(skyRef.current, { y: "-5%" }, { y: "5%", ease: "none" }, 0);
-    tl.fromTo(deepWaterRef.current, { y: "2%" }, { y: "-2%", ease: "none" }, 0);
-    tl.fromTo(shallowLagoonRef.current, { y: "5%" }, { y: "-5%", ease: "none" }, 0);
+    // 2. Parallax Layers - Multi-depth calibration
+    tl.fromTo(skyRef.current, { y: "-2%" }, { y: "2%", ease: "none" }, 0); // Deepest
+    tl.fromTo(deepWaterRef.current, { y: "4%" }, { y: "-4%", ease: "none" }, 0); 
+    tl.fromTo(shallowLagoonRef.current, { y: "8%" }, { y: "-8%", ease: "none" }, 0); 
+    tl.fromTo(sandRef.current, { y: "12%", opacity: 0.2 }, { y: "-12%", opacity: 0.5, ease: "none" }, 0); // Near seabed
 
-    // 3. Island and Jetty entrance with Depth - moved slightly to start after entry reveal
+    // 3. Island and Jetty entrance with Depth
     tl.fromTo(islandRef.current,
-      { opacity: 0, scale: 0.7, y: 50 },
+      { opacity: 0, scale: 0.7, y: 80 },
       { 
         opacity: 1, 
         scale: 1, 
         y: 0,
         force3D: true,
         ease: "power2.out",
-        duration: 0.4
+        duration: 0.5
       }, 0.1);
 
     tl.fromTo(jettyRef.current,
-      { opacity: 0, scaleY: 0 },
+      { opacity: 0, scaleY: 0, y: 100 },
       { 
         opacity: 1, 
         scaleY: 1,
+        y: 0,
         force3D: true,
         ease: "power2.out",
-        duration: 0.3
+        duration: 0.4
       }, 0.2);
 
-    // 4. Caustics - Converted from CSS to GSAP Scroll-driven
+    // 4. Caustics - Independent drift
     tl.to(causticsRef.current, {
-      backgroundPosition: "20px -20px",
-      opacity: 0.3,
+      backgroundPosition: "40px -40px",
+      opacity: 0.4,
+      scale: 1.1,
       ease: "none",
     }, 0);
 
-    // 5. Main Action - Zoom into the Island
+    // 5. Main Action - Zoom into the Island (Foreground moves faster)
     tl.to(islandRef.current, {
-      scale: 2.5,
-      y: "-40vh",
+      scale: 2.8,
+      y: "-50vh",
       opacity: 0,
       force3D: true,
       ease: "power1.in",
     }, 0.5);
 
     tl.to(jettyRef.current, {
-      scaleY: 2,
-      y: "-20vh",
+      scaleY: 2.5,
+      y: "-30vh",
       opacity: 0,
       force3D: true,
       ease: "power1.in",
@@ -100,8 +103,8 @@ const Moment03 = ({ index }: { index: number }) => {
     // 6. Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95,
-      y: -30,
+      scale: 0.92,
+      y: -50,
       ease: "power2.inOut",
     }, 0.85);
 
