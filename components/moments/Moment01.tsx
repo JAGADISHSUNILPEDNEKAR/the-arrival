@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { useScroll } from '@/lib/context/ScrollContext';
+import { gsap, ScrollTrigger } from '@/lib/gsap';
+
 import HeroBackground from '../hero/HeroBackground';
 import HeroContent from '../hero/HeroContent';
 import HeroCTA from '../hero/HeroCTA';
@@ -16,56 +17,63 @@ const Moment01 = ({ index }: { index: number }) => {
   const ctaRef = useRef<HTMLDivElement>(null);
   const proofsRef = useRef<HTMLDivElement>(null);
   
-  const { masterTl } = useScroll();
-
   useEffect(() => {
-    if (!masterTl || !sectionRef.current) return;
+    if (!sectionRef.current) return;
 
-    const label = `moment-01`;
-    
-    // Visibility toggle: Make active immediately at the start
-    masterTl.set(sectionRef.current, { 
-      opacity: 1, 
-      pointerEvents: 'auto'
-    }, label);
-
-    // Initial state for children
-    masterTl.set(contentRef.current, { opacity: 1, y: 0 }, label);
+    // Create a local timeline for this moment
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "+=200%", // Lock for 2 viewports
+        pin: true,
+        pinSpacing: false, // Allow next section to scroll over
+        scrub: 1,
+        onToggle: self => {
+          if (self.isActive) {
+            sectionRef.current?.classList.add('active');
+          } else {
+            sectionRef.current?.classList.remove('active');
+          }
+        }
+      }
+    });
 
     // Background logic
-    masterTl.to(backgroundGradRef.current, {
+    tl.to(backgroundGradRef.current, {
       y: "12%",
       force3D: true,
       ease: "none",
-      duration: 8 // Occupies 80% of the slot
-    }, `${label}+=0`);
+    }, 0);
 
     // Horizon glow
-    masterTl.to(glowRef.current, {
+    tl.to(glowRef.current, {
       scaleY: 1.3,
       force3D: true,
       ease: "none",
-      duration: 8
-    }, `${label}+=0`);
+    }, 0);
 
-    // UI Elements fade out
-    masterTl.to([contentRef.current, ctaRef.current, proofsRef.current], {
+    // UI Elements fade out as we scroll deep into the pin
+    tl.to([contentRef.current, ctaRef.current, proofsRef.current], {
       opacity: 0,
-      y: -30,
+      y: -50,
       force3D: true,
       ease: "power2.inOut",
-      duration: 3,
-      stagger: 0.5
-    }, `${label}+=5`);
+      stagger: 0.1
+    }, 0.5);
 
-    // Exit: fade out to next moment
-    masterTl.to(sectionRef.current, {
+    // Fade out background slightly as next moment arrives
+    tl.to(sectionRef.current, {
       opacity: 0,
-      pointerEvents: 'none',
-      duration: 2
-    }, `${label}+=8`);
+      ease: "none",
+    }, 1);
 
-  }, [masterTl]);
+    return () => {
+      tl.kill();
+      ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
+    };
+  }, []);
+
 
   return (
     <section 
