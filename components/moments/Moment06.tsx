@@ -14,6 +14,7 @@ const Moment06 = ({ index }: { index: number }) => {
   const lightsRef = useRef<HTMLDivElement>(null);
   const palmLeftRef = useRef<HTMLDivElement>(null);
   const palmRightRef = useRef<HTMLDivElement>(null);
+  const dappleRefs = useRef<HTMLDivElement[]>([]);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -25,7 +26,7 @@ const Moment06 = ({ index }: { index: number }) => {
         end: "+=200%",
         pin: true,
         pinSpacing: false,
-        scrub: 1,
+        scrub: true,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -36,10 +37,10 @@ const Moment06 = ({ index }: { index: number }) => {
       }
     });
 
-    // Entry Reveal
+    // 1. Entry Reveal
     tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
 
-    // Staggered reveal of architectural elements
+    // 2. Staggered reveal of architectural elements
     const revealElements = [
         palmLeftRef.current,
         palmRightRef.current,
@@ -53,33 +54,54 @@ const Moment06 = ({ index }: { index: number }) => {
     tl.fromTo(revealElements, 
       { 
         opacity: 0, 
-        scale: 0.95, 
-        y: 20 
+        scale: 0.9, 
+        y: 60 
       }, 
       { 
         opacity: 1, 
         scale: 1, 
         y: 0, 
-        stagger: 0.05,
+        stagger: 0.04,
         force3D: true,
         ease: "power2.out",
+        duration: 0.4
       }, 0);
 
-    // Main structural push
+    // 3. Parallax "Deep Dive" - Main structural push
     tl.to(structureRef.current, {
-      scale: 1.05,
+      scale: 1.15,
+      y: "-5vh",
       force3D: true,
       ease: "none",
     }, 0);
 
     tl.to(glowRef.current, {
-      opacity: 0.25,
-      filter: "blur(20px)",
+      opacity: 0.35,
+      scale: 1.2,
+      filter: "blur(30px)",
       force3D: true,
       ease: "none",
     }, 0);
 
-    // Exit transition (fade out)
+    // 4. Palms Parallax - Moving faster/slower
+    tl.to(palmLeftRef.current, { x: "-5vw", y: "-2vh", rotate: -5, ease: "none" }, 0);
+    tl.to(palmRightRef.current, { x: "5vw", y: "-2vh", rotate: 5, ease: "none" }, 0);
+
+    // 5. Dapples - Converted from CSS to GSAP Scroll-driven
+    dappleRefs.current.forEach((dapple, i) => {
+      if (dapple) {
+        tl.to(dapple, {
+          xPercent: (i % 2 === 0 ? 30 : -30),
+          yPercent: (i % 3 === 0 ? 20 : -20),
+          rotate: (i % 2 === 0 ? 15 : -15),
+          scale: 1.2,
+          opacity: 0.12,
+          ease: "none"
+        }, 0);
+      }
+    });
+
+    // 6. Exit transition
     tl.to(sectionRef.current, {
       opacity: 0,
       ease: "none",
@@ -93,12 +115,12 @@ const Moment06 = ({ index }: { index: number }) => {
 
 
   const dapples = [
-    { top: '10%', left: '15%', size: '300px', delay: '0s', dur: '8s' },
-    { top: '25%', left: '60%', size: '350px', delay: '-2s', dur: '10s' },
-    { top: '5%', left: '40%', size: '280px', delay: '-4s', dur: '9s' },
-    { top: '30%', left: '20%', size: '320px', delay: '-1s', dur: '11s' },
-    { top: '15%', left: '75%', size: '310px', delay: '-5s', dur: '7s' },
-    { top: '40%', left: '45%', size: '290px', delay: '-3s', dur: '12s' },
+    { top: '10%', left: '15%', size: '300px' },
+    { top: '25%', left: '60%', size: '350px' },
+    { top: '5%', left: '40%', size: '280px' },
+    { top: '30%', left: '20%', size: '320px' },
+    { top: '15%', left: '75%', size: '310px' },
+    { top: '40%', left: '45%', size: '290px' },
   ];
 
   return (
@@ -116,6 +138,7 @@ const Moment06 = ({ index }: { index: number }) => {
         {dapples.map((d, i) => (
           <div 
             key={i}
+            ref={el => { if (el) dappleRefs.current[i] = el; }}
             className="absolute bg-[#dcc864] opacity-[0.07]"
             style={{
               top: d.top,
@@ -124,7 +147,6 @@ const Moment06 = ({ index }: { index: number }) => {
               height: d.size,
               borderRadius: '50%',
               filter: 'blur(20px)',
-              animation: `dappleShift ${d.dur} ease-in-out ${d.delay} infinite alternate`
             }}
           />
         ))}
@@ -217,14 +239,9 @@ const Moment06 = ({ index }: { index: number }) => {
         />
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes dappleShift {
-          0% { transform: translate(0, 0) rotate(0deg) scale(1); }
-          100% { transform: translate(20px, 15px) rotate(10deg) scale(1.1); }
-        }
-      ` }} />
     </section>
   );
 };
 
 export default Moment06;
+

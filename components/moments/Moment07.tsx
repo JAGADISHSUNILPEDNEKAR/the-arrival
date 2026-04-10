@@ -23,7 +23,7 @@ const Moment07 = ({ index }: { index: number }) => {
         end: "+=200%",
         pin: true,
         pinSpacing: false,
-        scrub: 1,
+        scrub: true,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -34,56 +34,72 @@ const Moment07 = ({ index }: { index: number }) => {
       }
     });
 
-    // Entry Reveal
+    // 1. Entry Reveal
     tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
 
-    // Container initial reveal (brightness/scale)
+    // 2. Container Reveal & Parallax Depth
     tl.fromTo(containerRef.current,
       { 
-        filter: "brightness(0.7)", 
-        scale: 0.97 
+        filter: "brightness(0.6)", 
+        scale: 0.95 
       },
       {
         filter: "brightness(1)",
         scale: 1,
         force3D: true,
         ease: "power2.out",
+        duration: 0.4
       }, 0);
 
-    // Narrative text entrance
+    // 3. Layered Parallax
+    tl.to(ceilingRef.current, { y: "-10%", ease: "none" }, 0);
+    tl.to(floorRef.current, { y: "5%", rotateX: "20deg", ease: "none" }, 0);
+
+    // 4. Narrative text reveal
     tl.fromTo(textRef.current,
-      { opacity: 0, x: -30 },
+      { opacity: 0, x: -50, scale: 0.9 },
       {
         opacity: 1,
         x: 0,
+        scale: 1,
         force3D: true,
+        duration: 0.3
       }, 0.1);
 
-    // Main pinned animations: table and container growth
+    // 5. Table "Coming Closer" Effect
     if (tableRef.current) {
       tl.to(tableRef.current, {
-        scale: 1.08,
-        y: -10,
-        opacity: 0.8,
+        scale: 1.25,
+        y: "-3vh",
+        opacity: 0.95,
         force3D: true,
-        ease: "power1.inOut",
+        ease: "none",
       }, 0);
     }
 
-    tl.to(containerRef.current, {
-      scale: 1.03,
-      force3D: true,
-      ease: "none",
-    }, 0);
+    // 6. Candles - Converted from CSS to GSAP Scroll-driven
+    candleRefs.current.forEach((candle, i) => {
+      if (candle) {
+        tl.to(candle, {
+          opacity: 0.35,
+          scale: 1.15,
+          x: (i % 2 === 0 ? 10 : -10),
+          y: (i % 3 === 0 ? 5 : -5),
+          filter: 'blur(35px)',
+          ease: "none"
+        }, 0);
+      }
+    });
 
     tl.to(textRef.current, {
       opacity: 0,
-      x: -50,
+      x: -80,
+      scale: 1.1,
       force3D: true,
       ease: "none",
     }, 0.7);
 
-    // Exit transition (fade out)
+    // 7. Exit transition
     tl.to(sectionRef.current, {
       opacity: 0,
       ease: "none",
@@ -97,10 +113,10 @@ const Moment07 = ({ index }: { index: number }) => {
 
 
   const candles = [
-    { left: '25%', top: '45%', width: '120px', height: '60px', dur: '3.2s', delay: '0s' },
-    { left: '60%', top: '55%', width: '140px', height: '70px', dur: '4.5s', delay: '-1.2s' },
-    { left: '40%', top: '35%', width: '90px', height: '45px', dur: '5s', delay: '-0.5s' },
-    { left: '75%', top: '40%', width: '110px', height: '55px', dur: '3.8s', delay: '-2s' },
+    { left: '25%', top: '45%', width: '120px', height: '60px' },
+    { left: '60%', top: '55%', width: '140px', height: '70px' },
+    { left: '40%', top: '35%', width: '90px', height: '45px' },
+    { left: '75%', top: '40%', width: '110px', height: '55px' },
   ];
 
   const tables = [
@@ -223,7 +239,6 @@ const Moment07 = ({ index }: { index: number }) => {
                 height: c.height,
                 opacity: 0.15,
                 filter: 'blur(30px)',
-                animation: `flicker ${c.dur} ease-in-out ${c.delay} infinite`
               }}
             />
           ))}
@@ -262,16 +277,9 @@ const Moment07 = ({ index }: { index: number }) => {
 
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes flicker {
-          0%, 100% { opacity: 0.12; transform: scale(1); }
-          25% { opacity: 0.20; transform: scale(1.05); }
-          50% { opacity: 0.13; transform: scale(0.98); }
-          75% { opacity: 0.18; transform: scale(1.02); }
-        }
-      ` }} />
     </section>
   );
 };
 
 export default Moment07;
+

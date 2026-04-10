@@ -10,6 +10,7 @@ const Moment05 = ({ index }: { index: number }) => {
   const shadeSideRef = useRef<HTMLDivElement>(null);
   const boundaryRef = useRef<HTMLDivElement>(null);
   const dappleRefs = useRef<HTMLDivElement[]>([]);
+  const petalsRef = useRef<HTMLDivElement[]>([]);
   const [bougainvilleaData, setBougainvilleaData] = useState<any[]>([]);
 
 
@@ -20,7 +21,6 @@ const Moment05 = ({ index }: { index: number }) => {
       top: 15 + Math.random() * 20,
       right: 10 + Math.random() * 15,
       rotate: Math.random() * 360,
-      delay: Math.random() * 2
     })));
   }, []);
 
@@ -34,7 +34,7 @@ const Moment05 = ({ index }: { index: number }) => {
         end: "+=200%",
         pin: true,
         pinSpacing: false,
-        scrub: 1,
+        scrub: true,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -45,49 +45,62 @@ const Moment05 = ({ index }: { index: number }) => {
       }
     });
 
-    // Entry Reveal
+    // 1. Entry Reveal
     tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
 
-    // Shade side initial brightness
-    tl.fromTo(shadeSideRef.current,
-      { filter: "brightness(0.7)" },
-      {
-        filter: "brightness(1)",
-        force3D: true,
-      }, 0);
-
-    // Main split animation (the shift)
+    // 2. Main split animation (the shift) with Parallax
     tl.to(shadeSideRef.current, {
-      width: "65%",
+      width: "68%",
       force3D: true,
-      ease: "none",
+      ease: "power1.inOut",
     }, 0);
 
     tl.to(sunSideRef.current, {
-      width: "37%",
+      width: "35%",
       force3D: true,
-      ease: "none",
+      ease: "power1.inOut",
     }, 0);
 
     tl.to(boundaryRef.current, {
-      left: "35%",
+      left: "32%",
       force3D: true,
-      ease: "none",
+      ease: "power1.inOut",
     }, 0);
 
-    // Dappled lights intensify
-    dappleRefs.current.forEach((dapple) => {
+    // 3. Dappled lights scroll-driven flutter
+    dappleRefs.current.forEach((dapple, i) => {
       if (dapple) {
         tl.to(dapple, {
-          opacity: "+=0.1",
-          scale: 1.1,
+          x: (i % 2 === 0 ? 15 : -15),
+          y: (i % 3 === 0 ? 10 : -10),
+          opacity: 0.25,
+          scale: 1.15,
           force3D: true,
           ease: "none",
         }, 0);
       }
     });
 
-    // Exit transition (fade out)
+    // 4. Petal Sway - Converted from CSS to GSAP
+    petalsRef.current.forEach((petal, i) => {
+      if (petal) {
+        tl.to(petal, {
+          rotation: (i % 2 === 0 ? "+=30" : "-=30"),
+          y: "-=15",
+          opacity: 0.6,
+          ease: "none"
+        }, 0.15);
+      }
+    });
+
+    // 5. Shadows parallax
+    tl.to(boundaryRef.current, {
+      y: "-5%",
+      scaleY: 1.05,
+      ease: "none"
+    }, 0);
+
+    // 6. Exit transition
     tl.to(sectionRef.current, {
       opacity: 0,
       ease: "none",
@@ -97,7 +110,7 @@ const Moment05 = ({ index }: { index: number }) => {
       tl.kill();
       ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
     };
-  }, []);
+  }, [bougainvilleaData]); // Re-run to bind refs
 
 
   const palmShadows = [
@@ -156,7 +169,6 @@ const Moment05 = ({ index }: { index: number }) => {
               height: `${light.h}px`,
               borderRadius: '50%',
               filter: 'blur(8px)',
-              animation: `dapple ${light.dur}s ease-in-out infinite`
             }}
           />
         ))}
@@ -165,6 +177,7 @@ const Moment05 = ({ index }: { index: number }) => {
           {bougainvilleaData.map((petal, i) => (
             <div 
               key={i}
+              ref={el => { if (el) petalsRef.current[i] = el; }}
               className="absolute bg-[#c8345a]"
               style={{
                 top: `${petal.top}%`,
@@ -173,7 +186,6 @@ const Moment05 = ({ index }: { index: number }) => {
                 height: `${petal.size}px`,
                 transform: `rotate(${petal.rotate}deg)`,
                 clipPath: 'polygon(50% 0%, 100% 38%, 81% 100%, 19% 100%, 0% 38%)',
-                animation: `petalSway 2.5s ease-in-out ${petal.delay}s infinite`
               }}
             />
           ))}
@@ -215,18 +227,9 @@ const Moment05 = ({ index }: { index: number }) => {
         ))}
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes dapple {
-          0%, 100% { opacity: 0.06; transform: translateX(0); }
-          50% { opacity: 0.18; transform: translateX(4px); }
-        }
-        @keyframes petalSway {
-          0%, 100% { transform: rotate(0deg) translateY(0); }
-          50% { transform: rotate(3deg) translateY(-2px); }
-        }
-      ` }} />
     </section>
   );
 };
 
 export default Moment05;
+

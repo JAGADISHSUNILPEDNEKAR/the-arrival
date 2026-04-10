@@ -11,7 +11,10 @@ const Moment08 = ({ index }: { index: number }) => {
   const plateRef = useRef<HTMLDivElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const candleRef = useRef<HTMLDivElement>(null);
+  const candleFlameRef = useRef<HTMLDivElement>(null);
+  const candleGlowRef = useRef<HTMLDivElement>(null);
   const glassRef = useRef<HTMLDivElement>(null);
+  const glassShimmerRef = useRef<HTMLDivElement>(null);
   const shadowRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const [menuLines, setMenuLines] = useState<number[]>([]);
@@ -31,7 +34,7 @@ const Moment08 = ({ index }: { index: number }) => {
         end: "+=200%",
         pin: true,
         pinSpacing: false,
-        scrub: 1,
+        scrub: true,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -42,50 +45,73 @@ const Moment08 = ({ index }: { index: number }) => {
       }
     });
 
-    // Entry Reveal
+    // 1. Entry Reveal
     tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
 
-    // Table and items entrance
+    // 2. Table and items entrance with individual Parallax speeds
     tl.fromTo(tableRef.current, 
-      { y: 30, opacity: 0 },
-      { y: 0, opacity: 1, force3D: true, ease: "power2.out" }, 0);
+      { y: 60, opacity: 0, scale: 0.95 },
+      { y: 0, opacity: 1, scale: 1, force3D: true, ease: "power2.out", duration: 0.4 }, 0);
 
-    // Stagger items
-    [plateRef.current, menuRef.current, candleRef.current, glassRef.current].forEach((item, i) => {
-      if (item) {
-        tl.fromTo(item,
-          { opacity: 0, scale: 0.95 },
-          { opacity: 1, scale: 1, force3D: true, ease: "power2.out" },
-          0.1 + i * 0.1
-        );
+    // Stagger items with varying parallax depths
+    const items = [
+      { el: plateRef.current, y: 30, speed: 0.1 },
+      { el: menuRef.current, y: 45, speed: 0.15 },
+      { el: candleRef.current, y: 20, speed: 0.08 },
+      { el: glassRef.current, y: 50, speed: 0.2 }
+    ];
+
+    items.forEach((item, i) => {
+      if (item.el) {
+        tl.fromTo(item.el,
+          { opacity: 0, y: item.y },
+          { 
+            opacity: 1, 
+            y: 0, 
+            force3D: true, 
+            ease: "power2.out",
+            duration: 0.3
+          }, 0.1 + i * 0.05);
       }
     });
 
+    // 3. Narrative text reveal
     tl.fromTo(textRef.current,
-      { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, force3D: true, ease: "power2.out" },
+      { opacity: 0, y: 30, x: 20 },
+      { opacity: 1, y: 0, x: 0, force3D: true, ease: "power2.out" },
       0.2);
 
-    // Pull back and shadow entry (pinned phase)
+    // 4. Main pinned animations: subtle zoom and shadow sweep
     tl.to(containerRef.current, {
-      scale: 1, 
+      scale: 1.05, 
       force3D: true,
       ease: "none",
     }, 0);
 
     tl.fromTo(shadowRef.current,
       { x: "100%", opacity: 0 },
-      { x: "0%", opacity: 0.4, force3D: true, ease: "power1.inOut" },
-      0.3);
+      { x: "-20%", opacity: 0.5, force3D: true, ease: "none" },
+      0.2);
 
+    // 5. Scroll-driven object kinetics
+    tl.to(menuRef.current, { rotate: 2, y: "-10px", ease: "none" }, 0.2);
+    tl.to(plateRef.current, { scale: 1.05, y: "-5px", ease: "none" }, 0.2);
+    
+    // 6. Candle & Glass - Converted from CSS to GSAP Scroll-driven
+    tl.to(candleFlameRef.current, { scale: 1.2, x: 2, ease: "none" }, 0.3);
+    tl.to(candleGlowRef.current, { opacity: 0.4, scale: 1.3, ease: "none" }, 0.3);
+    tl.to(glassShimmerRef.current, { x: "200%", ease: "none" }, 0.1);
+
+    // 7. Text Exit
     tl.to(textRef.current, {
       opacity: 0,
-      y: -20,
+      y: -40,
+      x: 30,
       force3D: true,
       ease: "none",
     }, 0.7);
 
-    // Exit transition (fade out)
+    // 8. Final Exit transition
     tl.to(sectionRef.current, {
       opacity: 0,
       ease: "none",
@@ -132,7 +158,7 @@ const Moment08 = ({ index }: { index: number }) => {
 
       <div 
         ref={containerRef}
-        className="relative w-full h-full scale-[1.02]"
+        className="relative w-full h-full"
         style={{
           background: 'linear-gradient(135deg, #1a1008 0%, #261808 40%, #1e1408 100%)'
         }}
@@ -198,7 +224,7 @@ const Moment08 = ({ index }: { index: number }) => {
                    <p className="text-[8px] uppercase tracking-widest text-center text-[#4a3820]" style={{ fontFamily: 'var(--font-sans)' }}>Tasting Menu<br/><span className="italic normal-case text-[10px] mt-2 block opacity-70" style={{ fontFamily: 'var(--font-serif)' }}>Inspired by the Tides</span></p>
                 </div>
                 {menuLines.map((width, i) => (
-                  <div key={i} className="h-[1px] bg-[rgba(100,80,60,0.3)]" style={{ width: `${width}%` }} />
+                   <div key={i} className="h-[1px] bg-[rgba(100,80,60,0.3)]" style={{ width: `${width}%` }} />
                 ))}
                 <div className="mt-auto h-[1px] bg-[rgba(80,60,40,0.5)] w-[40px]" />
               </div>
@@ -207,16 +233,16 @@ const Moment08 = ({ index }: { index: number }) => {
                 ref={candleRef}
                 className="absolute top-[30%] left-[15%] w-[40px] h-[70px] flex flex-col items-center"
               >
-                <div className="absolute -top-4 w-20 h-24 rounded-full pointer-events-none opacity-25"
-                     style={{
-                       background: 'radial-gradient(ellipse 40px 50px at center, rgba(255,200,80,0.5), transparent)',
-                       animation: 'candleFlickerOpacity 2.3s ease-in-out infinite'
-                     }}
+                <div 
+                  ref={candleGlowRef}
+                  className="absolute -top-4 w-20 h-24 rounded-full pointer-events-none opacity-25"
+                  style={{
+                    background: 'radial-gradient(ellipse 40px 50px at center, rgba(255,200,80,0.5), transparent)',
+                  }}
                 />
-                <div className="w-2 h-4 bg-[rgba(255,210,80,0.9)] rounded-[50%_50%_30%_30%] mb-1"
-                     style={{
-                       animation: 'candleFlicker 2.3s ease-in-out infinite'
-                     }}
+                <div 
+                  ref={candleFlameRef}
+                  className="w-2 h-4 bg-[rgba(255,210,80,0.9)] rounded-[50%_50%_30%_30%] mb-1"
                 />
                 <div className="w-[10px] h-[50px]"
                      style={{
@@ -230,7 +256,14 @@ const Moment08 = ({ index }: { index: number }) => {
                 className="absolute top-[25%] right-[25%] flex flex-col items-center pointer-events-none"
               >
                 <div className="w-8 h-12 rounded-[40%_40%_100%_100%] bg-[rgba(200,190,170,0.3)] overflow-hidden">
-                  <div className="w-full h-full" style={{ animation: 'shimmer 4s ease-in-out infinite', background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)' }} />
+                  <div 
+                    ref={glassShimmerRef}
+                    className="w-full h-full" 
+                    style={{ 
+                      background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent)',
+                      transform: 'translateX(-100%)'
+                    }} 
+                  />
                 </div>
                 <div className="w-[2px] h-10 bg-[rgba(200,190,170,0.3)]" />
               </div>
@@ -240,25 +273,9 @@ const Moment08 = ({ index }: { index: number }) => {
         </div>
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes candleFlicker {
-          0%, 100% { transform: scale(0.9) translateX(0); }
-          25% { transform: scale(1.1) translateX(1px); }
-          50% { transform: scale(0.95) translateX(-1px); }
-          75% { transform: scale(1.05) translateX(0.5px); }
-        }
-        @keyframes candleFlickerOpacity {
-          0%, 100% { opacity: 0.2; }
-          50% { opacity: 0.35; }
-        }
-        @keyframes shimmer {
-          0% { transform: translateX(-150%); }
-          50% { transform: translateX(150%); }
-          100% { transform: translateX(150%); }
-        }
-      ` }} />
     </section>
   );
 };
 
 export default Moment08;
+
