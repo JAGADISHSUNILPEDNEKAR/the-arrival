@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useScroll } from '@/lib/context/ScrollContext';
+import { gsap, ScrollTrigger } from '@/lib/gsap';
+
 
 const Moment05 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -11,7 +12,6 @@ const Moment05 = ({ index }: { index: number }) => {
   const dappleRefs = useRef<HTMLDivElement[]>([]);
   const [bougainvilleaData, setBougainvilleaData] = useState<any[]>([]);
 
-  const { masterTl } = useScroll();
 
   useEffect(() => {
     // Generate bougainvillea data only on client
@@ -25,71 +25,77 @@ const Moment05 = ({ index }: { index: number }) => {
   }, []);
 
   useEffect(() => {
-    if (!masterTl || !sectionRef.current) return;
+    if (!sectionRef.current) return;
 
-    const label = `moment-05`;
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "+=200%",
+        pin: true,
+        pinSpacing: false,
+        scrub: 1,
+        onToggle: self => {
+          if (self.isActive) {
+            sectionRef.current?.classList.add('active');
+          } else {
+            sectionRef.current?.classList.remove('active');
+          }
+        }
+      }
+    });
 
-    // Entry transition
-    masterTl.fromTo(sectionRef.current,
-      { opacity: 0 },
-      {
-        opacity: 1,
-        pointerEvents: 'auto',
-        duration: 2
-      }, `${label}-=1`);
-
-    // Shade side initial brightness (from previous)
-    masterTl.fromTo(shadeSideRef.current,
+    // Shade side initial brightness
+    tl.fromTo(shadeSideRef.current,
       { filter: "brightness(0.7)" },
       {
         filter: "brightness(1)",
         force3D: true,
-        duration: 4
-      }, label);
+      }, 0);
 
     // Main split animation (the shift)
-    masterTl.to(shadeSideRef.current, {
+    tl.to(shadeSideRef.current, {
       width: "65%",
       force3D: true,
       ease: "none",
-      duration: 10
-    }, label);
+    }, 0);
 
-    masterTl.to(sunSideRef.current, {
+    tl.to(sunSideRef.current, {
       width: "37%",
       force3D: true,
       ease: "none",
-      duration: 10
-    }, label);
+    }, 0);
 
-    masterTl.to(boundaryRef.current, {
+    tl.to(boundaryRef.current, {
       left: "35%",
       force3D: true,
       ease: "none",
-      duration: 10
-    }, label);
+    }, 0);
 
     // Dappled lights intensify
     dappleRefs.current.forEach((dapple) => {
       if (dapple) {
-        masterTl.to(dapple, {
+        tl.to(dapple, {
           opacity: "+=0.1",
           scale: 1.1,
           force3D: true,
           ease: "none",
-          duration: 10
-        }, label);
+        }, 0);
       }
     });
 
-    // Exit transition
-    masterTl.to(sectionRef.current, {
+    // Exit transition (fade out)
+    tl.to(sectionRef.current, {
       opacity: 0,
-      pointerEvents: 'none',
-      duration: 2
-    }, `${label}+=8`);
+      ease: "none",
+    }, 0.9);
 
-  }, [masterTl]);
+    return () => {
+      tl.kill();
+      ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
+    };
+  }, []);
+
 
   const palmShadows = [
     { width: 12, height: 100, top: 0, left: 0, opacity: 0.8 },

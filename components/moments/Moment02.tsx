@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { useScroll } from '@/lib/context/ScrollContext';
+import { gsap, ScrollTrigger } from '@/lib/gsap';
+
 
 const Moment02 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -10,83 +11,86 @@ const Moment02 = ({ index }: { index: number }) => {
   const backgroundRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
 
-  const { masterTl } = useScroll();
-
   useEffect(() => {
-    if (!masterTl || !sectionRef.current) return;
+    if (!sectionRef.current) return;
 
-    const label = `moment-02`;
-
-    // Entry transition from previous moment
-    masterTl.fromTo(sectionRef.current, 
-      { opacity: 0 }, 
-      { 
-        opacity: 1, 
-        pointerEvents: 'auto',
-        duration: 2 
-      }, `${label}-=1`); // Slight overlap for smooth transition
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "+=250%", // Slightly longer for detailed content
+        pin: true,
+        pinSpacing: false,
+        scrub: 1,
+        onToggle: self => {
+          if (self.isActive) {
+            sectionRef.current?.classList.add('active');
+          } else {
+            sectionRef.current?.classList.remove('active');
+          }
+        }
+      }
+    });
 
     // Island entrance and main move
-    masterTl.fromTo(islandRef.current, 
+    tl.fromTo(islandRef.current, 
       { x: 40, opacity: 0 },
       { 
         x: 0, 
         opacity: 1,
         force3D: true,
-        duration: 4
-      }, label);
+      }, 0);
 
-    masterTl.to(islandRef.current, {
+    tl.to(islandRef.current, {
       scale: 1.6,
       x: "-8vw",
       force3D: true,
       ease: "none",
-      duration: 6
-    }, `${label}+=4`);
+    }, 0.4);
 
     // Background movement
-    masterTl.to(backgroundRef.current, {
+    tl.to(backgroundRef.current, {
       y: "8%",
       force3D: true,
       ease: "none",
-      duration: 10
-    }, label);
+    }, 0);
 
     // Warm Overlay fade in
-    masterTl.fromTo(overlayRef.current,
+    tl.fromTo(overlayRef.current,
       { opacity: 0 },
       {
         opacity: 0.6,
         force3D: true,
-        duration: 4
-      }, label);
+      }, 0);
 
     // Text content animation
-    masterTl.fromTo(textRef.current,
+    tl.fromTo(textRef.current,
       { opacity: 0, y: 30 },
       {
         opacity: 1,
         y: 0,
         force3D: true,
-        duration: 4
-      }, `${label}+=2`);
+      }, 0.2);
 
-    masterTl.to(textRef.current, {
+    tl.to(textRef.current, {
         opacity: 0,
         y: -30,
         force3D: true,
         ease: "none",
-        duration: 4
-    }, `${label}+=6`);
+    }, 0.7);
 
-    // Exit transition
-    masterTl.to(sectionRef.current, {
+    // Exit transition (fade out)
+    tl.to(sectionRef.current, {
       opacity: 0,
-      pointerEvents: 'none',
-      duration: 2
-    }, `${label}+=8`);
+      ease: "none",
+    }, 0.9);
 
-  }, [masterTl]);
+    return () => {
+      tl.kill();
+      ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
+    };
+  }, []);
+
 
   return (
     <section 

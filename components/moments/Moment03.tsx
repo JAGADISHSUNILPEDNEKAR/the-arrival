@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { useScroll } from '@/lib/context/ScrollContext';
+import { gsap, ScrollTrigger } from '@/lib/gsap';
+
 
 const Moment03 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -14,67 +15,72 @@ const Moment03 = ({ index }: { index: number }) => {
   const islandRef = useRef<HTMLDivElement>(null);
   const jettyRef = useRef<HTMLDivElement>(null);
 
-  const { masterTl } = useScroll();
-
   useEffect(() => {
-    if (!masterTl || !sectionRef.current) return;
+    if (!sectionRef.current) return;
 
-    const label = `moment-03`;
-
-    // Entry transition
-    masterTl.fromTo(sectionRef.current,
-      { opacity: 0 },
-      {
-        opacity: 1,
-        pointerEvents: 'auto',
-        duration: 2
-      }, `${label}-=1`);
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "+=200%",
+        pin: true,
+        pinSpacing: false,
+        scrub: 1,
+        onToggle: self => {
+          if (self.isActive) {
+            sectionRef.current?.classList.add('active');
+          } else {
+            sectionRef.current?.classList.remove('active');
+          }
+        }
+      }
+    });
 
     // Island and jetty entrance
-    masterTl.fromTo([islandRef.current, jettyRef.current],
+    tl.fromTo([islandRef.current, jettyRef.current],
       { opacity: 0, y: 20 },
       { 
         opacity: 1, 
         y: 0,
-        duration: 4,
         force3D: true,
         ease: "power2.out"
-      }, label);
+      }, 0);
 
     // Background movement
-    masterTl.to(backgroundGroupRef.current, {
+    tl.to(backgroundGroupRef.current, {
       y: "6%",
       force3D: true,
       ease: "none",
-      duration: 10
-    }, label);
+    }, 0);
 
     // Caustics fade out
-    masterTl.to(causticsRef.current, {
+    tl.to(causticsRef.current, {
       opacity: 0,
       force3D: true,
       ease: "none",
-      duration: 10
-    }, label);
+    }, 0);
 
     // Island zoom and fade out (main action)
-    masterTl.to(islandRef.current, {
+    tl.to(islandRef.current, {
       scale: 2,
       y: "-30vh",
       opacity: 0,
       force3D: true,
       ease: "power1.in",
-      duration: 6
-    }, `${label}+=4`);
+    }, 0.5);
 
-    // Exit transition
-    masterTl.to(sectionRef.current, {
+    // Exit transition (fade out)
+    tl.to(sectionRef.current, {
       opacity: 0,
-      pointerEvents: 'none',
-      duration: 2
-    }, `${label}+=8`);
+      ease: "none",
+    }, 0.9);
 
-  }, [masterTl]);
+    return () => {
+      tl.kill();
+      ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
+    };
+  }, []);
+
 
   return (
     <section 

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { gsap } from "@/lib/gsap";
-import { useScroll } from '@/lib/context/ScrollContext';
+import { gsap, ScrollTrigger } from "@/lib/gsap";
+
 
 const Moment04 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -13,7 +13,6 @@ const Moment04 = ({ index }: { index: number }) => {
   const textRef = useRef<HTMLDivElement>(null);
   const [petals, setPetals] = useState<any[]>([]);
 
-  const { masterTl } = useScroll();
 
   useEffect(() => {
     // Generate petals only on client
@@ -26,88 +25,92 @@ const Moment04 = ({ index }: { index: number }) => {
   }, []);
 
   useEffect(() => {
-    if (!masterTl || !sectionRef.current) return;
+    if (!sectionRef.current) return;
 
-    const label = `moment-04`;
-
-    // Entry transition
-    masterTl.fromTo(sectionRef.current,
-      { opacity: 0 },
-      {
-        opacity: 1,
-        pointerEvents: 'auto',
-        duration: 2
-      }, `${label}-=1`);
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "+=250%",
+        pin: true,
+        pinSpacing: false,
+        scrub: 1,
+        onToggle: self => {
+          if (self.isActive) {
+            sectionRef.current?.classList.add('active');
+          } else {
+            sectionRef.current?.classList.remove('active');
+          }
+        }
+      }
+    });
 
     // Planks and feet entrance
-    masterTl.fromTo(planksContainerRef.current,
+    tl.fromTo(planksContainerRef.current,
       { y: 40, opacity: 0 },
       {
         y: 0,
         opacity: 1,
-        duration: 4,
         force3D: true,
         ease: "power2.out"
-      }, label);
+      }, 0);
 
-    masterTl.fromTo(feetRef.current,
+    tl.fromTo(feetRef.current,
       { opacity: 0 },
       {
         opacity: 1,
-        duration: 3,
         force3D: true
-      }, label);
+      }, 0);
 
     // Text content animation
-    masterTl.fromTo(textRef.current,
+    tl.fromTo(textRef.current,
       { opacity: 0, y: 30 },
       {
         opacity: 1,
         y: 0,
         force3D: true,
-        duration: 4
-      }, `${label}+=2`);
+      }, 0.2);
 
     // Main perspective and movement
-    masterTl.to(planksRef.current, {
+    tl.to(planksRef.current, {
       rotateX: "35deg",
       ease: "none",
       force3D: true,
-      duration: 10
-    }, label);
+    }, 0);
 
-    masterTl.to(planksContainerRef.current, {
+    tl.to(planksContainerRef.current, {
       y: "-15vh",
       ease: "none",
       force3D: true,
-      duration: 10
-    }, label);
+    }, 0);
 
     // Distant figure growth
-    masterTl.to(figureRef.current, {
+    tl.to(figureRef.current, {
       scale: 1.5,
       y: "-20px",
       force3D: true,
       ease: "none",
-      duration: 10
-    }, label);
+    }, 0);
 
-    masterTl.to(textRef.current, {
+    tl.to(textRef.current, {
       opacity: 0,
       y: -30,
       force3D: true,
       ease: "none",
-      duration: 4
-    }, `${label}+=6`);
+    }, 0.7);
 
-    // Exit transition
-    masterTl.to(sectionRef.current, {
+    // Exit transition (fade out)
+    tl.to(sectionRef.current, {
       opacity: 0,
-      pointerEvents: 'none',
-      duration: 2
-    }, `${label}+=8`);
+      ease: "none",
+    }, 0.9);
 
-  }, [masterTl]);
+    return () => {
+      tl.kill();
+      ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
+    };
+  }, []);
+
 
   return (
     <section 
