@@ -21,35 +21,14 @@ import { ScrollProvider, useScroll } from '@/lib/context/ScrollContext';
 
 const ScrollJourneyContent = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const scrollerRef = useRef<HTMLDivElement>(null);
   const { setMasterTl } = useScroll();
 
   useEffect(() => {
-    // Master timeline for the cinematic scrollytelling
-    const masterTl = gsap.timeline({
-      scrollTrigger: {
-        trigger: scrollerRef.current,
-        start: "top top",
-        end: "bottom bottom",
-        scrub: 1.2,
-        fastScrollEnd: true,
-        preventOverlaps: true,
-      }
-    });
-
-    // Create labels for each moment to allow precise positioning
-    // Each moment gets 10 units of "time" for clarity
-    for (let i = 1; i <= 11; i++) {
-        masterTl.addLabel(`moment-${i.toString().padStart(2, '0')}`, (i - 1) * 10);
-    }
-
-    setMasterTl(masterTl);
-    
     // Refresh ScrollTrigger to ensure all dimensions are correct
     const timer = setTimeout(() => {
       ScrollTrigger.refresh();
       console.log('ScrollTrigger refreshed from ScrollJourney');
-    }, 500);
+    }, 1000);
 
     const handleResize = () => {
       ScrollTrigger.refresh();
@@ -62,16 +41,14 @@ const ScrollJourneyContent = () => {
       clearTimeout(timer);
       window.removeEventListener('load', handleResize);
       window.removeEventListener('resize', handleResize);
-      masterTl.kill();
       ScrollTrigger.getAll().forEach(t => t.kill());
     };
-  }, [setMasterTl]);
+  }, []);
 
   return (
     <main className="scroll-journey relative">
       <Preloader />
       <GlobalNav />
-      <div ref={scrollerRef} className="virtual-scroller" />
       
       <div ref={containerRef} className="scroll-container">
         <div className="moments-wrapper relative w-full h-full">
@@ -91,6 +68,7 @@ const ScrollJourneyContent = () => {
     </main>
   );
 };
+
 
 const ScrollJourney = () => (
   <ScrollProvider>

@@ -57,40 +57,25 @@ html::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
 
-/* The actual scrollable area (invisible but functional) */
-.virtual-scroller {
-  position: relative;
-  display: block;
-  top: 0;
-  left: 0;
-  width: 1px;
-  /* (number of moments * height per moment) */
-  height: 1100vh; 
-  pointer-events: none;
-  opacity: 0;
-  z-index: -1;
-}
+/* The scrollable area is now the natural document length */
 
-/* Fixed container for all content */
+/* Main container for all content */
 .scroll-container {
-  position: fixed;
-  inset: 0;
   width: 100%;
-  height: 100vh;
-  overflow: hidden;
+  position: relative;
+  overflow: clip; /* Clean overflow for pinning */
 }
 
 .moment {
-  position: absolute;
-  inset: 0;
+  position: relative;
   width: 100%;
   height: 100vh;
-  opacity: 0; /* Hidden by default, controlled by TL */
-  pointer-events: none;
+  overflow: hidden;
   z-index: 1;
 }
 
 .moment.active {
   pointer-events: auto;
 }
+
 
