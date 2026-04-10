@@ -64,9 +64,23 @@ const ScrollJourneyContent = () => {
     setMasterTl(masterTl);
     
     // Refresh ScrollTrigger to ensure all dimensions are correct
-    ScrollTrigger.refresh();
+    // We wait a bit longer to ensure all child components have registered their tweens
+    const timer = setTimeout(() => {
+      ScrollTrigger.refresh();
+      console.log('ScrollTrigger refreshed');
+    }, 500);
+
+    const handleResize = () => {
+      ScrollTrigger.refresh();
+    };
+
+    window.addEventListener('load', handleResize);
+    window.addEventListener('resize', handleResize);
 
     return () => {
+      clearTimeout(timer);
+      window.removeEventListener('load', handleResize);
+      window.removeEventListener('resize', handleResize);
       lenis.destroy();
       gsap.ticker.remove(raf);
       masterTl.kill();

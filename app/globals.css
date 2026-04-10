@@ -36,16 +36,17 @@ html::-webkit-scrollbar {
   display: none; /* Chrome, Safari, Opera */
 }
 
-/* The actual scrollable area (invisible) */
+/* The actual scrollable area (invisible but functional) */
 .virtual-scroller {
-  position: absolute;
+  position: relative;
+  display: block;
   top: 0;
   left: 0;
   width: 1px;
   /* (number of moments * height per moment) */
   height: 1100vh; 
   pointer-events: none;
-  visibility: hidden;
+  opacity: 0;
   z-index: -1;
 }
 

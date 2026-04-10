@@ -13,8 +13,10 @@ const ScrollContext = createContext<ScrollContextType | undefined>(undefined);
 export const ScrollProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [masterTl, setMasterTl] = useState<gsap.core.Timeline | null>(null);
 
+  const value = React.useMemo(() => ({ masterTl, setMasterTl }), [masterTl]);
+
   return (
-    <ScrollContext.Provider value={{ masterTl, setMasterTl }}>
+    <ScrollContext.Provider value={value}>
       {children}
     </ScrollContext.Provider>
   );
