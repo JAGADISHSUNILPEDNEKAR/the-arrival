@@ -8,14 +8,14 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
   useEffect(() => {
     // Cinematic settings for a premium, weighted feel
     const lenis = new Lenis({
-      duration: 1.5,
+      duration: 1.8,
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), // Custom cinematic easing
       orientation: "vertical",
       gestureOrientation: "vertical",
       smoothWheel: true,
-      wheelMultiplier: 0.8, // Slightly slower for more deliberation
-      lerp: 0.05, // Lower value = more "weighty" and fluid (0.05 is the sweet spot for luxury)
-      touchMultiplier: 2,
+      wheelMultiplier: 0.7, // More resistance for deeper deliberation
+      lerp: 0.04, // Increased weight (lower lerp = more inertia)
+      touchMultiplier: 2.5, // Refined touch response
     });
 
     // Sync Lenis with GSAP ScrollTrigger
