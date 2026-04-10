@@ -9,6 +9,7 @@ import HeroProofPoints from '../hero/HeroProofPoints';
 
 const Moment01 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const backgroundContainerRef = useRef<HTMLDivElement>(null);
   const backgroundGradRef = useRef<HTMLDivElement>(null);
   const glowRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
@@ -22,12 +23,14 @@ const Moment01 = ({ index }: { index: number }) => {
 
     const label = `moment-01`;
     
-    // Visibility toggle: Make active when we are in its range
-    masterTl.to(sectionRef.current, { 
+    // Visibility toggle: Make active immediately at the start
+    masterTl.set(sectionRef.current, { 
       opacity: 1, 
-      pointerEvents: 'auto',
-      duration: 0.1 
+      pointerEvents: 'auto'
     }, label);
+
+    // Initial state for children
+    masterTl.set(contentRef.current, { opacity: 1, y: 0 }, label);
 
     // Background logic
     masterTl.to(backgroundGradRef.current, {
@@ -72,7 +75,7 @@ const Moment01 = ({ index }: { index: number }) => {
       style={{ opacity: 0 }} // Start hidden
     >
       <HeroBackground 
-        ref={sectionRef} 
+        ref={backgroundContainerRef} 
         glowRef={glowRef} 
         backgroundGradRef={backgroundGradRef} 
       />
