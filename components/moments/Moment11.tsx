@@ -30,11 +30,15 @@ const Moment11 = ({ index }: { index: number }) => {
   }, [isMobile]);
 
   useEffect(() => {
-    if (!sectionRef.current) return;
+    const textEl = textRef.current;
+    if (!sectionRef.current || !textEl) return;
 
-    // Split text for cinematic reveals
-    const splitTitle = new SplitText(textRef.current?.querySelector('div'), { type: "chars,words", charsClass: "char" });
-    const splitSub = new SplitText(textRef.current?.querySelector('p'), { type: "words,lines" });
+    // Split text for cinematic reveals - guard against missing elements
+    const titleElement = textEl.querySelector('div');
+    const pElement = textEl.querySelector('p');
+    
+    const splitTitle = titleElement ? new SplitText(titleElement, { type: "chars,words", charsClass: "char" }) : null;
+    const splitSub = pElement ? new SplitText(pElement, { type: "words,lines" }) : null;
 
     const tl = gsap.timeline({
       scrollTrigger: {
@@ -87,7 +91,7 @@ const Moment11 = ({ index }: { index: number }) => {
     }, 0.1);
 
     // 4. Cinematic Typography Reveal
-    if (splitTitle.chars) {
+    if (splitTitle?.chars) {
       tl.fromTo(splitTitle.chars, {
         opacity: 0,
         y: 40,
@@ -102,7 +106,7 @@ const Moment11 = ({ index }: { index: number }) => {
       }, 0.3);
     }
 
-    if (splitSub.words) {
+    if (splitSub?.words) {
       tl.fromTo(splitSub.words, {
         opacity: 0,
         y: 20,
@@ -153,8 +157,8 @@ const Moment11 = ({ index }: { index: number }) => {
 
     return () => {
       tl.kill();
-      splitTitle.revert();
-      splitSub.revert();
+      if (splitTitle) splitTitle.revert();
+      if (splitSub) splitSub.revert();
       ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
     };
   }, [starsData, isMobile]);
