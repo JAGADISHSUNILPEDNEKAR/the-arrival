@@ -34,7 +34,7 @@ const Moment08 = ({ index }: { index: number }) => {
         end: "+=200%",
         pin: true,
         pinSpacing: false,
-        scrub: true,
+        scrub: 1.5,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');

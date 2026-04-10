@@ -28,7 +28,7 @@ const Moment01 = ({ index }: { index: number }) => {
         end: "+=200%", // Lock for 2 viewports
         pin: true,
         pinSpacing: false, // Allow next section to scroll over
-        scrub: true,
+        scrub: 1.5,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
