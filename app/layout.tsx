@@ -17,6 +17,7 @@ export const metadata: Metadata = {
 };
 
 import { Providers } from "@/components/Providers";
+import CustomCursor from "@/components/CustomCursor";
 
 export default function RootLayout({
   children,
@@ -26,6 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${cormorant.variable} antialiased bg-[#060e1a]`}>
+        <CustomCursor />
         <Providers>
           <SmoothScroll>
             {children}
