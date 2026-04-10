@@ -32,6 +32,9 @@ const Moment02 = ({ index }: { index: number }) => {
       }
     });
 
+    // Entry Reveal
+    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+
     // Island entrance and main move
     tl.fromTo(islandRef.current, 
       { x: 40, opacity: 0 },

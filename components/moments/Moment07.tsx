@@ -34,6 +34,9 @@ const Moment07 = ({ index }: { index: number }) => {
       }
     });
 
+    // Entry Reveal
+    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+
     // Container initial reveal (brightness/scale)
     tl.fromTo(containerRef.current,
       { 

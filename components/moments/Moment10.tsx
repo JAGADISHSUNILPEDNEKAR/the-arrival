@@ -57,6 +57,9 @@ const Moment10 = ({ index }: { index: number }) => {
       }
     });
 
+    // Entry Reveal
+    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+
     // Camera pull back
     tl.fromTo(contentRef.current, 
       { scale: 1.1 },

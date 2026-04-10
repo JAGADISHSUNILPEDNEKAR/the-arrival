@@ -45,6 +45,9 @@ const Moment11 = ({ index }: { index: number }) => {
       }
     });
 
+    // Entry Reveal
+    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+
     // Horizon line draws in
     tl.fromTo(horizonRef.current,
       { scaleX: 0 },

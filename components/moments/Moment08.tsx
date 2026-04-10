@@ -42,6 +42,9 @@ const Moment08 = ({ index }: { index: number }) => {
       }
     });
 
+    // Entry Reveal
+    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+
     // Table and items entrance
     tl.fromTo(tableRef.current, 
       { y: 30, opacity: 0 },

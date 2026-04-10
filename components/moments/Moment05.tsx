@@ -45,6 +45,9 @@ const Moment05 = ({ index }: { index: number }) => {
       }
     });
 
+    // Entry Reveal
+    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+
     // Shade side initial brightness
     tl.fromTo(shadeSideRef.current,
       { filter: "brightness(0.7)" },

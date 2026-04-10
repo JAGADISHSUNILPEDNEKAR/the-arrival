@@ -45,6 +45,9 @@ const Moment04 = ({ index }: { index: number }) => {
       }
     });
 
+    // Entry Reveal
+    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+
     // Planks and feet entrance
     tl.fromTo(planksContainerRef.current,
       { y: 40, opacity: 0 },

@@ -60,6 +60,9 @@ const Moment09 = ({ index }: { index: number }) => {
       }
     });
 
+    // Entry Reveal
+    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+
     // Initial state for dish elements
     tl.set(sauceRef.current, { x: -30, opacity: 0, scale: 0.8 }, 0);
     tl.set([fishRef.current, herbsRef.current, foamRef.current], { opacity: 0, y: 15, scale: 0.95 }, 0);

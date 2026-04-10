@@ -39,6 +39,9 @@ const Moment01 = ({ index }: { index: number }) => {
       }
     });
 
+    // Entry Reveal
+    tl.set(sectionRef.current, { opacity: 1 }, 0);
+
     // Background logic
     tl.to(backgroundGradRef.current, {
       y: "12%",

@@ -36,6 +36,9 @@ const Moment06 = ({ index }: { index: number }) => {
       }
     });
 
+    // Entry Reveal
+    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+
     // Staggered reveal of architectural elements
     const revealElements = [
         palmLeftRef.current,
