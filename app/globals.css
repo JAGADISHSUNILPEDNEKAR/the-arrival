@@ -72,10 +72,17 @@ html::-webkit-scrollbar {
   height: 100vh;
   overflow: hidden;
   z-index: 1;
+  opacity: 0;
+  visibility: hidden; /* Prevent ghosting/leaks */
+  pointer-events: none; /* Block interactions until active */
+  will-change: opacity, transform;
+  transform-origin: center center;
 }
 
 .moment.active {
+  visibility: visible;
   pointer-events: auto;
+  z-index: 10;
 }
 
 
