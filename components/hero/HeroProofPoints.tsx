@@ -12,7 +12,7 @@ const HeroProofPoints = forwardRef<HTMLDivElement, {}>((props, ref) => {
   return (
     <div 
       ref={ref}
-      className="absolute bottom-24 left-1/2 -translate-x-1/2 z-20 flex flex-row items-center justify-center gap-6 md:gap-12 w-full px-4"
+      className="relative z-20 flex flex-col md:flex-row items-center justify-center gap-3 md:gap-12 w-full px-8 pb-12"
       style={{
         animation: 'fadeInUp 2.5s ease-out 2s forwards',
         opacity: 0,

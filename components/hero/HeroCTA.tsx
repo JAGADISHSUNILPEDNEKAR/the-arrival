@@ -6,7 +6,7 @@ const HeroCTA = forwardRef<HTMLDivElement, {}>((props, ref) => {
   return (
     <div 
       ref={ref}
-      className="absolute top-[60%] left-1/2 -translate-x-1/2 z-20 flex flex-col items-center justify-center"
+      className="relative z-20 flex flex-col items-center justify-center my-8"
       style={{
         animation: 'fadeInUp 2.5s ease-out 1.5s forwards',
         opacity: 0,
@@ -14,15 +14,16 @@ const HeroCTA = forwardRef<HTMLDivElement, {}>((props, ref) => {
       }}
     >
       <button 
-        className="group relative px-10 py-4 overflow-hidden rounded-sm transition-all duration-700 ease-out hover:scale-105 active:scale-95"
+        className="group relative px-6 md:px-10 py-3 md:py-4 overflow-hidden rounded-sm transition-all duration-700 ease-out hover:scale-105 active:scale-95"
         style={{
           background: 'rgba(20, 30, 40, 0.4)',
           backdropFilter: 'blur(8px)',
           border: '1px solid rgba(240, 232, 210, 0.3)',
+          width: 'max-content'
         }}
         onClick={() => {
-          // Future: Smooth scroll to reservation section or open modal
-          const elem = document.getElementById('reservation-section');
+          // Future: Smooth scroll to reservation section
+          const elem = document.getElementById('moment-11');
           if (elem) elem.scrollIntoView({ behavior: 'smooth' });
         }}
       >
@@ -34,10 +35,11 @@ const HeroCTA = forwardRef<HTMLDivElement, {}>((props, ref) => {
           style={{
             fontFamily: 'var(--font-sans)',
             fontWeight: 400,
-            fontSize: '0.85rem',
+            fontSize: 'clamp(0.7rem, 2vw, 0.85rem)',
             color: 'rgba(240, 232, 210, 0.9)',
             letterSpacing: '0.2em',
             textTransform: 'uppercase',
+            whiteSpace: 'nowrap'
           }}
         >
           Request an Invitation
