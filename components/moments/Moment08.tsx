@@ -142,7 +142,7 @@ const Moment08 = ({ index }: { index: number }) => {
       tl.kill();
       ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
     };
-  }, []);
+  }, [isMobile]);
 
   return (
     <section 
