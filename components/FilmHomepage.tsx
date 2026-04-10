@@ -21,10 +21,18 @@ const FilmHomepage = () => {
             gsap.registerPlugin(ScrollTrigger, SplitText, CustomEase);
 
             // Split Hero Text for word-by-word reveal (Scene 1)
-            const heroSplit = new SplitText(heroRef.current, { type: "words" });
+            const heroSplit = new SplitText(heroRef.current, { 
+                type: "lines,words",
+                 linesClass: "overflow-hidden inline-flex",
+                 wordsClass: "word"
+            });
 
             // Split Quote Text for character-by-character reveal (Scene 4)
-            const quoteSplit = new SplitText(quoteRef.current, { type: "chars" });
+            const quoteSplit = new SplitText(quoteRef.current, { 
+                type: "words,chars",
+                wordsClass: "overflow-hidden inline-flex",
+                charsClass: "char"
+            });
 
             // Create Master Timeline pinned to scroll
             const mainTimeline = gsap.timeline({
@@ -40,21 +48,22 @@ const FilmHomepage = () => {
             });
 
             // Initial State setup
-            gsap.set(heroSplit.words, { opacity: 0, y: 100, rotateX: -90 });
+            gsap.set(heroSplit.words, { y: "100%", filter: "blur(4px)" });
             gsap.set(subtitleRef.current, { opacity: 0, y: 30 });
             gsap.set(cardsRefs.current, { opacity: 0, y: 150 });
-            gsap.set(quoteSplit.chars, { opacity: 0, scale: 0, filter: 'blur(10px)' });
+            gsap.set(quoteSplit.chars, { y: "100%", filter: "blur(4px)" });
             gsap.set(ctaRef.current, { opacity: 0, y: 200, scale: 0.9 });
 
             // --- Scene 1: Hero Slam (0% - 20%) ---
             // 0 -> 0.2
             mainTimeline.to(heroSplit.words, {
-                opacity: 1,
-                y: 0,
-                rotateX: 0,
+                y: "0%",
+                filter: "blur(0px)",
+                willChange: "transform, filter",
                 stagger: 0.1,
                 duration: 1,
-                ease: "power4.out"
+                ease: "power4.out",
+                clearProps: "willChange,filter"
             }, 0);
 
             mainTimeline.to(backgroundRef.current, {
@@ -115,12 +124,13 @@ const FilmHomepage = () => {
             // --- Scene 4: Quote Characters (60% - 80%) ---
             // 0.6 -> 0.8
             mainTimeline.to(quoteSplit.chars, {
-                opacity: 1,
-                scale: 1,
+                y: "0%",
                 filter: 'blur(0px)',
+                willChange: "transform, filter",
                 stagger: 0.02, // 20ms delay
                 duration: 1,
-                ease: "back.out(1.7)"
+                ease: "back.out(1.7)",
+                clearProps: "willChange,filter"
             }, 4);
 
             mainTimeline.to(quoteRef.current, {
