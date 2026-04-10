@@ -92,7 +92,7 @@ const Moment08 = ({ index }: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-screen overflow-hidden" 
       id="moment-08"
-      style={{ opacity: 0 }}
+      style={{ opacity: 0, pointerEvents: 'none' }}
     >
       <div 
         ref={textRef}

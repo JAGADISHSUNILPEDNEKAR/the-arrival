@@ -118,7 +118,7 @@ const Moment05 = ({ index }: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-screen overflow-hidden" 
       id="moment-05"
-      style={{ opacity: 0 }}
+      style={{ opacity: 0, pointerEvents: 'none' }}
     >
       <div 
         ref={sunSideRef}

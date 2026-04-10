@@ -81,7 +81,7 @@ const Moment03 = ({ index }: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-screen overflow-hidden bg-[#1a4060]" 
       id="moment-03"
-      style={{ opacity: 0 }}
+      style={{ opacity: 0, pointerEvents: 'none' }}
     >
       {/* Background Layers Group */}
       <div ref={backgroundGroupRef} className="absolute inset-0 w-full h-full">

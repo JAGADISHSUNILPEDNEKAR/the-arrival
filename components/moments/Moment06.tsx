@@ -98,7 +98,8 @@ const Moment06 = ({ index }: { index: number }) => {
       id="moment-06"
       style={{
         background: 'linear-gradient(180deg, #1a3020 0%, #243828 35%, #1c2e22 65%, #141e18 100%)',
-        opacity: 0
+        opacity: 0,
+        pointerEvents: 'none'
       }}
     >
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">

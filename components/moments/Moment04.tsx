@@ -116,7 +116,8 @@ const Moment04 = ({ index }: { index: number }) => {
       id="moment-04"
       style={{
         background: 'linear-gradient(180deg, #5aadbe 0%, #7dc4cf 30%, #a8d8e0 55%, #d0ecf0 80%, #e8f6f8 100%)',
-        opacity: 0
+        opacity: 0,
+        pointerEvents: 'none'
       }}
     >
       {/* Context Text & Soft CTA */}
