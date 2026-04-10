@@ -38,21 +38,26 @@ const GlobalNav = () => {
   return (
     <header
       ref={navRef}
-      className="fixed top-0 left-0 w-full z-50 transition-none"
-      style={{ padding: 'clamp(1rem, 3vw, 2rem) clamp(1.5rem, 5vw, 4rem)' }}
+      className="fixed top-0 left-0 w-full z-50 transition-all duration-700 ease-in-out border-b border-transparent"
+      style={{ 
+        padding: 'clamp(1rem, 2vw, 1.5rem) clamp(1.5rem, 5vw, 4rem)',
+        backgroundColor: 'rgba(6, 14, 26, 0.05)',
+        backdropFilter: 'blur(0px)'
+      }}
     >
       <div className="flex justify-between items-center w-full max-w-[1400px] mx-auto">
         <div 
-          className="text-[rgba(240,232,210,0.9)] tracking-[0.25em] uppercase text-xs md:text-sm font-light drop-shadow-md"
+          className="text-[rgba(240,232,210,0.9)] tracking-[0.3em] uppercase text-[10px] md:text-xs font-light"
           style={{ fontFamily: 'var(--font-sans)' }}
         >
           The Arrival
         </div>
         <button 
-          className="uppercase text-[10px] md:text-xs tracking-widest px-4 md:px-6 py-2 md:py-3 border border-[rgba(240,232,210,0.3)] text-[rgba(240,232,210,0.9)] hover:bg-[rgba(240,232,210,0.1)] transition-colors duration-500 backdrop-blur-sm drop-shadow-md"
+          className="uppercase text-[9px] md:text-[10px] tracking-[0.25em] px-5 md:px-7 py-2 md:py-2.5 border border-[rgba(240,232,210,0.25)] text-[rgba(240,232,210,0.85)] hover:bg-[rgba(240,232,210,0.1)] hover:text-white transition-all duration-700 backdrop-blur-sm rounded-sm"
           style={{ fontFamily: 'var(--font-sans)' }}
           onClick={() => {
-            window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+            const elem = document.getElementById('moment-11');
+            if (elem) elem.scrollIntoView({ behavior: 'smooth' });
           }}
         >
           Reserve
