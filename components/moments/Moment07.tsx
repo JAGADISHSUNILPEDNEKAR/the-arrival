@@ -34,10 +34,17 @@ const Moment07 = ({ index }: { index: number }) => {
       }
     });
 
-    // 1. Entry Reveal
-    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+    // 1. Entry Reveal - standardized fade + transform
+    tl.fromTo(sectionRef.current,
+      { opacity: 0, scale: 1.05 },
+      { 
+        opacity: 1, 
+        scale: 1,
+        ease: "power2.out",
+        duration: 0.2 
+      }, 0);
 
-    // 2. Container Reveal & Parallax Depth
+    // 2. Container Reveal & Parallax Depth - slightly delayed to start after entry
     tl.fromTo(containerRef.current,
       { 
         filter: "brightness(0.6)", 
@@ -49,7 +56,7 @@ const Moment07 = ({ index }: { index: number }) => {
         force3D: true,
         ease: "power2.out",
         duration: 0.4
-      }, 0);
+      }, 0.1);
 
     // 3. Layered Parallax
     tl.to(ceilingRef.current, { y: "-10%", ease: "none" }, 0);
@@ -64,7 +71,7 @@ const Moment07 = ({ index }: { index: number }) => {
         scale: 1,
         force3D: true,
         duration: 0.3
-      }, 0.1);
+      }, 0.2);
 
     // 5. Table "Coming Closer" Effect
     if (tableRef.current) {
@@ -99,11 +106,13 @@ const Moment07 = ({ index }: { index: number }) => {
       ease: "none",
     }, 0.7);
 
-    // 7. Exit transition
+    // 7. Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      ease: "none",
-    }, 0.9);
+      scale: 0.95,
+      y: -30,
+      ease: "power2.inOut",
+    }, 0.85);
 
     return () => {
       tl.kill();

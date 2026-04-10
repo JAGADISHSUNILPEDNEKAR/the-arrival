@@ -62,17 +62,24 @@ const Moment09 = ({ index }: { index: number }) => {
       }
     });
 
-    // 1. Entry Reveal
-    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+    // 1. Entry Reveal - standardized fade + transform
+    tl.fromTo(sectionRef.current,
+      { opacity: 0, scale: 1.05 },
+      { 
+        opacity: 1, 
+        scale: 1,
+        ease: "power2.out",
+        duration: 0.2 
+      }, 0);
 
     // 2. Initial state for dish elements
     tl.set(sauceRef.current, { x: -30, opacity: 0, scale: 0.8 }, 0);
     tl.set([fishRef.current, herbsRef.current, foamRef.current], { opacity: 0, y: 30, scale: 0.9, filter: 'blur(5px)' }, 0);
 
-    // 3. Plate Entry with Depth
+    // 3. Plate Entry with Depth - delayed for reveal
     tl.fromTo(plateRef.current,
       { opacity: 0, scale: 0.85, y: 100 },
-      { opacity: 1, scale: 1, y: 0, force3D: true, ease: "power2.out", duration: 0.4 }, 0);
+      { opacity: 1, scale: 1, y: 0, force3D: true, ease: "power2.out", duration: 0.4 }, 0.1);
 
     // 4. Sauce "Pour"
     tl.to(sauceRef.current, {
@@ -129,7 +136,7 @@ const Moment09 = ({ index }: { index: number }) => {
     tl.to(candleFlameRef.current, { scale: 1.3, x: 2, ease: "none" }, 0.2);
     tl.to(candleGlowRef.current, { opacity: 1, scale: 1.2, ease: "none" }, 0);
 
-    // 8. Exit transition (Fly away)
+    // 8. Exit transition - standardized fade + transform exit combined with plate flight
     tl.to(plateRef.current, {
       y: -250,
       opacity: 0,
@@ -137,12 +144,14 @@ const Moment09 = ({ index }: { index: number }) => {
       rotateX: -30,
       force3D: true,
       ease: "power2.in",
-    }, 0.8);
+    }, 0.75);
 
     tl.to(sectionRef.current, {
       opacity: 0,
-      ease: "none",
-    }, 0.9);
+      scale: 0.95,
+      y: -30,
+      ease: "power2.inOut",
+    }, 0.85);
 
     return () => {
       tl.kill();

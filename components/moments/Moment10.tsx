@@ -54,10 +54,17 @@ const Moment10 = ({ index }: { index: number }) => {
       }
     });
 
-    // 1. Entry Reveal
-    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+    // 1. Entry Reveal - standardized fade + transform
+    tl.fromTo(sectionRef.current,
+      { opacity: 0, scale: 1.05 },
+      { 
+        opacity: 1, 
+        scale: 1,
+        ease: "power2.out",
+        duration: 0.2 
+      }, 0);
 
-    // 2. Camera Depth - Pull back and parallax
+    // 2. Camera Depth - Pull back and parallax - slightly delayed for reveal
     tl.fromTo(contentRef.current, 
       { scale: 1.15, y: "5vh" },
       {
@@ -65,9 +72,9 @@ const Moment10 = ({ index }: { index: number }) => {
         y: 0,
         force3D: true,
         ease: "none",
-      }, 0);
+      }, 0.1);
 
-    // 3. Narrative Text entrance & persistence
+    // 3. Narrative Text entrance & persistence - delayed for reveal
     tl.fromTo(textRef.current,
       { opacity: 0, scale: 0.9, y: 30 },
       {
@@ -77,7 +84,7 @@ const Moment10 = ({ index }: { index: number }) => {
         force3D: true,
         ease: "power2.out",
         duration: 0.4
-      }, 0.1);
+      }, 0.2);
 
     // 4. Stars Celestial Kinetics - Converted from CSS to GSAP
     starRefs.current.forEach((star, i) => {
@@ -114,11 +121,13 @@ const Moment10 = ({ index }: { index: number }) => {
         ease: "none"
     }, 0.7);
 
-    // 7. Exit transition
+    // 7. Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      ease: "none",
-    }, 0.9);
+      scale: 0.95,
+      y: -30,
+      ease: "power2.inOut",
+    }, 0.85);
 
     return () => {
       tl.kill();

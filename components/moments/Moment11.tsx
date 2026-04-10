@@ -47,10 +47,17 @@ const Moment11 = ({ index }: { index: number }) => {
       }
     });
 
-    // 1. Entry Reveal
-    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+    // 1. Entry Reveal - standardized fade + transform
+    tl.fromTo(sectionRef.current,
+      { opacity: 0, scale: 1.05 },
+      { 
+        opacity: 1, 
+        scale: 1,
+        ease: "power2.out",
+        duration: 0.2 
+      }, 0);
 
-    // 2. Horizon Reveal - Drawing from center
+    // 2. Horizon Reveal - Drawing from center - delayed slightly
     tl.fromTo(horizonRef.current,
       { scaleX: 0, opacity: 0 },
       {
@@ -59,7 +66,7 @@ const Moment11 = ({ index }: { index: number }) => {
         force3D: true,
         ease: "power2.inOut",
         duration: 0.3
-      }, 0);
+      }, 0.1);
 
     // 3. Background Atmospheric Pulse - Converted from CSS to GSAP
     tl.to(backgroundWrapperRef.current, {
@@ -68,7 +75,7 @@ const Moment11 = ({ index }: { index: number }) => {
         ease: "none"
     }, 0);
 
-    // 4. Text and Form reveal kinetics
+    // 4. Text and Form reveal kinetics - delayed for reveal
     tl.fromTo(textRef.current,
       { opacity: 0, y: 50, scale: 0.95 },
       {
@@ -78,7 +85,7 @@ const Moment11 = ({ index }: { index: number }) => {
         force3D: true,
         ease: "power2.out",
         duration: 0.4
-      }, 0.15);
+      }, 0.2);
 
     tl.fromTo(formRef.current,
         { opacity: 0, y: 30, skewY: 2 },
@@ -88,7 +95,7 @@ const Moment11 = ({ index }: { index: number }) => {
             skewY: 0, 
             duration: 0.4, 
             ease: "power2.out" 
-        }, 0.25);
+        }, 0.3);
 
     // 5. Water Kinetic - Converted from CSS to GSAP Scroll-driven
     tl.to(waterPatternRef.current, {
@@ -125,7 +132,6 @@ const Moment11 = ({ index }: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-screen overflow-hidden" 
       id="moment-11"
-      style={{ opacity: 0, pointerEvents: 'none' }}
     >
       <div 
         ref={backgroundWrapperRef}

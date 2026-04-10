@@ -37,10 +37,17 @@ const Moment06 = ({ index }: { index: number }) => {
       }
     });
 
-    // 1. Entry Reveal
-    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+    // 1. Entry Reveal - standardized fade + transform
+    tl.fromTo(sectionRef.current,
+      { opacity: 0, scale: 1.05 },
+      { 
+        opacity: 1, 
+        scale: 1,
+        ease: "power2.out",
+        duration: 0.2 
+      }, 0);
 
-    // 2. Staggered reveal of architectural elements
+    // 2. Staggered reveal of architectural elements - delayed for reveal
     const revealElements = [
         palmLeftRef.current,
         palmRightRef.current,
@@ -65,7 +72,7 @@ const Moment06 = ({ index }: { index: number }) => {
         force3D: true,
         ease: "power2.out",
         duration: 0.4
-      }, 0);
+      }, 0.15);
 
     // 3. Parallax "Deep Dive" - Main structural push
     tl.to(structureRef.current, {
@@ -101,11 +108,13 @@ const Moment06 = ({ index }: { index: number }) => {
       }
     });
 
-    // 6. Exit transition
+    // 6. Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      ease: "none",
-    }, 0.9);
+      scale: 0.95,
+      y: -30,
+      ease: "power2.inOut",
+    }, 0.85);
 
     return () => {
       tl.kill();

@@ -45,13 +45,20 @@ const Moment08 = ({ index }: { index: number }) => {
       }
     });
 
-    // 1. Entry Reveal
-    tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
+    // 1. Entry Reveal - standardized fade + transform
+    tl.fromTo(sectionRef.current,
+      { opacity: 0, scale: 1.05 },
+      { 
+        opacity: 1, 
+        scale: 1,
+        ease: "power2.out",
+        duration: 0.2 
+      }, 0);
 
-    // 2. Table and items entrance with individual Parallax speeds
+    // 2. Table and items entrance with individual Parallax speeds - delayed for reveal
     tl.fromTo(tableRef.current, 
       { y: 60, opacity: 0, scale: 0.95 },
-      { y: 0, opacity: 1, scale: 1, force3D: true, ease: "power2.out", duration: 0.4 }, 0);
+      { y: 0, opacity: 1, scale: 1, force3D: true, ease: "power2.out", duration: 0.4 }, 0.1);
 
     // Stagger items with varying parallax depths
     const items = [
@@ -71,7 +78,7 @@ const Moment08 = ({ index }: { index: number }) => {
             force3D: true, 
             ease: "power2.out",
             duration: 0.3
-          }, 0.1 + i * 0.05);
+          }, 0.2 + i * 0.05);
       }
     });
 
@@ -79,7 +86,7 @@ const Moment08 = ({ index }: { index: number }) => {
     tl.fromTo(textRef.current,
       { opacity: 0, y: 30, x: 20 },
       { opacity: 1, y: 0, x: 0, force3D: true, ease: "power2.out" },
-      0.2);
+      0.25);
 
     // 4. Main pinned animations: subtle zoom and shadow sweep
     tl.to(containerRef.current, {
@@ -111,11 +118,13 @@ const Moment08 = ({ index }: { index: number }) => {
       ease: "none",
     }, 0.7);
 
-    // 8. Final Exit transition
+    // 8. Final Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      ease: "none",
-    }, 0.9);
+      scale: 0.95,
+      y: -30,
+      ease: "power2.inOut",
+    }, 0.85);
 
     return () => {
       tl.kill();
