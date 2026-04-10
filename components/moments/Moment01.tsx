@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
+import { useScroll } from '@/lib/context/ScrollContext';
 
 import HeroBackground from '../hero/HeroBackground';
 import HeroContent from '../hero/HeroContent';
@@ -16,6 +17,7 @@ const Moment01 = ({ index }: { index: number }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const ctaRef = useRef<HTMLDivElement>(null);
   const proofsRef = useRef<HTMLDivElement>(null);
+  const { isMobile } = useScroll();
   
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -25,10 +27,10 @@ const Moment01 = ({ index }: { index: number }) => {
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: "+=200%", // Lock for 2 viewports
+        end: isMobile ? "+=150%" : "+=200%", // Slightly shorter on mobile for better flow
         pin: true,
-        pinSpacing: false, // Allow next section to scroll over
-        scrub: 1.5,
+        pinSpacing: false, 
+        scrub: isMobile ? 0.6 : 1.5, // Snappier on mobile
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -111,7 +113,7 @@ const Moment01 = ({ index }: { index: number }) => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative w-screen overflow-hidden" 
+      className="moment relative w-full overflow-hidden" 
       id="moment-01"
        // Start hidden
     >

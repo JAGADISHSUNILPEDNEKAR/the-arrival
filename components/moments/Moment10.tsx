@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
+import { useScroll } from '@/lib/context/ScrollContext';
 
 
 const Moment10 = ({ index }: { index: number }) => {
@@ -12,12 +13,14 @@ const Moment10 = ({ index }: { index: number }) => {
   const silhouetteRef = useRef<HTMLDivElement>(null);
   const nebulaRef = useRef<HTMLDivElement>(null);
   const [starsData, setStarsData] = useState<any[]>([]);
+  const { isMobile } = useScroll();
 
 
   useEffect(() => {
-    // Generate 55 stars with random properties only on client
-    setStarsData(Array.from({ length: 55 }).map((_, i) => {
-      const size = i < 40 ? 1 : i < 50 ? 2 : 3;
+    // Generate stars with random properties only on client - reduced for mobile
+    const count = isMobile ? 25 : 55;
+    setStarsData(Array.from({ length: count }).map((_, i) => {
+      const size = i < (count * 0.7) ? 1 : i < (count * 0.9) ? 2 : 3;
       const isBlueTint = Math.random() > 0.7;
       const color = isBlueTint ? 'rgba(220, 230, 255, 0.6)' : `rgba(255, 255, 255, ${0.4 + Math.random() * 0.5})`;
       const hasGlow = size >= 2 && Math.random() > 0.5;
@@ -31,7 +34,7 @@ const Moment10 = ({ index }: { index: number }) => {
         hasGlow
       };
     }));
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -40,11 +43,10 @@ const Moment10 = ({ index }: { index: number }) => {
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: "+=200%",
+        end: isMobile ? "+=150%" : "+=200%",
         pin: true,
         pinSpacing: false,
-        scrub: 1.5,
-        onToggle: self => {
+        scrub: isMobile ? 0.6 : 1.5,
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
           } else {
@@ -144,7 +146,7 @@ const Moment10 = ({ index }: { index: number }) => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative w-screen overflow-hidden bg-[#060810]" 
+      className="moment relative w-full overflow-hidden bg-[#060810]" 
       id="moment-10"
       style={{ opacity: 0, pointerEvents: 'none' }}
     >

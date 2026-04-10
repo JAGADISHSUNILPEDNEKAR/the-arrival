@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
-
+import { useScroll } from '@/lib/context/ScrollContext';
 
 const Moment02 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -11,6 +11,7 @@ const Moment02 = ({ index }: { index: number }) => {
   const backgroundRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const waterShimmerRef = useRef<HTMLDivElement>(null);
+  const { isMobile } = useScroll();
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -19,10 +20,10 @@ const Moment02 = ({ index }: { index: number }) => {
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: "+=250%", 
+        end: isMobile ? "+=180%" : "+=250%", 
         pin: true,
         pinSpacing: false,
-        scrub: 1.5,
+        scrub: isMobile ? 0.6 : 1.5,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -127,7 +128,7 @@ const Moment02 = ({ index }: { index: number }) => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative w-screen overflow-hidden" 
+      className="moment relative w-full overflow-hidden" 
       id="moment-02"
       style={{ opacity: 0, pointerEvents: 'none' }}
     >

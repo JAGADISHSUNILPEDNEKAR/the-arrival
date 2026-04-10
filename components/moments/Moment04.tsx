@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap, ScrollTrigger } from "@/lib/gsap";
-
+import { useScroll } from '@/lib/context/ScrollContext';
 
 const Moment04 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -15,17 +15,18 @@ const Moment04 = ({ index }: { index: number }) => {
   const textRef = useRef<HTMLDivElement>(null);
   const petalsRef = useRef<HTMLDivElement[]>([]);
   const [petals, setPetals] = useState<any[]>([]);
-
+  const { isMobile } = useScroll();
 
   useEffect(() => {
-    // Generate petals only on client
-    setPetals([...Array(6)].map((_, i) => ({
+    // Generate petals only on client - fewer on mobile
+    const count = isMobile ? 3 : 6;
+    setPetals([...Array(count)].map((_, i) => ({
       left: `${15 + (i * 12) + (Math.random() * 5)}%`,
       bottom: `${10 + (i * 4) + (Math.random() * 10)}%`,
       rotate: Math.random() * 30 - 15,
       delay: i * 0.2
     })));
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -34,10 +35,10 @@ const Moment04 = ({ index }: { index: number }) => {
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: "+=250%",
+        end: isMobile ? "+=180%" : "+=250%",
         pin: true,
         pinSpacing: false,
-        scrub: 1.5,
+        scrub: isMobile ? 0.6 : 1.5,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -161,7 +162,7 @@ const Moment04 = ({ index }: { index: number }) => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative w-screen overflow-hidden" 
+      className="moment relative w-full overflow-hidden" 
       id="moment-04"
       style={{
         background: 'linear-gradient(180deg, #5aadbe 0%, #7dc4cf 30%, #a8d8e0 55%, #d0ecf0 80%, #e8f6f8 100%)',

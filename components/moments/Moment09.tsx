@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
-
+import { useScroll } from '@/lib/context/ScrollContext';
 
 const Moment09 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -21,11 +21,15 @@ const Moment09 = ({ index }: { index: number }) => {
   const candleGlowRef = useRef<HTMLDivElement>(null);
   const [starsData, setStarsData] = useState<any[]>([]);
   const [foamData, setFoamData] = useState<any[]>([]);
+  const { isMobile } = useScroll();
 
 
   useEffect(() => {
-    // Generate data only on client
-    setStarsData(Array.from({ length: 20 }).map((_, i) => ({
+    // Generate data only on client - reduced counts for mobile
+    const starCount = isMobile ? 12 : 20;
+    const foamCount = isMobile ? 3 : 6;
+
+    setStarsData(Array.from({ length: starCount }).map((_, i) => ({
       id: i,
       top: `${Math.random() * 60}%`,
       left: `${Math.random() * 100}%`,
@@ -33,13 +37,13 @@ const Moment09 = ({ index }: { index: number }) => {
       opacity: 0.3 + Math.random() * 0.4,
     })));
 
-    setFoamData([...Array(6)].map((_, i) => ({
-      width: 3 + Math.random() * 2,
-      height: 3 + Math.random() * 2,
-      top: Math.random() * 12 - 6,
-      left: Math.random() * 12 - 6
+    setFoamData([...Array(foamCount)].map((_, i) => ({
+      left: `${25 + Math.random() * 50}%`,
+      top: `${35 + Math.random() * 30}%`,
+      size: `${10 + Math.random() * 20}px`,
+      delay: Math.random() * 0.5
     })));
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -48,10 +52,10 @@ const Moment09 = ({ index }: { index: number }) => {
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: "+=200%",
+        end: isMobile ? "+=180%" : "+=200%",
         pin: true,
         pinSpacing: false,
-        scrub: 1.5,
+        scrub: isMobile ? 0.6 : 1.5,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -162,7 +166,7 @@ const Moment09 = ({ index }: { index: number }) => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative w-screen overflow-hidden" 
+      className="moment relative w-full overflow-hidden" 
       id="moment-09"
       style={{ opacity: 0, pointerEvents: 'none' }}
     >

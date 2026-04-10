@@ -2,7 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
-
+import { useScroll } from '@/lib/context/ScrollContext';
 
 const Moment05 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -12,17 +12,18 @@ const Moment05 = ({ index }: { index: number }) => {
   const dappleRefs = useRef<HTMLDivElement[]>([]);
   const petalsRef = useRef<HTMLDivElement[]>([]);
   const [bougainvilleaData, setBougainvilleaData] = useState<any[]>([]);
-
+  const { isMobile } = useScroll();
 
   useEffect(() => {
-    // Generate bougainvillea data only on client
-    setBougainvilleaData([...Array(12)].map((_, i) => ({
+    // Generate bougainvillea data only on client - fewer on mobile
+    const count = isMobile ? 6 : 12;
+    setBougainvilleaData([...Array(count)].map((_, i) => ({
       size: 6 + Math.random() * 8,
       top: 15 + Math.random() * 20,
       right: 10 + Math.random() * 15,
       rotate: Math.random() * 360,
     })));
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -31,10 +32,10 @@ const Moment05 = ({ index }: { index: number }) => {
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: "+=200%",
+        end: isMobile ? "+=150%" : "+=200%",
         pin: true,
         pinSpacing: false,
-        scrub: 1.5,
+        scrub: isMobile ? 0.6 : 1.5,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -153,7 +154,7 @@ const Moment05 = ({ index }: { index: number }) => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative w-screen overflow-hidden" 
+      className="moment relative w-full overflow-hidden" 
       id="moment-05"
       style={{ opacity: 0, pointerEvents: 'none' }}
     >

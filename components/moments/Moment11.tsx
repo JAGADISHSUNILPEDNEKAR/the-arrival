@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
+import { useScroll } from '@/lib/context/ScrollContext';
 
 
 const Moment11 = ({ index }: { index: number }) => {
@@ -14,17 +15,19 @@ const Moment11 = ({ index }: { index: number }) => {
   const starRefs = useRef<HTMLDivElement[]>([]);
   const formRef = useRef<HTMLFormElement>(null);
   const [starsData, setStarsData] = useState<any[]>([]);
+  const { isMobile } = useScroll();
 
 
   useEffect(() => {
-    // Generate 15 stars only on client
-    setStarsData(Array.from({ length: 15 }).map((_, i) => ({
+    // Generate stars only on client - fewer on mobile
+    const count = isMobile ? 8 : 15;
+    setStarsData(Array.from({ length: count }).map((_, i) => ({
       id: i,
       top: `${Math.random() * 30}%`,
       left: `${Math.random() * 100}%`,
       opacity: 0.15 + Math.random() * 0.2,
     })));
-  }, []);
+  }, [isMobile]);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -33,10 +36,10 @@ const Moment11 = ({ index }: { index: number }) => {
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: "+=200%", // Extended for the final moment
+        end: isMobile ? "+=150%" : "+=200%", 
         pin: true,
         pinSpacing: true, 
-        scrub: 1.5,
+        scrub: isMobile ? 0.6 : 1.5,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -136,7 +139,7 @@ const Moment11 = ({ index }: { index: number }) => {
   return (
     <section 
       ref={sectionRef}
-      className="moment relative w-screen overflow-hidden" 
+      className="moment relative w-full overflow-hidden" 
       id="moment-11"
     >
       <div 
@@ -221,20 +224,20 @@ const Moment11 = ({ index }: { index: number }) => {
 
         <form 
             ref={formRef}
-            className="w-full bg-[rgba(10,20,35,0.5)] backdrop-blur-xl border border-[rgba(100,140,170,0.2)] p-6 md:p-8 flex flex-col gap-6 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-sm pointer-events-auto"
+            className="w-full bg-[rgba(10,20,35,0.5)] backdrop-blur-xl border border-[rgba(100,140,170,0.2)] p-6 md:p-8 flex flex-col gap-5 md:gap-6 drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] rounded-sm pointer-events-auto"
         >
           <div className="flex flex-col gap-2">
-            <label className="text-[10px] uppercase tracking-widest text-[rgba(200,215,230,0.6)]" style={{ fontFamily: 'var(--font-sans)' }}>Guest Name</label>
-            <input type="text" className="w-full bg-transparent border-b border-[rgba(100,140,170,0.3)] pb-2 text-[rgba(230,240,250,0.9)] focus:outline-none focus:border-[rgba(230,240,250,0.6)] transition-colors font-light" placeholder="Your Name" />
+            <label className="text-[9px] md:text-[10px] uppercase tracking-widest text-[rgba(200,215,230,0.6)]" style={{ fontFamily: 'var(--font-sans)' }}>Guest Name</label>
+            <input type="text" className="w-full bg-transparent border-b border-[rgba(100,140,170,0.3)] pb-2 text-sm md:text-base text-[rgba(230,240,250,0.9)] focus:outline-none focus:border-[rgba(230,240,250,0.6)] transition-colors font-light" placeholder="Your Name" />
           </div>
           
-          <div className="flex gap-6">
-            <div className="flex flex-col gap-2 w-1/2">
-              <label className="text-[10px] uppercase tracking-widest text-[rgba(200,215,230,0.6)]" style={{ fontFamily: 'var(--font-sans)' }}>Arrival Date</label>
-              <input type="date" className="w-full bg-transparent border-b border-[rgba(100,140,170,0.3)] pb-2 text-[rgba(230,240,250,0.9)] focus:outline-none focus:border-[rgba(230,240,250,0.6)] transition-colors font-light appearance-none" style={{ colorScheme: 'dark' }} />
+          <div className="flex flex-col md:flex-row gap-5 md:gap-6">
+            <div className="flex flex-col gap-2 w-full md:w-1/2">
+              <label className="text-[9px] md:text-[10px] uppercase tracking-widest text-[rgba(200,215,230,0.6)]" style={{ fontFamily: 'var(--font-sans)' }}>Arrival Date</label>
+              <input type="date" className="w-full bg-transparent border-b border-[rgba(100,140,170,0.3)] pb-2 text-sm text-[rgba(230,240,250,0.9)] focus:outline-none focus:border-[rgba(230,240,250,0.6)] transition-colors font-light appearance-none" style={{ colorScheme: 'dark' }} />
             </div>
-            <div className="flex flex-col gap-2 w-1/2">
-              <label className="text-[10px] uppercase tracking-widest text-[rgba(200,215,230,0.6)]" style={{ fontFamily: 'var(--font-sans)' }}>Party Size</label>
+            <div className="flex flex-col gap-2 w-full md:w-1/2">
+              <label className="text-[9px] md:text-[10px] uppercase tracking-widest text-[rgba(200,215,230,0.6)]" style={{ fontFamily: 'var(--font-sans)' }}>Party Size</label>
               <select className="w-full bg-transparent border-b border-[rgba(100,140,170,0.3)] pb-2 text-[rgba(230,240,250,0.9)] focus:outline-none focus:border-[rgba(230,240,250,0.6)] transition-colors font-light appearance-none text-sm">
                 <option value="2" className="bg-[#152235]">2 Guests</option>
                 <option value="4" className="bg-[#152235]">4 Guests</option>
@@ -246,7 +249,7 @@ const Moment11 = ({ index }: { index: number }) => {
 
           <button 
             type="button"
-            className="mt-4 uppercase text-[11px] md:text-xs tracking-widest w-full py-4 bg-[rgba(230,240,250,0.9)] text-[#0a1020] hover:bg-white transition-colors duration-500 font-medium"
+            className="mt-2 md:mt-4 uppercase text-[10px] md:text-xs tracking-widest w-full py-3 md:py-4 bg-[rgba(230,240,250,0.9)] text-[#0a1020] hover:bg-white transition-colors duration-500 font-medium"
             style={{ fontFamily: 'var(--font-sans)' }}
           >
             Secure Reservation
