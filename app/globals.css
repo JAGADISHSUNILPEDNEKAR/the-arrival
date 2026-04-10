@@ -12,6 +12,7 @@
 
 :root {
   --font-serif: 'Cormorant Garamond', 'Cormorant Garamond Fallback', Georgia, serif;
+  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
 }
 
 *, *::before, *::after {
