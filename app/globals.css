@@ -73,9 +73,10 @@ html::-webkit-scrollbar {
   overflow: hidden;
   z-index: 1;
   opacity: 0;
-  visibility: hidden; /* Prevent ghosting/leaks */
-  pointer-events: none; /* Block interactions until active */
-  will-change: opacity, transform;
+  visibility: hidden;
+  pointer-events: none;
+  background: #060e1a; /* Solid base to prevent leaks */
+  will-change: opacity, transform, visibility;
   transform-origin: center center;
 }
 

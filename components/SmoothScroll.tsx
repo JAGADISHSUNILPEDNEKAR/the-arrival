@@ -11,13 +11,12 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
   useEffect(() => {
     // Cinematic settings optimized by device type
     const lenis = new Lenis({
-      duration: isMobile ? 1.2 : 1.8,
+      duration: isMobile ? 1.4 : 2.2, // More weighted feel
       easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)), 
       smoothWheel: true,
-      wheelMultiplier: isMobile ? 1 : 0.7, 
-      lerp: isMobile ? 0.1 : 0.04, // Snappier on mobile to follow touch more closely
-      touchMultiplier: isMobile ? 1.5 : 2.5, // Reduced on mobile for more natural control
-      // syncTouch: true, // Optional: sync with native touch
+      wheelMultiplier: isMobile ? 1.1 : 0.8, 
+      lerp: isMobile ? 0.08 : 0.035, // Ultra-smooth on desktop
+      touchMultiplier: isMobile ? 1.8 : 2.2, 
     });
 
     // Sync Lenis with GSAP ScrollTrigger
