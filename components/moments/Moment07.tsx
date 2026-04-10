@@ -58,41 +58,43 @@ const Moment07 = ({ index }: { index: number }) => {
         duration: 0.4
       }, 0.1);
 
-    // 3. Layered Parallax
-    tl.to(ceilingRef.current, { y: "-10%", ease: "none" }, 0);
-    tl.to(floorRef.current, { y: "5%", rotateX: "20deg", ease: "none" }, 0);
+    // 3. Layered Parallax - Deep Background components
+    tl.to(ceilingRef.current, { y: "-15%", opacity: 0.8, ease: "none" }, 0);
+    tl.to(floorRef.current, { y: "8%", rotateX: "25deg", ease: "none" }, 0);
 
-    // 4. Narrative text reveal
+    // 4. Narrative text reveal - Foreground Speed
     tl.fromTo(textRef.current,
-      { opacity: 0, x: -50, scale: 0.9 },
+      { opacity: 0, x: -80, scale: 0.9, skewX: 5 },
       {
         opacity: 1,
         x: 0,
         scale: 1,
+        skewX: 0,
         force3D: true,
-        duration: 0.3
+        duration: 0.45,
+        ease: "power2.out"
       }, 0.2);
 
-    // 5. Table "Coming Closer" Effect
+    // 5. Table "Coming Closer" Effect - Midground speed
     if (tableRef.current) {
       tl.to(tableRef.current, {
-        scale: 1.25,
-        y: "-3vh",
-        opacity: 0.95,
+        scale: 1.35,
+        y: "-5vh",
+        opacity: 1,
         force3D: true,
         ease: "none",
       }, 0);
     }
 
-    // 6. Candles - Converted from CSS to GSAP Scroll-driven
+    // 6. Candles - Independent ambient flicker drift
     candleRefs.current.forEach((candle, i) => {
       if (candle) {
         tl.to(candle, {
-          opacity: 0.35,
-          scale: 1.15,
-          x: (i % 2 === 0 ? 10 : -10),
-          y: (i % 3 === 0 ? 5 : -5),
-          filter: 'blur(35px)',
+          opacity: 0.4,
+          scale: 1.25,
+          x: (i % 2 === 0 ? 20 : -20),
+          y: (i % 3 === 0 ? 10 : -10),
+          filter: 'blur(40px)',
           ease: "none"
         }, 0);
       }
@@ -100,17 +102,17 @@ const Moment07 = ({ index }: { index: number }) => {
 
     tl.to(textRef.current, {
       opacity: 0,
-      x: -80,
-      scale: 1.1,
+      x: -150,
+      scale: 1.2,
       force3D: true,
-      ease: "none",
-    }, 0.7);
+      ease: "power2.in",
+    }, 0.65);
 
     // 7. Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95,
-      y: -30,
+      scale: 0.9,
+      y: -60,
       ease: "power2.inOut",
     }, 0.85);
 

@@ -55,74 +55,85 @@ const Moment08 = ({ index }: { index: number }) => {
         duration: 0.2 
       }, 0);
 
-    // 2. Table and items entrance with individual Parallax speeds - delayed for reveal
+    // 2. Table and items entrance - Staggered mid-fast speeds
     tl.fromTo(tableRef.current, 
-      { y: 60, opacity: 0, scale: 0.95 },
-      { y: 0, opacity: 1, scale: 1, force3D: true, ease: "power2.out", duration: 0.4 }, 0.1);
+      { y: 100, opacity: 0, scale: 0.92 },
+      { y: 0, opacity: 1, scale: 1, force3D: true, ease: "power2.out", duration: 0.5 }, 0.1);
 
-    // Stagger items with varying parallax depths
+    // Differentiate items for depth pass
     const items = [
-      { el: plateRef.current, y: 30, speed: 0.1 },
-      { el: menuRef.current, y: 45, speed: 0.15 },
-      { el: candleRef.current, y: 20, speed: 0.08 },
-      { el: glassRef.current, y: 50, speed: 0.2 }
+      { el: plateRef.current, y: 50, rotateX: -10, speed: 0.2 },
+      { el: menuRef.current, y: 80, rotate: 5, speed: 0.35 },
+      { el: candleRef.current, y: 30, scale: 0.8, speed: 0.15 },
+      { el: glassRef.current, y: 100, rotate: -5, speed: 0.45 }
     ];
 
     items.forEach((item, i) => {
       if (item.el) {
         tl.fromTo(item.el,
-          { opacity: 0, y: item.y },
+          { opacity: 0, y: item.y, rotate: item.rotate || 0, rotateX: item.rotateX || 0 },
           { 
             opacity: 1, 
             y: 0, 
+            rotate: 0,
+            rotateX: 0,
             force3D: true, 
             ease: "power2.out",
-            duration: 0.3
-          }, 0.2 + i * 0.05);
+            duration: 0.45
+          }, 0.2 + i * 0.08);
       }
     });
 
-    // 3. Narrative text reveal
+    // 3. Narrative text reveal - Foreground Fast
     tl.fromTo(textRef.current,
-      { opacity: 0, y: 30, x: 20 },
-      { opacity: 1, y: 0, x: 0, force3D: true, ease: "power2.out" },
-      0.25);
+      { opacity: 0, y: 60, x: 40, scale: 0.9 },
+      { 
+        opacity: 1, 
+        y: 0, 
+        x: 0, 
+        scale: 1,
+        force3D: true, 
+        ease: "power2.out",
+        duration: 0.5 
+      }, 0.3);
 
-    // 4. Main pinned animations: subtle zoom and shadow sweep
+    // 4. Main pinned animations: subtle camera push
     tl.to(containerRef.current, {
-      scale: 1.05, 
+      scale: 1.08, 
       force3D: true,
       ease: "none",
     }, 0);
 
     tl.fromTo(shadowRef.current,
-      { x: "100%", opacity: 0 },
-      { x: "-20%", opacity: 0.5, force3D: true, ease: "none" },
-      0.2);
+      { x: "120%", opacity: 0, skewX: 10 },
+      { x: "-40%", opacity: 0.6, skewX: 0, force3D: true, ease: "none" },
+      0.1);
 
-    // 5. Scroll-driven object kinetics
-    tl.to(menuRef.current, { rotate: 2, y: "-10px", ease: "none" }, 0.2);
-    tl.to(plateRef.current, { scale: 1.05, y: "-5px", ease: "none" }, 0.2);
+    // 5. Scroll-driven object kinetics (Differentiated speeds)
+    tl.to(menuRef.current, { rotate: 5, y: "-25px", x: "10px", ease: "none" }, 0.2);
+    tl.to(plateRef.current, { scale: 1.1, y: "-12px", ease: "none" }, 0.2);
+    tl.to(glassRef.current, { y: "-40px", scale: 1.05, ease: "none" }, 0.2);
     
-    // 6. Candle & Glass - Converted from CSS to GSAP Scroll-driven
-    tl.to(candleFlameRef.current, { scale: 1.2, x: 2, ease: "none" }, 0.3);
-    tl.to(candleGlowRef.current, { opacity: 0.4, scale: 1.3, ease: "none" }, 0.3);
-    tl.to(glassShimmerRef.current, { x: "200%", ease: "none" }, 0.1);
+    // 6. Candle & Glass
+    tl.to(candleFlameRef.current, { scale: 1.4, x: 4, rotate: 10, ease: "none" }, 0.2);
+    tl.to(candleGlowRef.current, { opacity: 0.6, scale: 1.6, ease: "none" }, 0.1);
+    tl.to(glassShimmerRef.current, { x: "250%", ease: "none" }, 0.1);
 
-    // 7. Text Exit
+    // 7. Text Exit - Passing the camera
     tl.to(textRef.current, {
       opacity: 0,
-      y: -40,
-      x: 30,
+      y: -120,
+      x: 60,
+      scale: 1.2,
       force3D: true,
-      ease: "none",
-    }, 0.7);
+      ease: "power2.in",
+    }, 0.65);
 
     // 8. Final Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95,
-      y: -30,
+      scale: 0.9,
+      y: -60,
       ease: "power2.inOut",
     }, 0.85);
 

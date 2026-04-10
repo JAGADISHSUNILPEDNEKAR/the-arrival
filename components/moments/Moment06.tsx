@@ -74,35 +74,49 @@ const Moment06 = ({ index }: { index: number }) => {
         duration: 0.4
       }, 0.15);
 
-    // 3. Parallax "Deep Dive" - Main structural push
+    // 3. Parallax "Deep Dive" - Pavillion structure (Midground)
     tl.to(structureRef.current, {
-      scale: 1.15,
-      y: "-5vh",
+      scale: 1.1,
+      y: "-3vh",
       force3D: true,
       ease: "none",
     }, 0);
 
     tl.to(glowRef.current, {
-      opacity: 0.35,
-      scale: 1.2,
-      filter: "blur(30px)",
+      opacity: 0.4,
+      scale: 1.4,
+      filter: "blur(40px)",
+      y: "-5vh",
       force3D: true,
       ease: "none",
     }, 0);
 
-    // 4. Palms Parallax - Moving faster/slower
-    tl.to(palmLeftRef.current, { x: "-5vw", y: "-2vh", rotate: -5, ease: "none" }, 0);
-    tl.to(palmRightRef.current, { x: "5vw", y: "-2vh", rotate: 5, ease: "none" }, 0);
+    // 4. Palms Parallax - Foreground (Fastest movement)
+    tl.to(palmLeftRef.current, { 
+      x: "-12vw", 
+      y: "-15vh", 
+      rotate: -12, 
+      scale: 1.1, 
+      ease: "none" 
+    }, 0);
 
-    // 5. Dapples - Converted from CSS to GSAP Scroll-driven
+    tl.to(palmRightRef.current, { 
+      x: "12vw", 
+      y: "-15vh", 
+      rotate: 12, 
+      scale: 1.1, 
+      ease: "none" 
+    }, 0);
+
+    // 5. Dapples - Background deep (Slowest drift)
     dappleRefs.current.forEach((dapple, i) => {
       if (dapple) {
         tl.to(dapple, {
-          xPercent: (i % 2 === 0 ? 30 : -30),
-          yPercent: (i % 3 === 0 ? 20 : -20),
-          rotate: (i % 2 === 0 ? 15 : -15),
-          scale: 1.2,
-          opacity: 0.12,
+          xPercent: (i % 2 === 0 ? 15 : -15),
+          yPercent: (i % 3 === 0 ? 10 : -10),
+          rotate: (i % 2 === 0 ? 8 : -8),
+          scale: 1.1,
+          opacity: 0.1,
           ease: "none"
         }, 0);
       }
@@ -111,8 +125,8 @@ const Moment06 = ({ index }: { index: number }) => {
     // 6. Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95,
-      y: -30,
+      scale: 0.9,
+      y: -60,
       ease: "power2.inOut",
     }, 0.85);
 

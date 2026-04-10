@@ -55,63 +55,69 @@ const Moment05 = ({ index }: { index: number }) => {
         duration: 0.2 
       }, 0);
 
-    // 2. Main split animation (the shift) with Parallax - slightly delayed to start during/after entry
+    // 2. Main split animation (the shift) - Background Depth
     tl.to(shadeSideRef.current, {
       width: "68%",
       force3D: true,
-      ease: "power1.inOut",
+      ease: "power2.inOut",
+      duration: 0.6
     }, 0.1);
 
     tl.to(sunSideRef.current, {
       width: "35%",
       force3D: true,
-      ease: "power1.inOut",
+      ease: "power2.inOut",
+      duration: 0.6
     }, 0.1);
 
     tl.to(boundaryRef.current, {
       left: "32%",
       force3D: true,
-      ease: "power1.inOut",
+      ease: "power2.inOut",
+      duration: 0.6
     }, 0.1);
 
-    // 3. Dappled lights scroll-driven flutter
+    // 3. Dappled lights scroll-driven flutter - Foreground 3D
     dappleRefs.current.forEach((dapple, i) => {
       if (dapple) {
         tl.to(dapple, {
-          x: (i % 2 === 0 ? 15 : -15),
-          y: (i % 3 === 0 ? 10 : -10),
-          opacity: 0.25,
-          scale: 1.15,
+          x: (i % 2 === 0 ? 40 : -40),
+          y: (i % 3 === 0 ? 30 : -30),
+          opacity: 0.3,
+          scale: 1.3,
+          rotate: (i % 2 === 0 ? 15 : -15),
           force3D: true,
           ease: "none",
         }, 0);
       }
     });
 
-    // 4. Petal Sway - Converted from CSS to GSAP
+    // 4. Petal Sway - Kinetic depth
     petalsRef.current.forEach((petal, i) => {
       if (petal) {
         tl.to(petal, {
-          rotation: (i % 2 === 0 ? "+=30" : "-=30"),
-          y: "-=15",
-          opacity: 0.6,
+          rotation: (i % 2 === 0 ? 180 : -180),
+          y: -100 - (i * 20),
+          x: (i % 2 === 0 ? 20 : -20),
+          opacity: 0.2,
+          scale: 1.4,
           ease: "none"
-        }, 0.15);
+        }, 0.1);
       }
     });
 
-    // 5. Shadows parallax
+    // 5. Shadows parallax - Midground speed (differentiated from background split)
     tl.to(boundaryRef.current, {
-      y: "-5%",
-      scaleY: 1.05,
+      y: "-12%",
+      scaleY: 1.1,
       ease: "none"
     }, 0);
 
     // 6. Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95,
-      y: -30,
+      scale: 0.9,
+      y: -60,
       ease: "power2.inOut",
     }, 0.85);
 
