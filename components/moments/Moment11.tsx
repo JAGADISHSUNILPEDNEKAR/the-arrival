@@ -57,64 +57,70 @@ const Moment11 = ({ index }: { index: number }) => {
         duration: 0.2 
       }, 0);
 
-    // 2. Horizon Reveal - Drawing from center - delayed slightly
+    // 2. Horizon Reveal - Drawing from center
     tl.fromTo(horizonRef.current,
       { scaleX: 0, opacity: 0 },
       {
-        scaleX: 1,
-        opacity: 0.8,
+        scaleX: 1.1, // Slight over-scale for depth
+        opacity: 0.6,
         force3D: true,
         ease: "power2.inOut",
-        duration: 0.3
+        duration: 0.4
       }, 0.1);
 
-    // 3. Background Atmospheric Pulse - Converted from CSS to GSAP
+    // 3. Background Atmospheric Pulse - Deep deepest background
     tl.to(backgroundWrapperRef.current, {
-        scale: 1.05,
-        y: "-2vh",
+        scale: 1.1,
+        y: "-5vh",
+        opacity: 0.8,
         ease: "none"
     }, 0);
 
-    // 4. Text and Form reveal kinetics - delayed for reveal
+    // 4. Text and Form reveal kinetics - Foreground Fast
     tl.fromTo(textRef.current,
-      { opacity: 0, y: 50, scale: 0.95 },
+      { opacity: 0, y: 100, scale: 0.9, rotateX: 10 },
       {
         opacity: 1,
         y: 0,
         scale: 1,
+        rotateX: 0,
         force3D: true,
         ease: "power2.out",
-        duration: 0.4
+        duration: 0.6
       }, 0.2);
 
     tl.fromTo(formRef.current,
-        { opacity: 0, y: 30, skewY: 2 },
+        { opacity: 0, y: 150, scale: 0.95, skewY: 4 },
         { 
             opacity: 1, 
             y: 0, 
+            scale: 1,
             skewY: 0, 
-            duration: 0.4, 
+            duration: 0.7, 
+            force3D: true,
             ease: "power2.out" 
         }, 0.3);
 
-    // 5. Water Kinetic - Converted from CSS to GSAP Scroll-driven
+    // 5. Water Kinetic - Midground Speed
     tl.to(waterPatternRef.current, {
-        backgroundPositionX: "120px",
+        backgroundPositionX: "200px",
+        scale: 1.1,
         ease: "none"
     }, 0);
 
     tl.to(waterRef.current, {
-        y: "-2%",
-        scaleY: 1.05,
+        y: "-5%",
+        scaleY: 1.1,
         ease: "none"
     }, 0);
 
-    // 6. Stars Twinkle Dim - Converted to GSAP
+    // 6. Stars Twinkle Dim - Slow drifting celestial layer
     starRefs.current.forEach((star, i) => {
         if (star) {
             tl.to(star, {
-                opacity: 0.6,
-                scale: 1.5,
+                opacity: 0.9,
+                scale: 2,
+                y: "-10vh",
                 ease: "none"
             }, 0);
         }

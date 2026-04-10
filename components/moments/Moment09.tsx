@@ -73,25 +73,25 @@ const Moment09 = ({ index }: { index: number }) => {
       }, 0);
 
     // 2. Initial state for dish elements
-    tl.set(sauceRef.current, { x: -30, opacity: 0, scale: 0.8 }, 0);
-    tl.set([fishRef.current, herbsRef.current, foamRef.current], { opacity: 0, y: 30, scale: 0.9, filter: 'blur(5px)' }, 0);
+    tl.set(sauceRef.current, { x: -50, opacity: 0, scale: 0.7 }, 0);
+    tl.set([fishRef.current, herbsRef.current, foamRef.current], { opacity: 0, y: 50, scale: 0.8, filter: 'blur(10px)' }, 0);
 
-    // 3. Plate Entry with Depth - delayed for reveal
+    // 3. Plate Entry with Depth - Midground Pass
     tl.fromTo(plateRef.current,
-      { opacity: 0, scale: 0.85, y: 100 },
-      { opacity: 1, scale: 1, y: 0, force3D: true, ease: "power2.out", duration: 0.4 }, 0.1);
+      { opacity: 0, scale: 0.8, y: 150, rotateX: 20 },
+      { opacity: 1, scale: 1, y: 0, rotateX: 0, force3D: true, ease: "power2.out", duration: 0.5 }, 0.1);
 
-    // 4. Sauce "Pour"
+    // 4. Sauce "Pour" - Kinetic Foreground
     tl.to(sauceRef.current, {
       x: 0,
       opacity: 1,
       scale: 1,
       force3D: true,
       ease: "power2.inOut",
-      duration: 0.3
-    }, 0.2);
+      duration: 0.4
+    }, 0.25);
 
-    // 5. Staggered reveal of dish components
+    // 5. Staggered reveal of dish components - Micro-multi-layering
     const foodItems = [fishRef.current, herbsRef.current, foamRef.current].filter(Boolean) as HTMLElement[];
     foodItems.forEach((item, i) => {
       tl.to(item, {
@@ -100,56 +100,55 @@ const Moment09 = ({ index }: { index: number }) => {
         scale: 1,
         filter: 'blur(0px)',
         force3D: true,
-        ease: "back.out(1.4)",
-        duration: 0.3
-      }, 0.3 + i * 0.1);
+        ease: "back.out(1.7)",
+        duration: 0.45
+      }, 0.35 + i * 0.12);
     });
 
-    // 6. Kinetic Enhancements
-    // Herbs bounce
+    // 6. Kinetic Enhancements - Drifting depth
     herbItemsRef.current.forEach((herb, i) => {
-        if (herb) tl.to(herb, { y: -5, opacity: 1, delay: i * 0.05, ease: "back.out" }, 0.4);
+        if (herb) tl.to(herb, { y: -8, x: (i % 2 === 0 ? 5 : -5), opacity: 1, scale: 1.2, delay: i * 0.08, ease: "back.out" }, 0.45);
     });
 
-    // Steam Drift - Converted from CSS to GSAP Scroll-driven
+    // Steam Drift - Differentiated foreground speeds
     steamItemsRef.current.forEach((steam, i) => {
       if (steam) {
         tl.fromTo(steam, 
-          { y: 0, opacity: 0 },
-          { y: -60, opacity: 0.2, ease: "none", duration: 0.4 }, 0.2 + i * 0.1);
+          { y: 10, opacity: 0, scale: 0.8 },
+          { y: -100 - (i * 20), opacity: 0.3, scale: 1.5, ease: "none", duration: 0.5 }, 0.2 + i * 0.1);
       }
     });
 
-    // 7. Celestial & Ambience
-    // Stars Twinkle - Converted to GSAP
+    // 7. Celestial & Ambience - Deep Background slowest
     starRefs.current.forEach((star, i) => {
       if (star) {
         tl.to(star, {
-          opacity: 1,
-          scale: 1.5,
+          opacity: 0.8,
+          scale: 1.8,
+          y: "-5vh", // Subtle vertical drift
           ease: "none",
         }, 0);
       }
     });
 
-    // Candle Flicker
-    tl.to(candleFlameRef.current, { scale: 1.3, x: 2, ease: "none" }, 0.2);
-    tl.to(candleGlowRef.current, { opacity: 1, scale: 1.2, ease: "none" }, 0);
+    // Candle Flicker - Grounding the midground
+    tl.to(candleFlameRef.current, { scale: 1.4, x: 4, rotate: 15, ease: "none" }, 0.2);
+    tl.to(candleGlowRef.current, { opacity: 0.8, scale: 1.4, y: "-2vh", ease: "none" }, 0);
 
     // 8. Exit transition - standardized fade + transform exit combined with plate flight
     tl.to(plateRef.current, {
-      y: -250,
+      y: -350, // Faster exit for "fly past"
       opacity: 0,
-      scale: 0.7,
-      rotateX: -30,
+      scale: 0.6,
+      rotateX: -45,
       force3D: true,
       ease: "power2.in",
-    }, 0.75);
+    }, 0.7);
 
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95,
-      y: -30,
+      scale: 0.9,
+      y: -60,
       ease: "power2.inOut",
     }, 0.85);
 

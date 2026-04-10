@@ -64,9 +64,9 @@ const Moment10 = ({ index }: { index: number }) => {
         duration: 0.2 
       }, 0);
 
-    // 2. Camera Depth - Pull back and parallax - slightly delayed for reveal
+    // 2. Camera Depth - Pull back and parallax - Background Depth
     tl.fromTo(contentRef.current, 
-      { scale: 1.15, y: "5vh" },
+      { scale: 1.1, y: "2vh" },
       {
         scale: 1,
         y: 0,
@@ -74,58 +74,63 @@ const Moment10 = ({ index }: { index: number }) => {
         ease: "none",
       }, 0.1);
 
-    // 3. Narrative Text entrance & persistence - delayed for reveal
+    // 3. Narrative Text entrance & persistence - Foreground Speed
     tl.fromTo(textRef.current,
-      { opacity: 0, scale: 0.9, y: 30 },
+      { opacity: 0, scale: 0.9, y: 80, rotate: -1 },
       {
         opacity: 1,
         scale: 1,
         y: 0,
+        rotate: 0,
         force3D: true,
         ease: "power2.out",
-        duration: 0.4
+        duration: 0.5
       }, 0.2);
 
-    // 4. Stars Celestial Kinetics - Converted from CSS to GSAP
+    // 4. Stars Celestial Kinetics - Drifting Background
     starRefs.current.forEach((star, i) => {
       if (star) {
         tl.to(star, {
-          opacity: 1,
-          scale: (i % 3 === 0 ? 1.8 : 1.4),
-          x: (i % 2 === 0 ? 30 : -30),
-          y: (i % 3 === 0 ? 20 : -20),
+          opacity: 0.8,
+          scale: (i % 3 === 0 ? 2 : 1.5),
+          x: (i % 2 === 0 ? 60 : -60),
+          y: (i % 3 === 0 ? 40 : -40),
           ease: "none",
         }, 0);
       }
     });
 
-    // 5. Nebula & Silhouette Parallax
+    // 5. Nebula & Silhouette Parallax - Midground speeds
     tl.to(nebulaRef.current, {
-        rotate: 35,
-        opacity: 0.6,
-        scale: 1.2,
+        rotate: 45,
+        opacity: 0.7,
+        scale: 1.4,
+        y: "-10vh",
         ease: "none"
     }, 0);
 
     tl.to(silhouetteRef.current, {
-        y: "-5vh",
-        scale: 1.1,
+        y: "-12vh",
+        scale: 1.15,
+        x: "2vw",
         ease: "none"
     }, 0);
 
-    // 6. Text Exit - Floating away
+    // 6. Text Exit - Extremely fast fly-past
     tl.to(textRef.current, {
         opacity: 0,
-        y: -60,
-        scale: 1.2,
-        ease: "none"
-    }, 0.7);
+        y: -180,
+        scale: 1.3,
+        rotate: 2,
+        force3D: true,
+        ease: "power2.in"
+    }, 0.65);
 
     // 7. Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95,
-      y: -30,
+      scale: 0.9,
+      y: -60,
       ease: "power2.inOut",
     }, 0.85);
 
