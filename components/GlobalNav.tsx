@@ -1,30 +1,44 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
+import { gsap, ScrollTrigger } from '@/lib/gsap';
 
 const GlobalNav = () => {
-  const [isVisible, setIsVisible] = useState(false);
+  const navRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
-    const handleScroll = () => {
-      // Show nav after scrolling past 30% of the first viewport height
-      if (window.scrollY > window.innerHeight * 0.3) {
-        setIsVisible(true);
-      } else {
-        setIsVisible(false);
-      }
-    };
+    if (!navRef.current) return;
 
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    // Initial check
-    handleScroll();
-    
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Initially hide the nav
+    gsap.set(navRef.current, { opacity: 0, pointerEvents: 'none' });
+
+    const st = ScrollTrigger.create({
+      start: "30% top", // Show after 30% of first viewport
+      onEnter: () => {
+        gsap.to(navRef.current, { 
+          opacity: 1, 
+          pointerEvents: 'auto', 
+          duration: 1, 
+          ease: "power2.out" 
+        });
+      },
+      onLeaveBack: () => {
+        gsap.to(navRef.current, { 
+          opacity: 0, 
+          pointerEvents: 'none', 
+          duration: 0.8, 
+          ease: "power2.in" 
+        });
+      }
+    });
+
+    return () => st.kill();
   }, []);
 
   return (
     <header
-      className={`fixed top-0 left-0 w-full z-50 transition-opacity duration-1000 ${isVisible ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+      ref={navRef}
+      className="fixed top-0 left-0 w-full z-50 transition-none"
       style={{ padding: 'clamp(1rem, 3vw, 2rem) clamp(1.5rem, 5vw, 4rem)' }}
     >
       <div className="flex justify-between items-center w-full max-w-[1400px] mx-auto">
@@ -49,3 +63,4 @@ const GlobalNav = () => {
 };
 
 export default GlobalNav;
+
