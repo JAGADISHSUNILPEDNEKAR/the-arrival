@@ -10,6 +10,7 @@ const Moment02 = ({ index }: { index: number }) => {
   const overlayRef = useRef<HTMLDivElement>(null);
   const backgroundRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
+  const waterShimmerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!sectionRef.current) return;
@@ -18,10 +19,10 @@ const Moment02 = ({ index }: { index: number }) => {
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: "+=250%", // Slightly longer for detailed content
+        end: "+=250%", 
         pin: true,
         pinSpacing: false,
-        scrub: 1,
+        scrub: true,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -32,57 +33,69 @@ const Moment02 = ({ index }: { index: number }) => {
       }
     });
 
-    // Entry Reveal
+    // 1. Entry Reveal
     tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
 
-    // Island entrance and main move
+    // 2. Island entrance and Parallax depth
     tl.fromTo(islandRef.current, 
-      { x: 40, opacity: 0 },
+      { x: 60, opacity: 0, scale: 0.8 },
       { 
         x: 0, 
         opacity: 1,
+        scale: 1,
         force3D: true,
+        duration: 0.4
       }, 0);
 
     tl.to(islandRef.current, {
-      scale: 1.6,
-      x: "-8vw",
+      scale: 1.8,
+      x: "-12vw",
+      y: "5vh",
       force3D: true,
       ease: "none",
     }, 0.4);
 
-    // Background movement
+    // 3. Background parallax
     tl.to(backgroundRef.current, {
-      y: "8%",
+      y: "12%",
+      scale: 1.1,
       force3D: true,
       ease: "none",
     }, 0);
 
-    // Warm Overlay fade in
+    // 4. Water Shimmer - Converted from CSS to GSAP Scroll-driven
+    tl.to(waterShimmerRef.current, {
+      backgroundPositionX: "300px",
+      ease: "none",
+    }, 0);
+
+    // 5. Warm Overlay fade in
     tl.fromTo(overlayRef.current,
       { opacity: 0 },
       {
-        opacity: 0.6,
+        opacity: 0.7,
         force3D: true,
       }, 0);
 
-    // Text content animation
+    // 6. Text content animation
     tl.fromTo(textRef.current,
-      { opacity: 0, y: 30 },
+      { opacity: 0, y: 50, scale: 0.95 },
       {
         opacity: 1,
         y: 0,
+        scale: 1,
         force3D: true,
       }, 0.2);
 
     tl.to(textRef.current, {
         opacity: 0,
-        y: -30,
+        y: -50,
+        scale: 1.05,
         force3D: true,
         ease: "none",
     }, 0.7);
 
-    // Exit transition (fade out)
+    // 7. Exit transition (fade out)
     tl.to(sectionRef.current, {
       opacity: 0,
       ease: "none",
@@ -105,7 +118,7 @@ const Moment02 = ({ index }: { index: number }) => {
       {/* Background Base */}
       <div 
         ref={backgroundRef}
-        className="absolute inset-0 w-full h-[110%] -top-[5%]" 
+        className="absolute inset-0 w-full h-[120%] -top-[10%]" 
         style={{
           background: 'linear-gradient(180deg, #0e2038 0%, #1c4d70 30%, #3a8aaa 60%, #89c0d0 82%, #d4eaf0 100%)'
         }}
@@ -116,7 +129,7 @@ const Moment02 = ({ index }: { index: number }) => {
         ref={overlayRef}
         className="absolute inset-0 w-full h-full z-[1] pointer-events-none"
         style={{
-          background: 'linear-gradient(135deg, rgba(210,160,80,0.08) 0%, transparent 50%)'
+          background: 'linear-gradient(135deg, rgba(210,160,80,0.12) 0%, transparent 50%)'
         }}
       />
 
@@ -172,21 +185,16 @@ const Moment02 = ({ index }: { index: number }) => {
 
       {/* Water Shimmer */}
       <div 
+        ref={waterShimmerRef}
         className="absolute bottom-0 left-0 w-full h-[45%] z-[1] pointer-events-none"
         style={{
           background: 'repeating-linear-gradient(92deg, transparent, transparent 60px, rgba(255,255,255,0.025) 61px, rgba(255,255,255,0.025) 62px)',
-          animation: 'waterMove 5s linear infinite'
         }}
       />
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes waterMove {
-          from { background-position-x: 0px; }
-          to { background-position-x: 120px; }
-        }
-      ` }} />
     </section>
   );
 };
 
 export default Moment02;
+

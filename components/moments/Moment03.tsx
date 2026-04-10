@@ -25,7 +25,7 @@ const Moment03 = ({ index }: { index: number }) => {
         end: "+=200%",
         pin: true,
         pinSpacing: false,
-        scrub: 1,
+        scrub: true,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -36,43 +36,61 @@ const Moment03 = ({ index }: { index: number }) => {
       }
     });
 
-    // Entry Reveal
+    // 1. Entry Reveal
     tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
 
-    // Island and jetty entrance
-    tl.fromTo([islandRef.current, jettyRef.current],
-      { opacity: 0, y: 20 },
+    // 2. Parallax Layers
+    tl.fromTo(skyRef.current, { y: "-5%" }, { y: "5%", ease: "none" }, 0);
+    tl.fromTo(deepWaterRef.current, { y: "2%" }, { y: "-2%", ease: "none" }, 0);
+    tl.fromTo(shallowLagoonRef.current, { y: "5%" }, { y: "-5%", ease: "none" }, 0);
+
+    // 3. Island and Jetty entrance with Depth
+    tl.fromTo(islandRef.current,
+      { opacity: 0, scale: 0.7, y: 50 },
       { 
         opacity: 1, 
+        scale: 1, 
         y: 0,
         force3D: true,
-        ease: "power2.out"
+        ease: "power2.out",
+        duration: 0.4
       }, 0);
 
-    // Background movement
-    tl.to(backgroundGroupRef.current, {
-      y: "6%",
-      force3D: true,
-      ease: "none",
-    }, 0);
+    tl.fromTo(jettyRef.current,
+      { opacity: 0, scaleY: 0 },
+      { 
+        opacity: 1, 
+        scaleY: 1,
+        force3D: true,
+        ease: "power2.out",
+        duration: 0.3
+      }, 0.1);
 
-    // Caustics fade out
+    // 4. Caustics - Converted from CSS to GSAP Scroll-driven
     tl.to(causticsRef.current, {
-      opacity: 0,
-      force3D: true,
+      backgroundPosition: "20px -20px",
+      opacity: 0.3,
       ease: "none",
     }, 0);
 
-    // Island zoom and fade out (main action)
+    // 5. Main Action - Zoom into the Island
     tl.to(islandRef.current, {
-      scale: 2,
-      y: "-30vh",
+      scale: 2.5,
+      y: "-40vh",
       opacity: 0,
       force3D: true,
       ease: "power1.in",
     }, 0.5);
 
-    // Exit transition (fade out)
+    tl.to(jettyRef.current, {
+      scaleY: 2,
+      y: "-20vh",
+      opacity: 0,
+      force3D: true,
+      ease: "power1.in",
+    }, 0.5);
+
+    // 6. Exit transition
     tl.to(sectionRef.current, {
       opacity: 0,
       ease: "none",
@@ -141,7 +159,6 @@ const Moment03 = ({ index }: { index: number }) => {
               radial-gradient(ellipse 4px 6px at 70% 75%, rgba(255,255,255,0.1) 0%, transparent 100%),
               radial-gradient(ellipse 3px 5px at 85% 68%, rgba(255,255,255,0.13) 0%, transparent 100%)
             `,
-            animation: 'caustics 4s ease-in-out infinite'
           }}
         />
       </div>
@@ -161,7 +178,7 @@ const Moment03 = ({ index }: { index: number }) => {
       {/* Jetty */}
       <div 
         ref={jettyRef}
-        className="absolute left-1/2 -translate-x-1/2 bottom-0 z-[5]"
+        className="absolute left-1/2 -translate-x-1/2 bottom-0 z-[5] origin-bottom"
         style={{
           width: '3px',
           height: '35%',
@@ -169,14 +186,9 @@ const Moment03 = ({ index }: { index: number }) => {
         }}
       />
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes caustics {
-          0%, 100% { background-position: 0px 0px; }
-          50% { background-position: 3px -3px; }
-        }
-      ` }} />
     </section>
   );
 };
 
 export default Moment03;
+

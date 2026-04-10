@@ -9,8 +9,11 @@ const Moment04 = ({ index }: { index: number }) => {
   const planksContainerRef = useRef<HTMLDivElement>(null);
   const planksRef = useRef<HTMLDivElement>(null);
   const feetRef = useRef<HTMLDivElement>(null);
+  const feetLeftRef = useRef<HTMLDivElement>(null);
+  const feetRightRef = useRef<HTMLDivElement>(null);
   const figureRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
+  const petalsRef = useRef<HTMLDivElement[]>([]);
   const [petals, setPetals] = useState<any[]>([]);
 
 
@@ -34,7 +37,7 @@ const Moment04 = ({ index }: { index: number }) => {
         end: "+=250%",
         pin: true,
         pinSpacing: false,
-        scrub: 1,
+        scrub: true,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -45,64 +48,88 @@ const Moment04 = ({ index }: { index: number }) => {
       }
     });
 
-    // Entry Reveal
+    // 1. Entry Reveal
     tl.to(sectionRef.current, { opacity: 1, duration: 0.1 }, 0);
 
-    // Planks and feet entrance
+    // 2. Planks and feet entrance
     tl.fromTo(planksContainerRef.current,
-      { y: 40, opacity: 0 },
+      { y: 80, opacity: 0 },
       {
         y: 0,
         opacity: 1,
         force3D: true,
-        ease: "power2.out"
+        ease: "power2.out",
+        duration: 0.4
       }, 0);
 
     tl.fromTo(feetRef.current,
-      { opacity: 0 },
-      {
-        opacity: 1,
-        force3D: true
-      }, 0);
-
-    // Text content animation
-    tl.fromTo(textRef.current,
-      { opacity: 0, y: 30 },
+      { opacity: 0, y: 20 },
       {
         opacity: 1,
         y: 0,
         force3D: true,
+        duration: 0.3
+      }, 0.1);
+
+    // 3. Text content reveal
+    tl.fromTo(textRef.current,
+      { opacity: 0, y: 50, scale: 0.9 },
+      {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        force3D: true,
+        duration: 0.3
       }, 0.2);
 
-    // Main perspective and movement
+    // 4. Main perspective and movement (Parallax)
     tl.to(planksRef.current, {
-      rotateX: "35deg",
+      rotateX: "45deg",
       ease: "none",
       force3D: true,
     }, 0);
 
     tl.to(planksContainerRef.current, {
-      y: "-15vh",
+      y: "-20vh",
+      scale: 1.1,
       ease: "none",
       force3D: true,
     }, 0);
 
-    // Distant figure growth
+    // Distant figure growth (Depth)
     tl.to(figureRef.current, {
-      scale: 1.5,
-      y: "-20px",
+      scale: 2.2,
+      y: "-40px",
+      opacity: 0.2, // Fade out as we get "too close"
       force3D: true,
       ease: "none",
-    }, 0);
+    }, 0.3);
 
+    // 5. Petals and Feet (Subtle scroll-driven motion)
+    petalsRef.current.forEach((petal, i) => {
+      if (petal) {
+        tl.to(petal, {
+          y: -40 - (i * 10),
+          rotation: (i % 2 === 0 ? 45 : -45),
+          opacity: 0,
+          ease: "none"
+        }, 0.2);
+      }
+    });
+
+    tl.to(feetLeftRef.current, { scale: 1.05, opacity: 0.8, y: -5, ease: "none" }, 0.2);
+    tl.to(feetRightRef.current, { scale: 1.05, opacity: 0.8, y: -5, ease: "none" }, 0.35);
+
+    // 6. Text Exit
     tl.to(textRef.current, {
       opacity: 0,
-      y: -30,
+      y: -50,
+      scale: 1.1,
       force3D: true,
       ease: "none",
     }, 0.7);
 
-    // Exit transition (fade out)
+    // 7. Final Exit transition
     tl.to(sectionRef.current, {
       opacity: 0,
       ease: "none",
@@ -112,7 +139,7 @@ const Moment04 = ({ index }: { index: number }) => {
       tl.kill();
       ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
     };
-  }, []);
+  }, [petals]); // Re-run if petals change to bind refs
 
 
   return (
@@ -219,6 +246,7 @@ const Moment04 = ({ index }: { index: number }) => {
           {petals.map((petal, i) => (
             <div 
               key={i}
+              ref={el => { petalsRef.current[i] = el!; }}
               className="absolute"
               style={{
                 width: '8px',
@@ -228,48 +256,38 @@ const Moment04 = ({ index }: { index: number }) => {
                 left: petal.left,
                 bottom: petal.bottom,
                 transform: `rotate(${petal.rotate}deg)`,
-                animation: `floatPetal ${3 + petal.delay}s ease-in-out infinite`
               }}
             />
           ))}
 
           <div ref={feetRef} className="absolute inset-0 z-[5] pointer-events-none">
             <div 
+              ref={feetLeftRef}
               className="absolute left-[38%] bottom-[15%]"
               style={{
                 width: '28px',
                 height: '50px',
                 borderRadius: '50%',
                 background: 'rgba(210, 170, 130, 0.7)',
-                animation: 'stepBreath 1.5s ease-in-out infinite alternate'
               }}
             />
             <div 
+              ref={feetRightRef}
               className="absolute left-[58%] bottom-[22%]"
               style={{
                 width: '28px',
                 height: '50px',
                 borderRadius: '50%',
                 background: 'rgba(210, 170, 130, 0.7)',
-                animation: 'stepBreath 1.5s ease-in-out infinite alternate-reverse'
               }}
             />
           </div>
         </div>
       </div>
 
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes floatPetal {
-          0%, 100% { transform: translateY(0) rotate(-2deg); }
-          50% { transform: translateY(-5px) rotate(2deg); }
-        }
-        @keyframes stepBreath {
-          from { transform: scale(1); }
-          to { transform: scale(1.02); }
-        }
-      ` }} />
     </section>
   );
 };
 
 export default Moment04;
+

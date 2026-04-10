@@ -28,7 +28,7 @@ const Moment01 = ({ index }: { index: number }) => {
         end: "+=200%", // Lock for 2 viewports
         pin: true,
         pinSpacing: false, // Allow next section to scroll over
-        scrub: 1,
+        scrub: true,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -39,37 +39,61 @@ const Moment01 = ({ index }: { index: number }) => {
       }
     });
 
-    // Entry Reveal
-    tl.set(sectionRef.current, { opacity: 1 }, 0);
+    // 1. Entry Reveal - opacity tied to scroll
+    tl.to(sectionRef.current, { 
+      opacity: 1, 
+      ease: "none",
+      duration: 0.1 
+    }, 0);
 
-    // Background logic
+    // 2. Parallax Background - movement speed differentiation
     tl.to(backgroundGradRef.current, {
-      y: "12%",
+      y: "15%",
       force3D: true,
       ease: "none",
     }, 0);
 
-    // Horizon glow
+    tl.to(backgroundContainerRef.current, {
+      scale: 1.1,
+      force3D: true,
+      ease: "none",
+    }, 0);
+
+    // 3. Horizon glow parallax
     tl.to(glowRef.current, {
-      scaleY: 1.3,
+      scaleY: 1.4,
+      y: "-5%",
       force3D: true,
       ease: "none",
     }, 0);
 
-    // UI Elements fade out as we scroll deep into the pin
+    // 4. Content Reveal (Layered)
+    tl.fromTo([contentRef.current, ctaRef.current, proofsRef.current], 
+      { opacity: 0, y: 40, scale: 0.95 },
+      {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.3,
+        stagger: 0.05,
+        ease: "power2.out"
+      }, 0.1);
+
+    // 5. Exit Transition - UI Elements fade out first
     tl.to([contentRef.current, ctaRef.current, proofsRef.current], {
       opacity: 0,
-      y: -50,
+      y: -60,
+      scale: 1.05,
       force3D: true,
-      ease: "power2.inOut",
-      stagger: 0.1
-    }, 0.5);
+      ease: "power2.in",
+      stagger: 0.05
+    }, 0.6);
 
-    // Fade out background slightly as next moment arrives
+    // 6. Final Moment Fade
     tl.to(sectionRef.current, {
       opacity: 0,
       ease: "none",
-    }, 1);
+    }, 0.9);
 
     return () => {
       tl.kill();
@@ -93,11 +117,14 @@ const Moment01 = ({ index }: { index: number }) => {
       
       <div className="relative z-10 w-full h-full flex flex-col">
         <HeroContent ref={contentRef} />
-        <HeroCTA ref={ctaRef} />
-        <HeroProofPoints ref={proofsRef} />
+        <div className="mt-auto mb-12 flex flex-col items-center">
+          <HeroCTA ref={ctaRef} />
+          <HeroProofPoints ref={proofsRef} />
+        </div>
       </div>
     </section>
   );
 };
 
 export default Moment01;
+
