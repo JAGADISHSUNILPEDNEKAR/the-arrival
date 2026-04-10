@@ -23,10 +23,10 @@ const Moment03 = ({ index }: { index: number }) => {
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: isMobile ? "+=150%" : "+=200%",
+        end: isMobile ? "+=150%" : "+=250%",
         pin: true,
         pinSpacing: true,
-        scrub: isMobile ? 0.6 : 1.5,
+        scrub: isMobile ? 0.8 : 1.2,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -37,77 +37,83 @@ const Moment03 = ({ index }: { index: number }) => {
       }
     });
 
+    // 100ms kinetic threshold
+    tl.set({}, {}, 0.1);
+
     // 1. Entry Reveal - standardized fade + transform
     tl.fromTo(sectionRef.current,
-      { opacity: 0, scale: 1.05 },
+      { opacity: 0, scale: 1.02 },
       { 
         opacity: 1, 
         scale: 1,
-        ease: "power2.out",
-        duration: 0.2 
-      }, 0);
+        ease: "cinematic",
+        duration: 0.5 
+      }, 0.1);
 
     // 2. Parallax Layers - Multi-depth calibration
-    tl.fromTo(skyRef.current, { y: "-2%" }, { y: "2%", ease: "none" }, 0); // Deepest
-    tl.fromTo(deepWaterRef.current, { y: "4%" }, { y: "-4%", ease: "none" }, 0); 
-    tl.fromTo(shallowLagoonRef.current, { y: "8%" }, { y: "-8%", ease: "none" }, 0); 
-    tl.fromTo(sandRef.current, { y: "12%", opacity: 0.2 }, { y: "-12%", opacity: 0.5, ease: "none" }, 0); // Near seabed
+    // Backgrounds (Sky, Deep Water) at ~0.3x relative to FG
+    tl.fromTo(skyRef.current, { y: "-5%" }, { y: "5%", ease: "none" }, 0.1); 
+    tl.fromTo(deepWaterRef.current, { y: "10%" }, { y: "-10%", ease: "none" }, 0.1); 
+    
+    // Midgrounds
+    tl.fromTo(shallowLagoonRef.current, { y: "15%" }, { y: "-15%", ease: "none" }, 0.1); 
+    tl.fromTo(sandRef.current, { y: "20%", opacity: 0.2 }, { y: "-20%", opacity: 0.6, ease: "none" }, 0.1);
 
-    // 3. Island and Jetty entrance with Depth
+    // 3. Island and Jetty entrance - Cinematic Kinetic (+40px)
     tl.fromTo(islandRef.current,
-      { opacity: 0, scale: 0.7, y: 80 },
+      { opacity: 0, scale: 0.85, y: 40 },
       { 
         opacity: 1, 
         scale: 1, 
         y: 0,
         force3D: true,
-        ease: "power2.out",
-        duration: 0.5
-      }, 0.1);
+        ease: "cinematic",
+        duration: 0.8
+      }, 0.2);
 
     tl.fromTo(jettyRef.current,
-      { opacity: 0, scaleY: 0, y: 100 },
+      { opacity: 0, scaleY: 0, y: 60 },
       { 
         opacity: 1, 
         scaleY: 1,
         y: 0,
         force3D: true,
-        ease: "power2.out",
-        duration: 0.4
-      }, 0.2);
+        ease: "cinematic",
+        duration: 0.7
+      }, 0.3);
 
     // 4. Caustics - Independent drift
     tl.to(causticsRef.current, {
-      backgroundPosition: "40px -40px",
-      opacity: 0.4,
-      scale: 1.1,
+      backgroundPosition: "60px -60px",
+      opacity: 0.5,
+      scale: 1.15,
       ease: "none",
-    }, 0);
+    }, 0.1);
 
-    // 5. Main Action - Zoom into the Island (Foreground moves faster)
+    // 5. Main Scaling Action - Zooming into destination
     tl.to(islandRef.current, {
-      scale: 2.8,
-      y: "-50vh",
-      opacity: 0,
+      scale: 3,
+      y: "-60vh",
+      opacity: 0.2, // Fade out as we "fly over"
       force3D: true,
-      ease: "power1.in",
-    }, 0.4);
+      ease: "cinematic",
+    }, 0.5);
 
     tl.to(jettyRef.current, {
-      scaleY: 2.5,
-      y: "-30vh",
+      scaleY: 3,
+      y: "-40vh",
       opacity: 0,
       force3D: true,
-      ease: "power1.in",
-    }, 0.4);
+      ease: "cinematic",
+    }, 0.5);
 
-    // 6. Exit transition - standardized fade + transform exit
+    // 6. Exit transition
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95,
+      scale: 0.98,
       y: -40,
-      ease: "power2.inOut",
-    }, 0.85);
+      ease: "cinematic",
+    }, 0.9);
 
     return () => {
       tl.kill();
@@ -121,47 +127,40 @@ const Moment03 = ({ index }: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-full overflow-hidden bg-[#1a4060]" 
       id="moment-03"
-      style={{ opacity: 0, pointerEvents: 'none' }}
     >
-      {/* Background Layers Group */}
       <div ref={backgroundGroupRef} className="absolute inset-0 w-full h-full">
-        {/* Sky */}
         <div 
           ref={skyRef}
-          className="absolute top-0 left-0 w-full h-[42%] z-0"
+          className="absolute top-0 left-0 w-full h-[45%] z-0"
           style={{
             background: 'linear-gradient(180deg, #1a4060 0%, #3a7a9a 35%, #6aadbe 55%)'
           }}
         />
 
-        {/* Deep water horizon */}
         <div 
           ref={deepWaterRef}
-          className="absolute top-[35%] left-0 w-full h-[25%] z-[1]"
+          className="absolute top-[35%] left-0 w-full h-[30%] z-[1]"
           style={{
             background: 'linear-gradient(180deg, #4a9ab0 0%, #3a8a9e 100%)'
           }}
         />
 
-        {/* Shallow lagoon */}
         <div 
           ref={shallowLagoonRef}
-          className="absolute bottom-0 left-0 w-full h-[50%] z-[2]"
+          className="absolute bottom-0 left-0 w-full h-[55%] z-[2]"
           style={{
             background: 'linear-gradient(180deg, rgba(40,160,160,0.9) 0%, rgba(60,190,170,0.85) 20%, rgba(100,210,180,0.8) 40%, rgba(150,225,200,0.75) 65%, rgba(200,238,218,0.7) 85%, rgba(225,245,230,0.65) 100%)'
           }}
         />
 
-        {/* Sand beneath water */}
         <div 
           ref={sandRef}
-          className="absolute bottom-0 left-0 w-full h-[30%] z-[3]"
+          className="absolute bottom-0 left-0 w-full h-[35%] z-[3]"
           style={{
             background: 'radial-gradient(ellipse 80% 60% at 50% 100%, rgba(240,225,180,0.35) 0%, transparent 70%)'
           }}
         />
 
-        {/* Caustic light patterns */}
         <div 
           ref={causticsRef}
           className="absolute inset-0 w-full h-full z-[4] pointer-events-none"
@@ -176,10 +175,9 @@ const Moment03 = ({ index }: { index: number }) => {
         />
       </div>
 
-      {/* Island */}
       <div 
         ref={islandRef}
-        className="absolute left-1/2 -translate-x-1/2 top-[28%] z-[4]"
+        className="absolute left-1/2 -translate-x-1/2 top-[30%] z-[4]"
         style={{
           width: 'clamp(200px, 35vw, 500px)',
           height: 'clamp(40px, 8vw, 100px)',
@@ -188,20 +186,17 @@ const Moment03 = ({ index }: { index: number }) => {
         }}
       />
 
-      {/* Jetty */}
       <div 
         ref={jettyRef}
         className="absolute left-1/2 -translate-x-1/2 bottom-0 z-[5] origin-bottom"
         style={{
           width: '3px',
-          height: '35%',
+          height: '38%',
           background: 'linear-gradient(180deg, transparent, rgba(180,140,90,0.6) 40%, rgba(160,120,70,0.8) 100%)'
         }}
       />
-
     </section>
   );
 };
 
 export default Moment03;
-

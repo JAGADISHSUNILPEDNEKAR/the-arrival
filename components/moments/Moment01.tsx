@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { gsap, ScrollTrigger } from '@/lib/gsap';
+import { gsap, ScrollTrigger, SplitText } from '@/lib/gsap';
 import { useScroll } from '@/lib/context/ScrollContext';
 
 import HeroBackground from '../hero/HeroBackground';
@@ -22,15 +22,19 @@ const Moment01 = ({ index }: { index: number }) => {
   useEffect(() => {
     if (!sectionRef.current) return;
 
+    // Split text for cinematic character-level reveals
+    const splitTitle = new SplitText(".cinematic-text", { type: "chars,words", charsClass: "char" });
+    const splitSub = new SplitText(".cinematic-subtext", { type: "chars" });
+
     // Create a local timeline for this moment
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: isMobile ? "+=150%" : "+=200%", // Slightly shorter on mobile for better flow
+        end: isMobile ? "+=150%" : "+=250%", // Extended for cinematic breath
         pin: true,
         pinSpacing: true, 
-        scrub: isMobile ? 0.6 : 1.5, // Snappier on mobile
+        scrub: isMobile ? 0.8 : 1.2, // Tighter control for "viscosity"
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -41,70 +45,103 @@ const Moment01 = ({ index }: { index: number }) => {
       }
     });
 
-    // 1. Entry Reveal - standardized fade + transform
+    // 1. Initial State Set - 100ms conceptual delay via a small empty tween or offset
+    tl.set({}, {}, 0.1); 
+
+    // 2. Entry Reveal - Standard +40px Y-translation + fade
     tl.fromTo(sectionRef.current,
-      { opacity: 0, scale: 1.05 },
+      { opacity: 0, scale: 1.02 },
       { 
         opacity: 1, 
         scale: 1,
-        ease: "power2.out",
-        duration: 0.2 
-      }, 0);
+        ease: "cinematic",
+        duration: 0.5 
+      }, 0.1);
 
-    // 2. Parallax Background - movement speed differentiation
+    // 3. Cinematic Typography Reveal (Character Level)
+    if (splitTitle.chars) {
+      tl.fromTo(splitTitle.chars, {
+        opacity: 0,
+        y: 40,
+        rotateX: -30,
+      }, {
+        opacity: 1,
+        y: 0,
+        rotateX: 0,
+        stagger: 0.02,
+        duration: 0.8,
+        ease: "cinematic"
+      }, 0.2);
+    }
+
+    if (splitSub.chars) {
+      tl.fromTo(splitSub.chars, {
+        opacity: 0,
+        y: 20,
+      }, {
+        opacity: 1,
+        y: 0,
+        stagger: 0.01,
+        duration: 0.6,
+        ease: "cinematic"
+      }, 0.4);
+    }
+
+    // 4. Parallax Background - 0.3x scroll speed logic
+    // We achieve this by moving the BG significantly less than the pin duration
     tl.to(backgroundGradRef.current, {
-      y: "8%", // Very slow deep background
+      y: "15vh", 
       force3D: true,
       ease: "none",
-    }, 0);
+    }, 0.1);
 
     tl.to(backgroundContainerRef.current, {
-      scale: 1.12, // Subtle zoom
+      scale: 1.15,
       force3D: true,
       ease: "none",
-    }, 0);
+    }, 0.1);
 
-    // 3. Horizon glow parallax - Midground speed
+    // 5. Midground Glow Parallax
     tl.to(glowRef.current, {
-      scaleY: 1.5,
-      y: "-8%", 
-      opacity: 0.8,
+      y: "-12vh",
+      opacity: 0.9,
+      scale: 1.4,
       force3D: true,
       ease: "none",
-    }, 0);
+    }, 0.1);
 
-    // 4. Content Reveal (Layered) - delayed slightly for better reveal
-    tl.fromTo([contentRef.current, ctaRef.current, proofsRef.current], 
-      { opacity: 0, y: 60, scale: 0.98 },
+    // 6. Foreground Reveal - 1x speed kinetics
+    tl.fromTo([ctaRef.current, proofsRef.current], 
+      { opacity: 0, y: 80 },
       {
         opacity: 1,
         y: 0,
-        scale: 1,
-        duration: 0.4,
-        stagger: 0.08,
-        ease: "power2.out"
-      }, 0.15);
+        duration: 0.8,
+        stagger: 0.15,
+        ease: "cinematic"
+      }, 0.5);
 
-    // 5. Exit Transition - Foreground elements move faster for depth
+    // 7. Exit Transition - Standardized -40px offset exit
     tl.to([contentRef.current, ctaRef.current, proofsRef.current], {
       opacity: 0,
-      y: -120, // Faster exit for "foreground" feel
-      scale: 1.1,
+      y: -80,
+      scale: 1.05,
       force3D: true,
-      ease: "power2.in",
+      ease: "cinematic",
       stagger: 0.05
-    }, 0.7);
+    }, 0.8);
 
-    // 6. Final Moment Fade - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95, // Standardized scale
-      y: -40,      // Standardized drift
-      ease: "power2.inOut",
-    }, 0.85);
+      scale: 0.98,
+      y: -40,
+      ease: "cinematic",
+    }, 0.9);
 
     return () => {
       tl.kill();
+      splitTitle.revert();
+      splitSub.revert();
       ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
     };
   }, [isMobile]);
@@ -115,7 +152,6 @@ const Moment01 = ({ index }: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-full overflow-hidden" 
       id="moment-01"
-       // Start hidden
     >
       <HeroBackground 
         ref={backgroundContainerRef} 
@@ -123,9 +159,9 @@ const Moment01 = ({ index }: { index: number }) => {
         backgroundGradRef={backgroundGradRef} 
       />
       
-      <div className="relative z-10 w-full h-full flex flex-col">
+      <div className="relative z-10 w-full h-full flex flex-col pt-[15vh]">
         <HeroContent ref={contentRef} />
-        <div className="mt-auto mb-12 flex flex-col items-center">
+        <div className="mt-auto mb-20 flex flex-col items-center">
           <HeroCTA ref={ctaRef} />
           <HeroProofPoints ref={proofsRef} />
         </div>
@@ -135,4 +171,3 @@ const Moment01 = ({ index }: { index: number }) => {
 };
 
 export default Moment01;
-
