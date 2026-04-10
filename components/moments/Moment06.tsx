@@ -24,10 +24,10 @@ const Moment06 = ({ index }: { index: number }) => {
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: isMobile ? "+=150%" : "+=200%",
+        end: isMobile ? "+=150%" : "+=250%",
         pin: true,
         pinSpacing: true,
-        scrub: isMobile ? 0.6 : 1.5,
+        scrub: isMobile ? 0.8 : 1.2,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -38,98 +38,108 @@ const Moment06 = ({ index }: { index: number }) => {
       }
     });
 
+    // 100ms kinetic threshold
+    tl.set({}, {}, 0.1);
+
     // 1. Entry Reveal - standardized fade + transform
     tl.fromTo(sectionRef.current,
-      { opacity: 0, scale: 1.05 },
+      { opacity: 0, scale: 1.02 },
       { 
         opacity: 1, 
         scale: 1,
-        ease: "power2.out",
-        duration: 0.2 
-      }, 0);
+        ease: "cinematic",
+        duration: 0.5 
+      }, 0.1);
 
-    // 2. Staggered reveal of architectural elements - delayed for reveal
+    // 2. Staggered reveal of architectural elements - Cinematic Kinetic (+40px)
     const revealElements = [
-        palmLeftRef.current,
-        palmRightRef.current,
         platformRef.current,
         ...postRefs.current,
         roofRef.current,
-        glowRef.current,
         lightsRef.current
     ].filter(Boolean) as HTMLElement[];
 
     tl.fromTo(revealElements, 
       { 
         opacity: 0, 
-        scale: 0.9, 
-        y: 60 
+        y: 40 
       }, 
       { 
         opacity: 1, 
-        scale: 1, 
         y: 0, 
-        stagger: 0.04,
+        stagger: 0.05,
         force3D: true,
-        ease: "power2.out",
-        duration: 0.4
-      }, 0.15);
+        ease: "cinematic",
+        duration: 1
+      }, 0.2);
 
-    // 3. Parallax "Deep Dive" - Pavillion structure (Midground)
+    // 3. Focal Glow Bloom
+    tl.fromTo(glowRef.current, {
+        opacity: 0,
+        scale: 0.8,
+    }, {
+        opacity: 0.2,
+        scale: 1.4,
+        force3D: true,
+        ease: "cinematic",
+        duration: 1.5
+    }, 0.3);
+
+    // 4. Parallax Depth - 0.3x for Backgrounds, 1x for Palms
     tl.to(structureRef.current, {
-      scale: 1.1,
-      y: "-3vh",
-      force3D: true,
-      ease: "none",
-    }, 0);
-
-    tl.to(glowRef.current, {
-      opacity: 0.4,
-      scale: 1.4,
-      filter: "blur(40px)",
+      scale: 1.15,
       y: "-5vh",
       force3D: true,
       ease: "none",
-    }, 0);
+    }, 0.1);
 
-    // 4. Palms Parallax - Foreground (Fastest movement)
+    // Foreground Palms (1x speed kinetics)
     tl.to(palmLeftRef.current, { 
-      x: "-12vw", 
-      y: "-15vh", 
-      rotate: -12, 
-      scale: 1.1, 
+      x: "-15vw", 
+      y: "-10vh", 
+      rotate: -15, 
+      scale: 1.15, 
       ease: "none" 
-    }, 0);
+    }, 0.1);
 
     tl.to(palmRightRef.current, { 
-      x: "12vw", 
-      y: "-15vh", 
-      rotate: 12, 
-      scale: 1.1, 
+      x: "15vw", 
+      y: "-10vh", 
+      rotate: 15, 
+      scale: 1.15, 
       ease: "none" 
-    }, 0);
+    }, 0.1);
 
-    // 5. Dapples - Background deep (Slowest drift)
+    // Deep Background Dapples (0.2x speed)
     dappleRefs.current.forEach((dapple, i) => {
       if (dapple) {
         tl.to(dapple, {
-          xPercent: (i % 2 === 0 ? 15 : -15),
-          yPercent: (i % 3 === 0 ? 10 : -10),
-          rotate: (i % 2 === 0 ? 8 : -8),
-          scale: 1.1,
-          opacity: 0.1,
+          xPercent: (i % 2 === 0 ? 25 : -25),
+          yPercent: (i % 3 === 0 ? 15 : -15),
+          rotate: (i % 2 === 0 ? 12 : -12),
+          scale: 1.2,
+          opacity: 0.15,
           ease: "none"
-        }, 0);
+        }, 0.1);
       }
     });
 
-    // 6. Exit transition - standardized fade + transform exit
+    // 5. Exit transition
+    tl.to([structureRef.current, palmLeftRef.current, palmRightRef.current], {
+      opacity: 0,
+      y: -100,
+      scale: 1.1,
+      force3D: true,
+      ease: "cinematic",
+      stagger: 0.05
+    }, 0.8);
+
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95,
+      scale: 0.98,
       y: -40,
-      ease: "power2.inOut",
-    }, 0.85);
+      ease: "cinematic",
+    }, 0.9);
 
     return () => {
       tl.kill();
@@ -154,8 +164,6 @@ const Moment06 = ({ index }: { index: number }) => {
       id="moment-06"
       style={{
         background: 'linear-gradient(180deg, #1a3020 0%, #243828 35%, #1c2e22 65%, #141e18 100%)',
-        opacity: 0,
-        pointerEvents: 'none'
       }}
     >
       <div className="absolute top-0 left-0 w-full h-full pointer-events-none">
@@ -262,10 +270,8 @@ const Moment06 = ({ index }: { index: number }) => {
           style={{ clipPath: 'polygon(50% 100%, 0% 0%, 15% 0%, 50% 80%, 85% 0%, 100% 0%)' }}
         />
       </div>
-
     </section>
   );
 };
 
 export default Moment06;
-

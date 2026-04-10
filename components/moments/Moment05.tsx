@@ -15,7 +15,7 @@ const Moment05 = ({ index }: { index: number }) => {
   const { isMobile } = useScroll();
 
   useEffect(() => {
-    // Generate bougainvillea data only on client - fewer on mobile
+    // Generate bougainvillea data only on client
     const count = isMobile ? 6 : 12;
     setBougainvilleaData([...Array(count)].map((_, i) => ({
       size: 6 + Math.random() * 8,
@@ -32,10 +32,10 @@ const Moment05 = ({ index }: { index: number }) => {
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: isMobile ? "+=150%" : "+=200%",
+        end: isMobile ? "+=150%" : "+=250%",
         pin: true,
         pinSpacing: true,
-        scrub: isMobile ? 0.6 : 1.5,
+        scrub: isMobile ? 0.8 : 1.2,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -46,50 +46,53 @@ const Moment05 = ({ index }: { index: number }) => {
       }
     });
 
+    // 100ms kinetic threshold
+    tl.set({}, {}, 0.1);
+
     // 1. Entry Reveal - standardized fade + transform
     tl.fromTo(sectionRef.current,
-      { opacity: 0, scale: 1.05 },
+      { opacity: 0, scale: 1.02 },
       { 
         opacity: 1, 
         scale: 1,
-        ease: "power2.out",
-        duration: 0.2 
-      }, 0);
+        ease: "cinematic",
+        duration: 0.5 
+      }, 0.1);
 
-    // 2. Main split animation (the shift) - Background Depth
+    // 2. The Great Split - Background kinetic
     tl.to(shadeSideRef.current, {
-      width: "68%",
+      width: "70%",
       force3D: true,
-      ease: "power2.inOut",
-      duration: 0.6
-    }, 0.1);
+      ease: "cinematic",
+      duration: 1.2
+    }, 0.2);
 
     tl.to(sunSideRef.current, {
       width: "35%",
       force3D: true,
-      ease: "power2.inOut",
-      duration: 0.6
-    }, 0.1);
+      ease: "cinematic",
+      duration: 1.2
+    }, 0.2);
 
     tl.to(boundaryRef.current, {
-      left: "32%",
+      left: "30%",
       force3D: true,
-      ease: "power2.inOut",
-      duration: 0.6
-    }, 0.1);
+      ease: "cinematic",
+      duration: 1.2
+    }, 0.2);
 
     // 3. Dappled lights scroll-driven flutter - Foreground 3D
     dappleRefs.current.forEach((dapple, i) => {
       if (dapple) {
         tl.to(dapple, {
-          x: (i % 2 === 0 ? 40 : -40),
-          y: (i % 3 === 0 ? 30 : -30),
-          opacity: 0.3,
-          scale: 1.3,
-          rotate: (i % 2 === 0 ? 15 : -15),
+          x: (i % 2 === 0 ? 50 : -50),
+          y: (i % 3 === 0 ? 40 : -40),
+          opacity: 0.4,
+          scale: 1.5,
+          rotate: (i % 2 === 0 ? 25 : -25),
           force3D: true,
           ease: "none",
-        }, 0);
+        }, 0.1);
       }
     });
 
@@ -97,36 +100,36 @@ const Moment05 = ({ index }: { index: number }) => {
     petalsRef.current.forEach((petal, i) => {
       if (petal) {
         tl.to(petal, {
-          rotation: (i % 2 === 0 ? 180 : -180),
-          y: -100 - (i * 20),
-          x: (i % 2 === 0 ? 20 : -20),
-          opacity: 0.2,
-          scale: 1.4,
+          rotation: (i % 2 === 0 ? 240 : -240),
+          y: -150 - (i * 30),
+          x: (i % 2 === 0 ? 40 : -40),
+          opacity: 0.1,
+          scale: 1.8,
           ease: "none"
         }, 0.1);
       }
     });
 
-    // 5. Shadows parallax - Midground speed (differentiated from background split)
+    // 5. Shadows parallax - 0.3x mapping relative to 1x screen flow
     tl.to(boundaryRef.current, {
-      y: "-12%",
-      scaleY: 1.1,
+      y: "-15vh",
+      scaleY: 1.2,
       ease: "none"
-    }, 0);
+    }, 0.1);
 
-    // 6. Exit transition - standardized fade + transform exit
+    // 6. Exit transition
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95,
+      scale: 0.98,
       y: -40,
-      ease: "power2.inOut",
-    }, 0.85);
+      ease: "cinematic",
+    }, 0.9);
 
     return () => {
       tl.kill();
       ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
     };
-  }, [bougainvilleaData]); // Re-run to bind refs
+  }, [bougainvilleaData, isMobile]);
 
 
   const palmShadows = [
@@ -156,7 +159,6 @@ const Moment05 = ({ index }: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-full overflow-hidden" 
       id="moment-05"
-      style={{ opacity: 0, pointerEvents: 'none' }}
     >
       <div 
         ref={sunSideRef}
@@ -206,20 +208,6 @@ const Moment05 = ({ index }: { index: number }) => {
             />
           ))}
         </div>
-
-        <div className="absolute bottom-0 left-0 w-full h-[40%] pointer-events-none overflow-hidden">
-          <div 
-            className="absolute bottom-[-10%] left-[10%] w-[120%] h-[120%] bg-[#dcc8a026]"
-            style={{ borderRadius: '50% 50% 0 0', transform: 'rotate(-5deg)' }}
-          />
-        </div>
-
-        <div 
-          className="absolute top-[5%] right-[10%] w-[40%] h-[15%] bg-[#8c64324d] rounded-b-[4px]"
-          style={{
-            backgroundImage: `repeating-linear-gradient(45deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 2px, transparent 2px, transparent 4px)`
-          }}
-        />
       </div>
 
       <div 
@@ -242,10 +230,8 @@ const Moment05 = ({ index }: { index: number }) => {
           />
         ))}
       </div>
-
     </section>
   );
 };
 
 export default Moment05;
-
