@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { gsap, ScrollTrigger } from '@/lib/gsap';
+import { gsap, ScrollTrigger, SplitText } from '@/lib/gsap';
 import { useScroll } from '@/lib/context/ScrollContext';
 
 const Moment08 = ({ index }: { index: number }) => {
@@ -28,14 +28,18 @@ const Moment08 = ({ index }: { index: number }) => {
   useEffect(() => {
     if (!sectionRef.current) return;
 
+    // Split text for cinematic reveals
+    const splitQuote = new SplitText(textRef.current?.querySelector('p:first-child'), { type: "words,lines" });
+    const splitSource = new SplitText(textRef.current?.querySelector('p:last-child'), { type: "chars" });
+
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: isMobile ? "+=150%" : "+=200%",
+        end: isMobile ? "+=150%" : "+=250%",
         pin: true,
         pinSpacing: true,
-        scrub: isMobile ? 0.6 : 1.5,
+        scrub: isMobile ? 0.8 : 1.2,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -46,27 +50,59 @@ const Moment08 = ({ index }: { index: number }) => {
       }
     });
 
+    // 100ms kinetic threshold
+    tl.set({}, {}, 0.1);
+
     // 1. Entry Reveal - standardized fade + transform
     tl.fromTo(sectionRef.current,
-      { opacity: 0, scale: 1.05 },
+      { opacity: 0, scale: 1.02 },
       { 
         opacity: 1, 
         scale: 1,
-        ease: "power2.out",
-        duration: 0.2 
-      }, 0);
+        ease: "cinematic",
+        duration: 0.5 
+      }, 0.1);
 
-    // 2. Table and items entrance - Staggered mid-fast speeds
+    // 2. Cinematic Typography Reveal
+    if (splitQuote.words) {
+      tl.fromTo(splitQuote.words, {
+        opacity: 0,
+        y: 20,
+        rotateX: -15,
+      }, {
+        opacity: 1,
+        y: 0,
+        rotateX: 0,
+        stagger: 0.015,
+        duration: 0.8,
+        ease: "cinematic"
+      }, 0.3);
+    }
+
+    if (splitSource.chars) {
+      tl.fromTo(splitSource.chars, {
+        opacity: 0,
+        x: 10,
+      }, {
+        opacity: 0.5,
+        x: 0,
+        stagger: 0.01,
+        duration: 0.6,
+        ease: "cinematic"
+      }, 0.6);
+    }
+
+    // 3. Table and items entrance - Cinematic Kinetic (+40px)
     tl.fromTo(tableRef.current, 
-      { y: 100, opacity: 0, scale: 0.92 },
-      { y: 0, opacity: 1, scale: 1, force3D: true, ease: "power2.out", duration: 0.5 }, 0.1);
+      { y: 80, opacity: 0, scale: 0.95 },
+      { y: 0, opacity: 1, scale: 1, force3D: true, ease: "cinematic", duration: 1 }, 0.2);
 
     // Differentiate items for depth pass
     const items = [
-      { el: plateRef.current, y: 50, rotateX: -10, speed: 0.2 },
-      { el: menuRef.current, y: 80, rotate: 5, speed: 0.35 },
-      { el: candleRef.current, y: 30, scale: 0.8, speed: 0.15 },
-      { el: glassRef.current, y: 100, rotate: -5, speed: 0.45 }
+      { el: plateRef.current, y: 30, rotateX: -10 },
+      { el: menuRef.current, y: 50, rotate: 5 },
+      { el: candleRef.current, y: 20, scale: 0.9 },
+      { el: glassRef.current, y: 60, rotate: -5 }
     ];
 
     items.forEach((item, i) => {
@@ -79,67 +115,54 @@ const Moment08 = ({ index }: { index: number }) => {
             rotate: 0,
             rotateX: 0,
             force3D: true, 
-            ease: "power2.out",
-            duration: 0.45
-          }, 0.2 + i * 0.08);
+            ease: "cinematic",
+            duration: 0.8
+          }, 0.25 + i * 0.1);
       }
     });
 
-    // 3. Narrative text reveal - Foreground Fast
-    tl.fromTo(textRef.current,
-      { opacity: 0, y: 60, x: 40, scale: 0.9 },
-      { 
-        opacity: 1, 
-        y: 0, 
-        x: 0, 
-        scale: 1,
-        force3D: true, 
-        ease: "power2.out",
-        duration: 0.5 
-      }, 0.3);
-
-    // 4. Main pinned animations: subtle camera push
+    // 4. Parallax mapping - 0.3x for Table depth
     tl.to(containerRef.current, {
-      scale: 1.08, 
+      scale: 1.1, 
       force3D: true,
       ease: "none",
-    }, 0);
+    }, 0.1);
 
     tl.fromTo(shadowRef.current,
-      { x: "120%", opacity: 0, skewX: 10 },
-      { x: "-40%", opacity: 0.6, skewX: 0, force3D: true, ease: "none" },
+      { x: "100%", opacity: 0 },
+      { x: "-50%", opacity: 0.5, force3D: true, ease: "none" },
       0.1);
 
-    // 5. Scroll-driven object kinetics (Differentiated speeds)
-    tl.to(menuRef.current, { rotate: 5, y: "-25px", x: "10px", ease: "none" }, 0.2);
-    tl.to(plateRef.current, { scale: 1.1, y: "-12px", ease: "none" }, 0.2);
-    tl.to(glassRef.current, { y: "-40px", scale: 1.05, ease: "none" }, 0.2);
+    // 5. Scroll-driven object kinetics
+    tl.to(menuRef.current, { rotate: 8, y: "-15vh", x: "2vw", ease: "none" }, 0.2);
+    tl.to(plateRef.current, { scale: 1.2, y: "-8vh", ease: "none" }, 0.2);
+    tl.to(glassRef.current, { y: "-20vh", scale: 1.1, ease: "none" }, 0.2);
     
-    // 6. Candle & Glass
-    tl.to(candleFlameRef.current, { scale: 1.4, x: 4, rotate: 10, ease: "none" }, 0.2);
-    tl.to(candleGlowRef.current, { opacity: 0.6, scale: 1.6, ease: "none" }, 0.1);
-    tl.to(glassShimmerRef.current, { x: "250%", ease: "none" }, 0.1);
+    // 6. Candle & Glass Atmosphere
+    tl.to(candleFlameRef.current, { scale: 1.6, x: 5, rotate: 15, ease: "none" }, 0.2);
+    tl.to(candleGlowRef.current, { opacity: 0.6, scale: 2, ease: "none" }, 0.1);
+    tl.to(glassShimmerRef.current, { x: "300%", ease: "none" }, 0.1);
 
-    // 7. Text Exit - Passing the camera
+    // 7. Exit transition
     tl.to(textRef.current, {
       opacity: 0,
       y: -120,
-      x: 60,
-      scale: 1.2,
+      scale: 1.1,
       force3D: true,
-      ease: "power2.in",
-    }, 0.6);
+      ease: "cinematic",
+    }, 0.8);
 
-    // 8. Final Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95,
+      scale: 0.98,
       y: -40,
-      ease: "power2.inOut",
-    }, 0.85);
+      ease: "cinematic",
+    }, 0.9);
 
     return () => {
       tl.kill();
+      splitQuote.revert();
+      splitSource.revert();
       ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
     };
   }, [isMobile]);
@@ -149,11 +172,10 @@ const Moment08 = ({ index }: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-full overflow-hidden" 
       id="moment-08"
-      style={{ opacity: 0, pointerEvents: 'none' }}
     >
       <div 
         ref={textRef}
-        className="absolute top-[15%] right-[10%] md:right-[15%] z-30 max-w-[320px] pointer-events-none text-right"
+        className="absolute top-[18%] right-[10%] md:right-[15%] z-30 max-w-[320px] pointer-events-none text-right"
       >
         <p
           className="italic font-light mb-4 drop-shadow-md"
@@ -288,15 +310,12 @@ const Moment08 = ({ index }: { index: number }) => {
                 </div>
                 <div className="w-[2px] h-10 bg-[rgba(200,190,170,0.3)]" />
               </div>
-
             </div>
           </div>
         </div>
       </div>
-
     </section>
   );
 };
 
 export default Moment08;
-

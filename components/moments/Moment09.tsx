@@ -25,7 +25,7 @@ const Moment09 = ({ index }: { index: number }) => {
 
 
   useEffect(() => {
-    // Generate data only on client - reduced counts for mobile
+    // Generate data only on client
     const starCount = isMobile ? 12 : 20;
     const foamCount = isMobile ? 3 : 6;
 
@@ -41,7 +41,6 @@ const Moment09 = ({ index }: { index: number }) => {
       left: `${25 + Math.random() * 50}%`,
       top: `${35 + Math.random() * 30}%`,
       size: `${10 + Math.random() * 20}px`,
-      delay: Math.random() * 0.5
     })));
   }, [isMobile]);
 
@@ -52,10 +51,10 @@ const Moment09 = ({ index }: { index: number }) => {
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: isMobile ? "+=150%" : "+=200%",
+        end: isMobile ? "+=150%" : "+=250%",
         pin: true,
         pinSpacing: true,
-        scrub: isMobile ? 0.6 : 1.5,
+        scrub: isMobile ? 0.8 : 1.2,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -66,101 +65,104 @@ const Moment09 = ({ index }: { index: number }) => {
       }
     });
 
+    // 100ms kinetic threshold
+    tl.set({}, {}, 0.1);
+
     // 1. Entry Reveal - standardized fade + transform
     tl.fromTo(sectionRef.current,
-      { opacity: 0, scale: 1.05 },
+      { opacity: 0, scale: 1.02 },
       { 
         opacity: 1, 
         scale: 1,
-        ease: "power2.out",
-        duration: 0.2 
-      }, 0);
+        ease: "cinematic",
+        duration: 0.5 
+      }, 0.1);
 
-    // 2. Initial state for dish elements
-    tl.set(sauceRef.current, { x: -50, opacity: 0, scale: 0.7 }, 0);
-    tl.set([fishRef.current, herbsRef.current, foamRef.current], { opacity: 0, y: 50, scale: 0.8, filter: 'blur(10px)' }, 0);
-
-    // 3. Plate Entry with Depth - Midground Pass
+    // 2. Plate Entry with Cinematic Kinetic (+40px)
     tl.fromTo(plateRef.current,
-      { opacity: 0, scale: 0.8, y: 150, rotateX: 20 },
-      { opacity: 1, scale: 1, y: 0, rotateX: 0, force3D: true, ease: "power2.out", duration: 0.5 }, 0.1);
+      { opacity: 0, scale: 0.85, y: 80, rotateX: 15 },
+      { opacity: 1, scale: 1, y: 0, rotateX: 0, force3D: true, ease: "cinematic", duration: 1 }, 0.2);
 
-    // 4. Sauce "Pour" - Kinetic Foreground
-    tl.to(sauceRef.current, {
-      x: 0,
+    // 3. Sauce "Pour" & Component Reveals
+    tl.fromTo(sauceRef.current, 
+      { x: -40, opacity: 0, scale: 0.8 },
+      {
+        x: 0,
+        opacity: 1,
+        scale: 1,
+        force3D: true,
+        ease: "cinematic",
+        duration: 0.6
+      }, 0.4);
+
+    const foodItems = [fishRef.current, herbsRef.current, foamRef.current].filter(Boolean) as HTMLElement[];
+    tl.fromTo(foodItems, {
+      opacity: 0,
+      y: 20,
+      scale: 0.9,
+    }, {
       opacity: 1,
+      y: 0,
       scale: 1,
       force3D: true,
-      ease: "power2.inOut",
-      duration: 0.4
-    }, 0.25);
+      stagger: 0.15,
+      ease: "cinematic",
+      duration: 0.8
+    }, 0.5);
 
-    // 5. Staggered reveal of dish components - Micro-multi-layering
-    const foodItems = [fishRef.current, herbsRef.current, foamRef.current].filter(Boolean) as HTMLElement[];
-    foodItems.forEach((item, i) => {
-      tl.to(item, {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        filter: 'blur(0px)',
-        force3D: true,
-        ease: "back.out(1.7)",
-        duration: 0.45
-      }, 0.35 + i * 0.12);
-    });
-
-    // 6. Kinetic Enhancements - Drifting depth
-    herbItemsRef.current.forEach((herb, i) => {
-        if (herb) tl.to(herb, { y: -8, x: (i % 2 === 0 ? 5 : -5), opacity: 1, scale: 1.2, delay: i * 0.08, ease: "back.out" }, 0.45);
-    });
-
-    // Steam Drift - Differentiated foreground speeds
-    steamItemsRef.current.forEach((steam, i) => {
-      if (steam) {
-        tl.fromTo(steam, 
-          { y: 10, opacity: 0, scale: 0.8 },
-          { y: -100 - (i * 20), opacity: 0.3, scale: 1.5, ease: "none", duration: 0.5 }, 0.2 + i * 0.1);
-      }
-    });
-
-    // 7. Celestial & Ambience - Deep Background slowest
+    // 4. Parallax Depth - 0.3x mapping for Stars/Ambience
     starRefs.current.forEach((star, i) => {
       if (star) {
         tl.to(star, {
           opacity: 0.8,
-          scale: 1.8,
-          y: "-5vh", // Subtle vertical drift
+          scale: 2,
+          y: "-10vh",
           ease: "none",
-        }, 0);
+        }, 0.1);
       }
     });
 
-    // Candle Flicker - Grounding the midground
-    tl.to(candleFlameRef.current, { scale: 1.4, x: 4, rotate: 15, ease: "none" }, 0.2);
-    tl.to(candleGlowRef.current, { opacity: 0.8, scale: 1.4, y: "-2vh", ease: "none" }, 0);
-
-    // 8. Exit transition - standardized fade + transform exit 
     tl.to(plateRef.current, {
-      y: -350, 
-      opacity: 0,
-      scale: 0.6,
-      rotateX: -45,
+      y: "-15vh",
+      scale: 1.2,
+      rotateX: -10,
       force3D: true,
-      ease: "power2.in",
-    }, 0.7);
+      ease: "none",
+    }, 0.2);
+
+    // 5. Steam & Micro-Kinetic
+    steamItemsRef.current.forEach((steam, i) => {
+      if (steam) {
+        tl.fromTo(steam, 
+          { y: 10, opacity: 0 },
+          { y: -120 - (i * 20), opacity: 0.5, scale: 2, ease: "none", duration: 0.6 }, 0.2 + i * 0.1);
+      }
+    });
+
+    tl.to(candleFlameRef.current, { scale: 1.8, x: 6, rotate: 20, ease: "none" }, 0.1);
+    tl.to(candleGlowRef.current, { opacity: 0.6, scale: 2.2, ease: "none" }, 0.1);
+
+    // 6. Exit transition
+    tl.to(plateRef.current, {
+      y: -250, 
+      opacity: 0,
+      scale: 0.7,
+      force3D: true,
+      ease: "cinematic",
+    }, 0.8);
 
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95,
+      scale: 0.98,
       y: -40,
-      ease: "power2.inOut",
-    }, 0.85);
+      ease: "cinematic",
+    }, 0.9);
 
     return () => {
       tl.kill();
       ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
     };
-  }, [starsData, foamData, isMobile]);
+  }, [starsData, isMobile]);
 
 
   return (
@@ -168,7 +170,6 @@ const Moment09 = ({ index }: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-full overflow-hidden" 
       id="moment-09"
-      style={{ opacity: 0, pointerEvents: 'none' }}
     >
       <div 
         ref={containerRef}
@@ -193,15 +194,6 @@ const Moment09 = ({ index }: { index: number }) => {
             />
           ))}
         </div>
-
-        <div 
-          className="absolute bottom-0 left-0 w-full h-[30%] z-1"
-          style={{
-            background: 'rgba(15,35,50,0.6)',
-            maskImage: 'linear-gradient(to top, black, transparent)',
-            WebkitMaskImage: 'linear-gradient(to top, black, transparent)'
-          }}
-        />
 
         <div 
           ref={candleRef}
@@ -257,18 +249,16 @@ const Moment09 = ({ index }: { index: number }) => {
                   borderRadius: '45% 55% 50% 50% / 40% 40% 60% 60%',
                   boxShadow: 'inset 0 2px 5px rgba(255,255,255,0.15), 0 3px 10px rgba(0,0,0,0.4)'
                 }}
-              >
-                <div className="absolute inset-0 w-full h-1/2 bg-white/5 rounded-t-full blur-[2px]" />
-              </div>
+              />
 
               <div ref={herbsRef} className="absolute inset-0 pointer-events-none z-20">
                 <div 
                     ref={el => { if (el) herbItemsRef.current[0] = el; }}
-                    className="absolute top-[40%] left-[65%] w-[6px] h-[6px] rounded-full bg-[rgba(60,100,40,0.95)] opacity-0" 
+                    className="absolute top-[40%] left-[65%] w-[6px] h-[6px] rounded-full bg-[rgba(60,100,40,0.95)]" 
                 />
                 <div 
                     ref={el => { if (el) herbItemsRef.current[1] = el; }}
-                    className="absolute top-[62%] left-[72%] w-[5px] h-[5px] rounded-full bg-[rgba(60,100,40,0.95)] opacity-0" 
+                    className="absolute top-[62%] left-[72%] w-[5px] h-[5px] rounded-full bg-[rgba(60,100,40,0.95)]" 
                 />
               </div>
 
@@ -278,10 +268,10 @@ const Moment09 = ({ index }: { index: number }) => {
                     key={i} 
                     className="absolute bg-[rgba(245,240,220,0.85)] rounded-full backdrop-blur-[1px]"
                     style={{
-                      width: `${f.width}px`,
-                      height: `${f.height}px`,
-                      top: `${f.top}px`,
-                      left: `${f.left}px`,
+                      width: `${f.size}px`,
+                      height: `${f.size}px`,
+                      top: `${Math.random() * 10}px`,
+                      left: `${Math.random() * 10}px`,
                       boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
                     }}
                   />
@@ -304,10 +294,8 @@ const Moment09 = ({ index }: { index: number }) => {
           </div>
         </div>
       </div>
-
     </section>
   );
 };
 
 export default Moment09;
-

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { gsap, ScrollTrigger } from '@/lib/gsap';
+import { gsap, ScrollTrigger, SplitText } from '@/lib/gsap';
 import { useScroll } from '@/lib/context/ScrollContext';
 
 const Moment07 = ({ index }: { index: number }) => {
@@ -17,14 +17,18 @@ const Moment07 = ({ index }: { index: number }) => {
   useEffect(() => {
     if (!sectionRef.current) return;
 
+    // Split text for cinematic reveals
+    const splitTitle = new SplitText(textRef.current?.querySelector('h2'), { type: "chars,words", charsClass: "char" });
+    const splitBody = new SplitText(textRef.current?.querySelector('p'), { type: "words,lines" });
+
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: isMobile ? "+=150%" : "+=200%",
+        end: isMobile ? "+=150%" : "+=250%",
         pin: true,
         pinSpacing: true,
-        scrub: isMobile ? 0.6 : 1.5,
+        scrub: isMobile ? 0.8 : 1.2,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -35,90 +39,106 @@ const Moment07 = ({ index }: { index: number }) => {
       }
     });
 
+    // 100ms kinetic threshold
+    tl.set({}, {}, 0.1);
+
     // 1. Entry Reveal - standardized fade + transform
     tl.fromTo(sectionRef.current,
-      { opacity: 0, scale: 1.05 },
+      { opacity: 0, scale: 1.02 },
       { 
         opacity: 1, 
         scale: 1,
-        ease: "power2.out",
-        duration: 0.2 
-      }, 0);
-
-    // 2. Container Reveal & Parallax Depth - slightly delayed to start after entry
-    tl.fromTo(containerRef.current,
-      { 
-        filter: "brightness(0.6)", 
-        scale: 0.95 
-      },
-      {
-        filter: "brightness(1)",
-        scale: 1,
-        force3D: true,
-        ease: "power2.out",
-        duration: 0.4
+        ease: "cinematic",
+        duration: 0.5 
       }, 0.1);
 
-    // 3. Layered Parallax - Deep Background components
-    tl.to(ceilingRef.current, { y: "-15%", opacity: 0.8, ease: "none" }, 0);
-    tl.to(floorRef.current, { y: "8%", rotateX: "25deg", ease: "none" }, 0);
-
-    // 4. Narrative text reveal - Foreground Speed
-    tl.fromTo(textRef.current,
-      { opacity: 0, x: -80, scale: 0.9, skewX: 5 },
-      {
+    // 2. Cinematic Typography Reveal
+    if (splitTitle.chars) {
+      tl.fromTo(splitTitle.chars, {
+        opacity: 0,
+        y: 40,
+        rotateX: -15,
+      }, {
         opacity: 1,
-        x: 0,
-        scale: 1,
-        skewX: 0,
-        force3D: true,
-        duration: 0.45,
-        ease: "power2.out"
+        y: 0,
+        rotateX: 0,
+        stagger: 0.02,
+        duration: 0.8,
+        ease: "cinematic"
       }, 0.2);
-
-    // 5. Table "Coming Closer" Effect - Midground speed
-    if (tableRef.current) {
-      tl.to(tableRef.current, {
-        scale: 1.35,
-        y: "-5vh",
-        opacity: 1,
-        force3D: true,
-        ease: "none",
-      }, 0);
     }
 
-    // 6. Candles - Independent ambient flicker drift
+    if (splitBody.words) {
+      tl.fromTo(splitBody.words, {
+        opacity: 0,
+        y: 20,
+      }, {
+        opacity: 1,
+        y: 0,
+        stagger: 0.005,
+        duration: 0.6,
+        ease: "cinematic"
+      }, 0.4);
+    }
+
+    // 3. Environment Parallax - 0.3x mapping
+    tl.to(ceilingRef.current, { y: "-10vh", opacity: 0.7, ease: "none" }, 0.1);
+    tl.to(floorRef.current, { y: "15vh", rotateX: "30deg", ease: "none" }, 0.1);
+
+    // 4. Table kinetic reveal (+40px)
+    if (tableRef.current) {
+      tl.fromTo(tableRef.current, 
+        { opacity: 0, y: 60, scale: 0.9 },
+        {
+          opacity: 1,
+          y: 0,
+          scale: 1,
+          duration: 1,
+          ease: "cinematic"
+        }, 0.2);
+        
+      tl.to(tableRef.current, {
+        scale: 1.5,
+        y: "-10vh",
+        force3D: true,
+        ease: "none",
+      }, 0.5);
+    }
+
+    // 5. Candle Kinetics - Ambient drifting
     candleRefs.current.forEach((candle, i) => {
       if (candle) {
         tl.to(candle, {
           opacity: 0.4,
-          scale: 1.25,
-          x: (i % 2 === 0 ? 20 : -20),
-          y: (i % 3 === 0 ? 10 : -10),
-          filter: 'blur(40px)',
+          scale: 1.4,
+          x: (i % 2 === 0 ? 30 : -30),
+          y: (i % 3 === 0 ? 15 : -15),
+          filter: 'blur(50px)',
           ease: "none"
-        }, 0);
+        }, 0.1);
       }
     });
 
+    // 6. Exit transition
     tl.to(textRef.current, {
       opacity: 0,
-      x: -150,
-      scale: 1.2,
+      y: -120, 
+      scale: 1.1,
       force3D: true,
-      ease: "power2.in",
-    }, 0.6);
+      ease: "cinematic",
+    }, 0.8);
 
-    // 7. Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.95,
+      scale: 0.98,
       y: -40,
-      ease: "power2.inOut",
-    }, 0.85);
+      ease: "cinematic",
+    }, 0.9);
 
     return () => {
       tl.kill();
+      splitTitle.revert();
+      splitBody.revert();
       ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
     };
   }, [isMobile]);
@@ -142,7 +162,6 @@ const Moment07 = ({ index }: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-full overflow-hidden" 
       id="moment-07"
-      style={{ opacity: 0, pointerEvents: 'none' }}
     >
       <div 
         ref={containerRef}
@@ -191,27 +210,6 @@ const Moment07 = ({ index }: { index: number }) => {
               linear-gradient(180deg, rgba(30, 20, 10, 0.8) 0%, rgba(58, 40, 24, 0.4) 100%)
             `
           }}
-        >
-          {[...Array(5)].map((_, i) => (
-            <div 
-              key={i}
-              className="absolute bg-[rgba(200,160,80,0.4)] rounded-full"
-              style={{
-                width: `${15 + i * 2}px`,
-                height: `${15 + i * 2}px`,
-                top: `${(i * 15) % 40}%`,
-                left: `${15 + i * 18}%`,
-                boxShadow: '0 0 15px rgba(200,160,80,0.2)'
-              }}
-            />
-          ))}
-        </div>
-
-        <div 
-          className="absolute top-0 right-0 w-[30%] h-full z-10 pointer-events-none"
-          style={{
-            background: 'linear-gradient(90deg, transparent 0%, rgba(255,200,100,0.05) 60%, rgba(180,140,80,0.15) 100%)'
-          }}
         />
 
         <div 
@@ -225,17 +223,7 @@ const Moment07 = ({ index }: { index: number }) => {
               transform: 'rotateX(15deg)',
               background: 'repeating-linear-gradient(0deg, rgba(120,80,40,0.9) 0px, rgba(140,95,50,0.85) 14px, rgba(100,65,30,0.7) 15px, rgba(100,65,30,0.7) 17px, rgba(120,80,40,0.9) 18px)'
             }}
-          >
-            <div className="absolute inset-0 w-full h-full pointer-events-none">
-              {[...Array(3)].map((_, i) => (
-                <div 
-                  key={i}
-                  className="absolute left-0 w-full h-[1px] bg-[rgba(60,150,170,0.3)]"
-                  style={{ bottom: `${10 + i * 30}%` }}
-                />
-              ))}
-            </div>
-          </div>
+          />
         </div>
 
         <div className="absolute inset-0 z-15 pointer-events-none">
@@ -286,12 +274,9 @@ const Moment07 = ({ index }: { index: number }) => {
             </div>
           ))}
         </div>
-
       </div>
-
     </section>
   );
 };
 
 export default Moment07;
-
