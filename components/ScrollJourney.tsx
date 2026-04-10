@@ -71,9 +71,7 @@ const ScrollJourneyContent = () => {
 
 
 const ScrollJourney = () => (
-  <ScrollProvider>
-    <ScrollJourneyContent />
-  </ScrollProvider>
+  <ScrollJourneyContent />
 );
 
 export default ScrollJourney;
