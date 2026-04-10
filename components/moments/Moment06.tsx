@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { useScroll } from '@/lib/context/ScrollContext';
+import { gsap, ScrollTrigger } from '@/lib/gsap';
+
 
 const Moment06 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -14,21 +15,26 @@ const Moment06 = ({ index }: { index: number }) => {
   const palmLeftRef = useRef<HTMLDivElement>(null);
   const palmRightRef = useRef<HTMLDivElement>(null);
 
-  const { masterTl } = useScroll();
-
   useEffect(() => {
-    if (!masterTl || !sectionRef.current) return;
+    if (!sectionRef.current) return;
 
-    const label = `moment-06`;
-
-    // Entry transition
-    masterTl.fromTo(sectionRef.current,
-      { opacity: 0 },
-      {
-        opacity: 1,
-        pointerEvents: 'auto',
-        duration: 2
-      }, `${label}-=1`);
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "+=200%",
+        pin: true,
+        pinSpacing: false,
+        scrub: 1,
+        onToggle: self => {
+          if (self.isActive) {
+            sectionRef.current?.classList.add('active');
+          } else {
+            sectionRef.current?.classList.remove('active');
+          }
+        }
+      }
+    });
 
     // Staggered reveal of architectural elements
     const revealElements = [
@@ -41,7 +47,7 @@ const Moment06 = ({ index }: { index: number }) => {
         lightsRef.current
     ].filter(Boolean) as HTMLElement[];
 
-    masterTl.fromTo(revealElements, 
+    tl.fromTo(revealElements, 
       { 
         opacity: 0, 
         scale: 0.95, 
@@ -51,36 +57,37 @@ const Moment06 = ({ index }: { index: number }) => {
         opacity: 1, 
         scale: 1, 
         y: 0, 
-        stagger: 0.5,
+        stagger: 0.05,
         force3D: true,
         ease: "power2.out",
-        duration: 4
-      }, label);
+      }, 0);
 
     // Main structural push
-    masterTl.to(structureRef.current, {
+    tl.to(structureRef.current, {
       scale: 1.05,
       force3D: true,
       ease: "none",
-      duration: 10
-    }, label);
+    }, 0);
 
-    masterTl.to(glowRef.current, {
+    tl.to(glowRef.current, {
       opacity: 0.25,
       filter: "blur(20px)",
       force3D: true,
       ease: "none",
-      duration: 10
-    }, label);
+    }, 0);
 
-    // Exit transition
-    masterTl.to(sectionRef.current, {
+    // Exit transition (fade out)
+    tl.to(sectionRef.current, {
       opacity: 0,
-      pointerEvents: 'none',
-      duration: 2
-    }, `${label}+=8`);
+      ease: "none",
+    }, 0.9);
 
-  }, [masterTl]);
+    return () => {
+      tl.kill();
+      ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
+    };
+  }, []);
+
 
   const dapples = [
     { top: '10%', left: '15%', size: '300px', delay: '0s', dur: '8s' },

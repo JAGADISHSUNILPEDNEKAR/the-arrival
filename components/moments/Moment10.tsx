@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useScroll } from '@/lib/context/ScrollContext';
+import { gsap, ScrollTrigger } from '@/lib/gsap';
+
 
 const Moment10 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -9,7 +10,6 @@ const Moment10 = ({ index }: { index: number }) => {
   const contentRef = useRef<HTMLDivElement>(null);
   const [starsData, setStarsData] = useState<any[]>([]);
 
-  const { masterTl } = useScroll();
 
   useEffect(() => {
     // Generate 55 stars with random properties only on client
@@ -37,47 +37,56 @@ const Moment10 = ({ index }: { index: number }) => {
   }, []);
 
   useEffect(() => {
-    if (!masterTl || !sectionRef.current) return;
+    if (!sectionRef.current) return;
 
-    const label = `moment-10`;
-
-    // Entry transition
-    masterTl.fromTo(sectionRef.current,
-      { opacity: 0 },
-      {
-        opacity: 1,
-        pointerEvents: 'auto',
-        duration: 2
-      }, `${label}-=1`);
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "+=200%",
+        pin: true,
+        pinSpacing: false,
+        scrub: 1,
+        onToggle: self => {
+          if (self.isActive) {
+            sectionRef.current?.classList.add('active');
+          } else {
+            sectionRef.current?.classList.remove('active');
+          }
+        }
+      }
+    });
 
     // Camera pull back
-    masterTl.fromTo(contentRef.current, 
+    tl.fromTo(contentRef.current, 
       { scale: 1.1 },
       {
         scale: 1,
         force3D: true,
         ease: "none",
-        duration: 10
-      }, label);
+      }, 0);
 
     // Text Fade-In
-    masterTl.fromTo(textRef.current,
+    tl.fromTo(textRef.current,
       { opacity: 0 },
       {
         opacity: 1,
         force3D: true,
         ease: "power1.inOut",
-        duration: 4
-      }, `${label}+=4`);
+      }, 0.4);
 
-    // Exit transition
-    masterTl.to(sectionRef.current, {
+    // Exit transition (fade out)
+    tl.to(sectionRef.current, {
       opacity: 0,
-      pointerEvents: 'none',
-      duration: 2
-    }, `${label}+=8`);
+      ease: "none",
+    }, 0.9);
 
-  }, [masterTl]);
+    return () => {
+      tl.kill();
+      ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
+    };
+  }, []);
+
 
   return (
     <section 

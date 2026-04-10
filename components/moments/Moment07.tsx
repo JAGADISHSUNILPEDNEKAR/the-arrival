@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { useScroll } from '@/lib/context/ScrollContext';
+import { gsap, ScrollTrigger } from '@/lib/gsap';
+
 
 const Moment07 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -12,24 +13,29 @@ const Moment07 = ({ index }: { index: number }) => {
   const textRef = useRef<HTMLDivElement>(null);
   const candleRefs = useRef<HTMLDivElement[]>([]);
 
-  const { masterTl } = useScroll();
-
   useEffect(() => {
-    if (!masterTl || !sectionRef.current) return;
+    if (!sectionRef.current) return;
 
-    const label = `moment-07`;
-
-    // Entry transition
-    masterTl.fromTo(sectionRef.current,
-      { opacity: 0 },
-      {
-        opacity: 1,
-        pointerEvents: 'auto',
-        duration: 2
-      }, `${label}-=1`);
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "+=200%",
+        pin: true,
+        pinSpacing: false,
+        scrub: 1,
+        onToggle: self => {
+          if (self.isActive) {
+            sectionRef.current?.classList.add('active');
+          } else {
+            sectionRef.current?.classList.remove('active');
+          }
+        }
+      }
+    });
 
     // Container initial reveal (brightness/scale)
-    masterTl.fromTo(containerRef.current,
+    tl.fromTo(containerRef.current,
       { 
         filter: "brightness(0.7)", 
         scale: 0.97 
@@ -39,54 +45,53 @@ const Moment07 = ({ index }: { index: number }) => {
         scale: 1,
         force3D: true,
         ease: "power2.out",
-        duration: 4
-      }, label);
+      }, 0);
 
     // Narrative text entrance
-    masterTl.fromTo(textRef.current,
+    tl.fromTo(textRef.current,
       { opacity: 0, x: -30 },
       {
         opacity: 1,
         x: 0,
         force3D: true,
-        duration: 4
-      }, `${label}+=1`);
+      }, 0.1);
 
     // Main pinned animations: table and container growth
     if (tableRef.current) {
-      masterTl.to(tableRef.current, {
+      tl.to(tableRef.current, {
         scale: 1.08,
         y: -10,
         opacity: 0.8,
         force3D: true,
         ease: "power1.inOut",
-        duration: 10
-      }, label);
+      }, 0);
     }
 
-    masterTl.to(containerRef.current, {
+    tl.to(containerRef.current, {
       scale: 1.03,
       force3D: true,
       ease: "none",
-      duration: 10
-    }, label);
+    }, 0);
 
-    masterTl.to(textRef.current, {
+    tl.to(textRef.current, {
       opacity: 0,
       x: -50,
       force3D: true,
       ease: "none",
-      duration: 4
-    }, `${label}+=6`);
+    }, 0.7);
 
-    // Exit transition
-    masterTl.to(sectionRef.current, {
+    // Exit transition (fade out)
+    tl.to(sectionRef.current, {
       opacity: 0,
-      pointerEvents: 'none',
-      duration: 2
-    }, `${label}+=8`);
+      ease: "none",
+    }, 0.9);
 
-  }, [masterTl]);
+    return () => {
+      tl.kill();
+      ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
+    };
+  }, []);
+
 
   const candles = [
     { left: '25%', top: '45%', width: '120px', height: '60px', dur: '3.2s', delay: '0s' },

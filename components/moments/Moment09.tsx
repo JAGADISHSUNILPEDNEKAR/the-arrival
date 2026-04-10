@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useScroll } from '@/lib/context/ScrollContext';
+import { gsap, ScrollTrigger } from '@/lib/gsap';
+
 
 const Moment09 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -17,7 +18,6 @@ const Moment09 = ({ index }: { index: number }) => {
   const [starsData, setStarsData] = useState<any[]>([]);
   const [foamData, setFoamData] = useState<any[]>([]);
 
-  const { masterTl } = useScroll();
 
   useEffect(() => {
     // Generate data only on client
@@ -40,68 +40,76 @@ const Moment09 = ({ index }: { index: number }) => {
   }, []);
 
   useEffect(() => {
-    if (!masterTl || !sectionRef.current) return;
+    if (!sectionRef.current) return;
 
-    const label = `moment-09`;
-
-    // Entry transition
-    masterTl.fromTo(sectionRef.current,
-      { opacity: 0 },
-      {
-        opacity: 1,
-        pointerEvents: 'auto',
-        duration: 2
-      }, `${label}-=1`);
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "+=200%",
+        pin: true,
+        pinSpacing: false,
+        scrub: 1,
+        onToggle: self => {
+          if (self.isActive) {
+            sectionRef.current?.classList.add('active');
+          } else {
+            sectionRef.current?.classList.remove('active');
+          }
+        }
+      }
+    });
 
     // Initial state for dish elements
-    masterTl.set(sauceRef.current, { x: -30, opacity: 0, scale: 0.8 }, label);
-    masterTl.set([fishRef.current, herbsRef.current, foamRef.current], { opacity: 0, y: 15, scale: 0.95 }, label);
+    tl.set(sauceRef.current, { x: -30, opacity: 0, scale: 0.8 }, 0);
+    tl.set([fishRef.current, herbsRef.current, foamRef.current], { opacity: 0, y: 15, scale: 0.95 }, 0);
 
     // Plate enters
-    masterTl.fromTo(plateRef.current,
+    tl.fromTo(plateRef.current,
       { opacity: 0, scale: 0.92 },
-      { opacity: 1, scale: 1, force3D: true, ease: "power2.out", duration: 4 }, label);
+      { opacity: 1, scale: 1, force3D: true, ease: "power2.out" }, 0);
 
     // Sauce assembly
-    masterTl.to(sauceRef.current, {
+    tl.to(sauceRef.current, {
       x: 0,
       opacity: 1,
       scale: 1,
       force3D: true,
       ease: "power2.out",
-      duration: 3
-    }, `${label}+=1`);
+    }, 0.1);
 
     // Stagger food elements
     const foodItems = [fishRef.current, herbsRef.current, foamRef.current].filter(Boolean) as HTMLElement[];
     foodItems.forEach((item, i) => {
-      masterTl.to(item, {
+      tl.to(item, {
         opacity: 1,
         y: 0,
         scale: 1,
         force3D: true,
         ease: "back.out(1.2)",
-        duration: 3
-      }, `${label}+=${2 + i * 0.5}`);
+      }, 0.2 + i * 0.1);
     });
 
     // Main removal (pinned phase)
-    masterTl.to(plateRef.current, {
+    tl.to(plateRef.current, {
       y: -150,
       opacity: 0,
       force3D: true,
       ease: "power2.inOut",
-      duration: 6
-    }, `${label}+=4`);
+    }, 0.5);
 
-    // Exit transition
-    masterTl.to(sectionRef.current, {
+    // Exit transition (fade out)
+    tl.to(sectionRef.current, {
       opacity: 0,
-      pointerEvents: 'none',
-      duration: 2
-    }, `${label}+=8`);
+      ease: "none",
+    }, 0.9);
 
-  }, [masterTl]);
+    return () => {
+      tl.kill();
+      ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
+    };
+  }, []);
+
 
   return (
     <section 

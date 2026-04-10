@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useScroll } from '@/lib/context/ScrollContext';
+import { gsap, ScrollTrigger } from '@/lib/gsap';
+
 
 const Moment11 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -10,7 +11,6 @@ const Moment11 = ({ index }: { index: number }) => {
   const textRef = useRef<HTMLDivElement>(null);
   const [starsData, setStarsData] = useState<any[]>([]);
 
-  const { masterTl } = useScroll();
 
   useEffect(() => {
     // Generate 15 stars only on client
@@ -25,41 +25,51 @@ const Moment11 = ({ index }: { index: number }) => {
   }, []);
 
   useEffect(() => {
-    if (!masterTl || !sectionRef.current) return;
+    if (!sectionRef.current) return;
 
-    const label = `moment-11`;
-
-    // Entry transition
-    masterTl.fromTo(sectionRef.current,
-      { opacity: 0 },
-      {
-        opacity: 1,
-        pointerEvents: 'auto',
-        duration: 2
-      }, `${label}-=1`);
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "+=150%", // Last moment pinning
+        pin: true,
+        pinSpacing: true, // Last one should space naturally
+        scrub: 1,
+        onToggle: self => {
+          if (self.isActive) {
+            sectionRef.current?.classList.add('active');
+          } else {
+            sectionRef.current?.classList.remove('active');
+          }
+        }
+      }
+    });
 
     // Horizon line draws in
-    masterTl.fromTo(horizonRef.current,
+    tl.fromTo(horizonRef.current,
       { scaleX: 0 },
       {
         scaleX: 1,
-        duration: 4,
         force3D: true,
         ease: "power2.inOut"
-      }, label);
+      }, 0);
 
     // Text and form fade in
-    masterTl.fromTo(textRef.current,
-      { opacity: 0 },
+    tl.fromTo(textRef.current,
+      { opacity: 0, y: 30 },
       {
         opacity: 1,
-        duration: 4,
+        y: 0,
         force3D: true,
         ease: "power1.out"
-      }, `${label}+=2`);
+      }, 0.2);
 
-    // Moment 11 remains visible at the end
-  }, [masterTl]);
+    return () => {
+      tl.kill();
+      ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
+    };
+  }, []);
+
 
   return (
     <section 

@@ -1,7 +1,8 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { useScroll } from '@/lib/context/ScrollContext';
+import { gsap, ScrollTrigger } from '@/lib/gsap';
+
 
 const Moment08 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -15,77 +16,83 @@ const Moment08 = ({ index }: { index: number }) => {
   const textRef = useRef<HTMLDivElement>(null);
   const [menuLines, setMenuLines] = useState<number[]>([]);
 
-  const { masterTl } = useScroll();
-
   useEffect(() => {
     // Generate menu lines only on client
     setMenuLines([...Array(6)].map(() => 60 + Math.random() * 30));
   }, []);
 
   useEffect(() => {
-    if (!masterTl || !sectionRef.current) return;
+    if (!sectionRef.current) return;
 
-    const label = `moment-08`;
-
-    // Entry transition
-    masterTl.fromTo(sectionRef.current,
-      { opacity: 0 },
-      {
-        opacity: 1,
-        pointerEvents: 'auto',
-        duration: 2
-      }, `${label}-=1`);
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: sectionRef.current,
+        start: "top top",
+        end: "+=200%",
+        pin: true,
+        pinSpacing: false,
+        scrub: 1,
+        onToggle: self => {
+          if (self.isActive) {
+            sectionRef.current?.classList.add('active');
+          } else {
+            sectionRef.current?.classList.remove('active');
+          }
+        }
+      }
+    });
 
     // Table and items entrance
-    masterTl.fromTo(tableRef.current, 
+    tl.fromTo(tableRef.current, 
       { y: 30, opacity: 0 },
-      { y: 0, opacity: 1, force3D: true, ease: "power2.out", duration: 4 }, label);
+      { y: 0, opacity: 1, force3D: true, ease: "power2.out" }, 0);
 
     // Stagger items
     [plateRef.current, menuRef.current, candleRef.current, glassRef.current].forEach((item, i) => {
       if (item) {
-        masterTl.fromTo(item,
+        tl.fromTo(item,
           { opacity: 0, scale: 0.95 },
-          { opacity: 1, scale: 1, force3D: true, ease: "power2.out", duration: 3 },
-          `${label}+=${0.5 + i * 0.5}`
+          { opacity: 1, scale: 1, force3D: true, ease: "power2.out" },
+          0.1 + i * 0.1
         );
       }
     });
 
-    masterTl.fromTo(textRef.current,
+    tl.fromTo(textRef.current,
       { opacity: 0, y: 20 },
-      { opacity: 1, y: 0, force3D: true, ease: "power2.out", duration: 4 },
-      `${label}+=2`);
+      { opacity: 1, y: 0, force3D: true, ease: "power2.out" },
+      0.2);
 
     // Pull back and shadow entry (pinned phase)
-    masterTl.to(containerRef.current, {
+    tl.to(containerRef.current, {
       scale: 1, 
       force3D: true,
       ease: "none",
-      duration: 10
-    }, label);
+    }, 0);
 
-    masterTl.fromTo(shadowRef.current,
+    tl.fromTo(shadowRef.current,
       { x: "100%", opacity: 0 },
-      { x: "0%", opacity: 0.4, force3D: true, ease: "power1.inOut", duration: 10 },
-      label);
+      { x: "0%", opacity: 0.4, force3D: true, ease: "power1.inOut" },
+      0.3);
 
-    masterTl.to(textRef.current, {
+    tl.to(textRef.current, {
       opacity: 0,
       y: -20,
       force3D: true,
       ease: "none",
-      duration: 4
-    }, `${label}+=6`);
+    }, 0.7);
 
-    // Exit transition
-    masterTl.to(sectionRef.current, {
+    // Exit transition (fade out)
+    tl.to(sectionRef.current, {
       opacity: 0,
-      pointerEvents: 'none',
-      duration: 2
-    }, `${label}+=8`);
+      ease: "none",
+    }, 0.9);
 
-  }, [masterTl]);
+    return () => {
+      tl.kill();
+      ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
+    };
+  }, []);
 
   return (
     <section 
