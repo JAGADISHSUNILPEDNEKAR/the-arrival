@@ -1,25 +1,33 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { gsap, ScrollTrigger } from '@/lib/gsap';
+import { gsap, ScrollTrigger, SplitText } from '@/lib/gsap';
 import { useScroll } from '@/lib/context/ScrollContext';
 
+interface Star {
+  id: number;
+  top: string;
+  left: string;
+  size: string;
+  color: string;
+  hasGlow: boolean;
+}
 
-const Moment10 = ({ index }: { index: number }) => {
+const Moment10 = ({}: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const textRef = useRef<HTMLDivElement>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const starRefs = useRef<HTMLDivElement[]>([]);
+  const starRefs = useRef<(HTMLDivElement | null)[]>([]);
   const silhouetteRef = useRef<HTMLDivElement>(null);
   const nebulaRef = useRef<HTMLDivElement>(null);
-  const [starsData, setStarsData] = useState<any[]>([]);
+  const [starsData, setStarsData] = useState<Star[]>([]);
   const { isMobile } = useScroll();
 
 
   useEffect(() => {
-    // Generate stars with random properties only on client - reduced for mobile
+    // Generate stars with random properties only on client to avoid hydration mismatch
     const count = isMobile ? 25 : 55;
-    setStarsData(Array.from({ length: count }).map((_, i) => {
+    const newStars = Array.from({ length: count }).map((_, i) => {
       const size = i < (count * 0.7) ? 1 : i < (count * 0.9) ? 2 : 3;
       const isBlueTint = Math.random() > 0.7;
       const color = isBlueTint ? 'rgba(220, 230, 255, 0.6)' : `rgba(255, 255, 255, ${0.4 + Math.random() * 0.5})`;
@@ -33,113 +41,152 @@ const Moment10 = ({ index }: { index: number }) => {
         color,
         hasGlow
       };
-    }));
+    });
+    
+    // Wrap in rAF to avoid "setState synchronously within an effect" warning in React 19 / strict lint
+    const rafId = requestAnimationFrame(() => {
+        setStarsData(newStars);
+    });
+
+    return () => cancelAnimationFrame(rafId);
   }, [isMobile]);
 
   useEffect(() => {
-    if (!sectionRef.current) return;
+    const sectionEl = sectionRef.current;
+    const textEl = textRef.current;
+    
+    if (!sectionEl || !starsData.length) return;
+
+    // Split text for cinematic reveals - guard against missing elements
+    const pElement = textEl?.querySelector('p');
+    const splitBody = pElement ? new SplitText(pElement, { type: "chars,words", charsClass: "char" }) : null;
 
     const tl = gsap.timeline({
       scrollTrigger: {
-        trigger: sectionRef.current,
+        trigger: sectionEl,
         start: "top top",
-        end: isMobile ? "+=150%" : "+=200%",
+        end: isMobile ? "+=150%" : "+=250%",
         pin: true,
         pinSpacing: true,
-        scrub: isMobile ? 0.6 : 1.5,
+        scrub: isMobile ? 0.8 : 1.2,
         onToggle: self => {
           if (self.isActive) {
-            sectionRef.current?.classList.add('active');
+            sectionEl.classList.add('active');
           } else {
-            sectionRef.current?.classList.remove('active');
+            sectionEl.classList.remove('active');
           }
         }
       }
     });
 
+    // 100ms kinetic threshold
+    tl.set({}, {}, 0.1);
+
     // 1. Entry Reveal - standardized fade + transform
-    tl.fromTo(sectionRef.current,
-      { opacity: 0, scale: 1.05 },
+    tl.fromTo(sectionEl,
+      { opacity: 0, scale: 1.02 },
       { 
         opacity: 1, 
         scale: 1,
-        ease: "power2.out",
-        duration: 0.2 
-      }, 0);
-
-    // 2. Camera Depth - Pull back and parallax - Background Depth
-    tl.fromTo(contentRef.current, 
-      { scale: 1.1, y: "2vh" },
-      {
-        scale: 1,
-        y: 0,
-        force3D: true,
-        ease: "none",
+        ease: "cinematic",
+        duration: 0.5 
       }, 0.1);
 
-    // 3. Narrative Text entrance & persistence - Foreground Speed
-    tl.fromTo(textRef.current,
-      { opacity: 0, scale: 0.9, y: 80, rotate: -1 },
-      {
-        opacity: 1,
-        scale: 1,
-        y: 0,
-        rotate: 0,
-        force3D: true,
-        ease: "power2.out",
-        duration: 0.5
-      }, 0.2);
+    // 2. Camera Depth & Environment - 0.3x ratio
+    if (contentRef.current) {
+        tl.fromTo(contentRef.current, 
+          { scale: 1.05, y: "5vh" },
+          {
+            scale: 1,
+            y: 0,
+            force3D: true,
+            ease: "none",
+          }, 0.1);
+    }
 
-    // 4. Stars Celestial Kinetics - Drifting Background
+    if (nebulaRef.current) {
+        tl.to(nebulaRef.current, {
+            rotate: 45,
+            opacity: 0.6,
+            scale: 1.6,
+            y: "-15vh",
+            ease: "none"
+        }, 0.1);
+    }
+
+    // 3. Cinematic Narrative Text Reveal
+    if (splitBody?.chars) {
+      tl.fromTo(splitBody.chars, {
+        opacity: 0,
+        y: 40,
+        rotateX: -20,
+      }, {
+        opacity: 0.7,
+        y: 0,
+        rotateX: 0,
+        stagger: 0.02,
+        duration: 1,
+        ease: "cinematic"
+      }, 0.2);
+    }
+
+    // 4. Stars Celestial Kinetics
     starRefs.current.forEach((star, i) => {
       if (star) {
         tl.to(star, {
-          opacity: 0.8,
-          scale: (i % 3 === 0 ? 2 : 1.5),
-          x: (i % 2 === 0 ? 60 : -60),
-          y: (i % 3 === 0 ? 40 : -40),
+          opacity: 0.9,
+          scale: 1.8,
+          x: (i % 2 === 0 ? 80 : -80),
+          y: (i % 3 === 0 ? 60 : -60),
           ease: "none",
-        }, 0);
+        }, 0.1);
       }
     });
 
-    // 5. Nebula & Silhouette Parallax - Midground speeds
-    tl.to(nebulaRef.current, {
-        rotate: 45,
-        opacity: 0.7,
-        scale: 1.4,
-        y: "-10vh",
-        ease: "none"
-    }, 0);
+    // 5. Silhouette kinetic reveal (+40px)
+    if (silhouetteRef.current) {
+        tl.fromTo(silhouetteRef.current, {
+            opacity: 0,
+            y: 60,
+            scale: 0.9,
+        }, {
+            opacity: 1,
+            y: 0,
+            scale: 1,
+            ease: "cinematic",
+            duration: 1
+        }, 0.3);
 
-    tl.to(silhouetteRef.current, {
-        y: "-12vh",
-        scale: 1.15,
-        x: "2vw",
-        ease: "none"
-    }, 0);
+        tl.to(silhouetteRef.current, {
+            y: "-15vh",
+            scale: 1.2,
+            x: "3vw",
+            ease: "none"
+        }, 0.5);
+    }
 
-    // 6. Text Exit - Extremely fast fly-past
-    tl.to(textRef.current, {
-        opacity: 0,
-        y: -180,
-        scale: 1.3,
-        rotate: 2,
-        force3D: true,
-        ease: "power2.in"
-    }, 0.6);
+    // 6. Exit transition
+    if (textEl) {
+        tl.to(textEl, {
+            opacity: 0,
+            y: -150,
+            scale: 1.2,
+            force3D: true,
+            ease: "cinematic"
+        }, 0.8);
+    }
 
-    // 7. Exit transition - standardized fade + transform exit
-    tl.to(sectionRef.current, {
+    tl.to(sectionEl, {
       opacity: 0,
-      scale: 0.95,
+      scale: 0.98,
       y: -40,
-      ease: "power2.inOut",
-    }, 0.85);
+      ease: "cinematic",
+    }, 0.9);
 
     return () => {
       tl.kill();
-      ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
+      if (splitBody) splitBody.revert();
+      ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionEl).forEach(st => st.kill());
     };
   }, [starsData, isMobile]);
 
@@ -149,7 +196,6 @@ const Moment10 = ({ index }: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-full overflow-hidden bg-[#060810]" 
       id="moment-10"
-      style={{ opacity: 0, pointerEvents: 'none' }}
     >
       <div 
         className="absolute inset-0 w-full h-full pointer-events-none"
@@ -169,14 +215,8 @@ const Moment10 = ({ index }: { index: number }) => {
           <div 
             className="absolute inset-0 w-full h-full"
             style={{
-              background: 'repeating-linear-gradient(92deg, transparent 0%, rgba(180,190,220,0.015) 1%, rgba(200,210,240,0.025) 2%, transparent 3%, transparent 6%)'
-            }}
-          />
-          <div 
-            className="absolute inset-0 w-full h-full"
-            style={{
-              background: 'rgba(200,210,240,0.04)',
-              filter: 'blur(40px)'
+              background: 'repeating-linear-gradient(92deg, transparent 0%, rgba(180,190,220,0.015) 1%, rgba(200,210,240,0.025) 2%, transparent 3%, transparent 6%)',
+              filter: 'blur(30px)'
             }}
           />
         </div>
@@ -185,7 +225,7 @@ const Moment10 = ({ index }: { index: number }) => {
           {starsData.map((star, i) => (
             <div 
               key={star.id}
-              ref={el => { if (el) starRefs.current[i] = el; }}
+              ref={el => { starRefs.current[i] = el; }}
               className="absolute rounded-full"
               style={{
                 top: star.top,
@@ -198,13 +238,6 @@ const Moment10 = ({ index }: { index: number }) => {
             />
           ))}
         </div>
-
-        <div 
-          className="absolute inset-0 pointer-events-none z-10"
-          style={{
-            background: 'radial-gradient(ellipse 80% 60% at 50% 75%, rgba(10,30,50,0.6) 0%, rgba(5,15,25,0.3) 50%, transparent 75%)'
-          }}
-        />
 
         <div 
           ref={silhouetteRef}
@@ -224,13 +257,6 @@ const Moment10 = ({ index }: { index: number }) => {
           </div>
 
           <div 
-            className="absolute inset-0 rounded-full pointer-events-none"
-            style={{
-              boxShadow: '0 0 40px 15px rgba(255,185,80,0.15)'
-            }}
-          />
-
-          <div 
             className="absolute top-[65%] left-[48%] -translate-x-1/2 -translate-y-1/2 w-[10px] h-[10px] rounded-full z-30"
             style={{
               background: 'rgba(255,200,100,0.7)',
@@ -244,19 +270,18 @@ const Moment10 = ({ index }: { index: number }) => {
         ref={textRef}
         className="absolute top-[35%] left-1/2 -translate-x-1/2 z-40 w-full text-center px-6 pointer-events-none"
       >
-        <p className="font-serif italic font-light tracking-[0.2em] text-[#dcd7c8] opacity-[0.55]"
+        <p className="font-serif italic font-light tracking-[0.2em] text-[#dcd7c8]"
            style={{
              fontSize: 'clamp(0.9rem, 2.2vw, 1.5rem)',
-             fontFamily: '"Cormorant Garamond", serif'
+             fontFamily: '"Cormorant Garamond", serif',
+             opacity: 0.6
            }}
         >
           Some tables are remembered longer than others.
         </p>
       </div>
-
     </section>
   );
 };
 
 export default Moment10;
-

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { gsap, ScrollTrigger } from '@/lib/gsap';
+import { gsap, ScrollTrigger, SplitText } from '@/lib/gsap';
 import { useScroll } from '@/lib/context/ScrollContext';
 
 
@@ -19,7 +19,7 @@ const Moment11 = ({ index }: { index: number }) => {
 
 
   useEffect(() => {
-    // Generate stars only on client - fewer on mobile
+    // Generate stars only on client
     const count = isMobile ? 8 : 15;
     setStarsData(Array.from({ length: count }).map((_, i) => ({
       id: i,
@@ -32,14 +32,18 @@ const Moment11 = ({ index }: { index: number }) => {
   useEffect(() => {
     if (!sectionRef.current) return;
 
+    // Split text for cinematic reveals
+    const splitTitle = new SplitText(textRef.current?.querySelector('div'), { type: "chars,words", charsClass: "char" });
+    const splitSub = new SplitText(textRef.current?.querySelector('p'), { type: "words,lines" });
+
     const tl = gsap.timeline({
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: isMobile ? "+=150%" : "+=200%", 
+        end: isMobile ? "+=150%" : "+=250%", 
         pin: true,
         pinSpacing: true, 
-        scrub: isMobile ? 0.6 : 1.5,
+        scrub: isMobile ? 0.8 : 1.2,
         onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
@@ -50,87 +54,107 @@ const Moment11 = ({ index }: { index: number }) => {
       }
     });
 
+    // 100ms kinetic threshold
+    tl.set({}, {}, 0.1);
+
     // 1. Entry Reveal - standardized fade + transform
     tl.fromTo(sectionRef.current,
-      { opacity: 0, scale: 1.05 },
+      { opacity: 0, scale: 1.02 },
       { 
         opacity: 1, 
         scale: 1,
-        ease: "power2.out",
-        duration: 0.2 
-      }, 0);
+        ease: "cinematic",
+        duration: 0.5 
+      }, 0.1);
 
-    // 2. Horizon Reveal - Drawing from center
+    // 2. Horizon Reveal - Cinematic Drawing
     tl.fromTo(horizonRef.current,
       { scaleX: 0, opacity: 0 },
       {
-        scaleX: 1.1, // Slight over-scale for depth
-        opacity: 0.6,
+        scaleX: 1.2,
+        opacity: 0.5,
         force3D: true,
-        ease: "power2.inOut",
-        duration: 0.4
-      }, 0.1);
-
-    // 3. Background Atmospheric Pulse - Deep deepest background
-    tl.to(backgroundWrapperRef.current, {
-        scale: 1.1,
-        y: "-5vh",
-        opacity: 0.8,
-        ease: "none"
-    }, 0);
-
-    // 4. Text and Form reveal kinetics - Foreground Fast
-    tl.fromTo(textRef.current,
-      { opacity: 0, y: 100, scale: 0.9, rotateX: 10 },
-      {
-        opacity: 1,
-        y: 0,
-        scale: 1,
-        rotateX: 0,
-        force3D: true,
-        ease: "power2.out",
-        duration: 0.6
+        ease: "cinematic",
+        duration: 1
       }, 0.2);
 
+    // 3. Environment Parallax - 0.3x mapping
+    tl.to(backgroundWrapperRef.current, {
+        scale: 1.15,
+        y: "-8vh",
+        opacity: 0.9,
+        ease: "none"
+    }, 0.1);
+
+    // 4. Cinematic Typography Reveal
+    if (splitTitle.chars) {
+      tl.fromTo(splitTitle.chars, {
+        opacity: 0,
+        y: 40,
+        rotateX: -15,
+      }, {
+        opacity: 1,
+        y: 0,
+        rotateX: 0,
+        stagger: 0.02,
+        duration: 0.8,
+        ease: "cinematic"
+      }, 0.3);
+    }
+
+    if (splitSub.words) {
+      tl.fromTo(splitSub.words, {
+        opacity: 0,
+        y: 20,
+      }, {
+        opacity: 0.7,
+        y: 0,
+        stagger: 0.01,
+        duration: 0.6,
+        ease: "cinematic"
+      }, 0.5);
+    }
+
+    // 5. Reservation Form Kinetic Reveal (+40px)
     tl.fromTo(formRef.current,
-        { opacity: 0, y: 150, scale: 0.95, skewY: 4 },
+        { opacity: 0, y: 60, scale: 0.95 },
         { 
             opacity: 1, 
             y: 0, 
             scale: 1,
-            skewY: 0, 
-            duration: 0.7, 
+            duration: 1, 
             force3D: true,
-            ease: "power2.out" 
-        }, 0.3);
+            ease: "cinematic" 
+        }, 0.6);
 
-    // 5. Water Kinetic - Midground Speed
+    // 6. Water & Stars Kinetics
     tl.to(waterPatternRef.current, {
-        backgroundPositionX: "200px",
-        scale: 1.1,
+        backgroundPositionX: "300px",
+        scale: 1.2,
         ease: "none"
-    }, 0);
+    }, 0.1);
 
     tl.to(waterRef.current, {
-        y: "-5%",
-        scaleY: 1.1,
+        y: "-8vh",
+        scaleY: 1.15,
         ease: "none"
-    }, 0);
+    }, 0.1);
 
-    // 6. Stars Twinkle Dim - Slow drifting celestial layer
     starRefs.current.forEach((star, i) => {
         if (star) {
             tl.to(star, {
                 opacity: 0.9,
-                scale: 2,
-                y: "-10vh",
+                scale: 2.5,
+                y: "-12vh",
                 ease: "none"
-            }, 0);
+            }, 0.1);
         }
     });
 
     return () => {
       tl.kill();
+      splitTitle.revert();
+      splitSub.revert();
       ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
     };
   }, [starsData, isMobile]);
@@ -269,10 +293,8 @@ const Moment11 = ({ index }: { index: number }) => {
       >
         THE ARRIVAL — A MALDIVES EXPERIENCE
       </div>
-
     </section>
   );
 };
 
 export default Moment11;
-
