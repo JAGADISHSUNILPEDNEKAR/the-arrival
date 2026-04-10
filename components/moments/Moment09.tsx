@@ -52,9 +52,9 @@ const Moment09 = ({ index }: { index: number }) => {
       scrollTrigger: {
         trigger: sectionRef.current,
         start: "top top",
-        end: isMobile ? "+=180%" : "+=200%",
+        end: isMobile ? "+=150%" : "+=200%",
         pin: true,
-        pinSpacing: false,
+        pinSpacing: true,
         scrub: isMobile ? 0.6 : 1.5,
         onToggle: self => {
           if (self.isActive) {
@@ -139,9 +139,9 @@ const Moment09 = ({ index }: { index: number }) => {
     tl.to(candleFlameRef.current, { scale: 1.4, x: 4, rotate: 15, ease: "none" }, 0.2);
     tl.to(candleGlowRef.current, { opacity: 0.8, scale: 1.4, y: "-2vh", ease: "none" }, 0);
 
-    // 8. Exit transition - standardized fade + transform exit combined with plate flight
+    // 8. Exit transition - standardized fade + transform exit 
     tl.to(plateRef.current, {
-      y: -350, // Faster exit for "fly past"
+      y: -350, 
       opacity: 0,
       scale: 0.6,
       rotateX: -45,
@@ -151,8 +151,8 @@ const Moment09 = ({ index }: { index: number }) => {
 
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.9,
-      y: -60,
+      scale: 0.95,
+      y: -40,
       ease: "power2.inOut",
     }, 0.85);
 
