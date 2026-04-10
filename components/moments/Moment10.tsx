@@ -47,6 +47,7 @@ const Moment10 = ({ index }: { index: number }) => {
         pin: true,
         pinSpacing: false,
         scrub: isMobile ? 0.6 : 1.5,
+        onToggle: self => {
           if (self.isActive) {
             sectionRef.current?.classList.add('active');
           } else {
