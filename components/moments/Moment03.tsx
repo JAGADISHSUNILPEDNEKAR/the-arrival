@@ -25,7 +25,7 @@ const Moment03 = ({ index }: { index: number }) => {
         start: "top top",
         end: isMobile ? "+=150%" : "+=200%",
         pin: true,
-        pinSpacing: false,
+        pinSpacing: true,
         scrub: isMobile ? 0.6 : 1.5,
         onToggle: self => {
           if (self.isActive) {
@@ -91,7 +91,7 @@ const Moment03 = ({ index }: { index: number }) => {
       opacity: 0,
       force3D: true,
       ease: "power1.in",
-    }, 0.5);
+    }, 0.4);
 
     tl.to(jettyRef.current, {
       scaleY: 2.5,
@@ -99,13 +99,13 @@ const Moment03 = ({ index }: { index: number }) => {
       opacity: 0,
       force3D: true,
       ease: "power1.in",
-    }, 0.5);
+    }, 0.4);
 
     // 6. Exit transition - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.92,
-      y: -50,
+      scale: 0.95,
+      y: -40,
       ease: "power2.inOut",
     }, 0.85);
 

@@ -29,7 +29,7 @@ const Moment01 = ({ index }: { index: number }) => {
         start: "top top",
         end: isMobile ? "+=150%" : "+=200%", // Slightly shorter on mobile for better flow
         pin: true,
-        pinSpacing: false, 
+        pinSpacing: true, 
         scrub: isMobile ? 0.6 : 1.5, // Snappier on mobile
         onToggle: self => {
           if (self.isActive) {
@@ -98,8 +98,8 @@ const Moment01 = ({ index }: { index: number }) => {
     // 6. Final Moment Fade - standardized fade + transform exit
     tl.to(sectionRef.current, {
       opacity: 0,
-      scale: 0.92, // Slight shrink back
-      y: -50,
+      scale: 0.95, // Standardized scale
+      y: -40,      // Standardized drift
       ease: "power2.inOut",
     }, 0.85);
 
