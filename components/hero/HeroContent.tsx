@@ -9,7 +9,7 @@ const HeroContent = forwardRef<HTMLDivElement, {}>((props, ref) => {
       className="absolute top-[40%] left-1/2 -translate-x-1/2 -translate-y-1/2 z-10 w-full px-8 flex flex-col items-center justify-center gap-6"
     >
       <p 
-        className="italic font-light text-center"
+        className="cinematic-text italic font-light text-center"
         style={{
           fontFamily: 'var(--font-serif)',
           fontWeight: 300,
@@ -18,6 +18,7 @@ const HeroContent = forwardRef<HTMLDivElement, {}>((props, ref) => {
           letterSpacing: '0.15em',
           lineHeight: '1.4',
           maxWidth: '800px',
+          opacity: 0,
         }}
       >
         You are no longer arriving.
@@ -25,7 +26,7 @@ const HeroContent = forwardRef<HTMLDivElement, {}>((props, ref) => {
         You have already arrived.
       </p>
       <p
-        className="text-center mt-4"
+        className="cinematic-subtext text-center mt-4"
         style={{
           fontFamily: 'var(--font-sans)',
           fontWeight: 300,
@@ -34,19 +35,11 @@ const HeroContent = forwardRef<HTMLDivElement, {}>((props, ref) => {
           letterSpacing: '0.3em',
           textTransform: 'uppercase',
           maxWidth: '600px',
-          animation: 'fadeInUp 2.5s ease-out 1s forwards',
           opacity: 0,
-          transform: 'translateY(15px)',
         }}
       >
         An exclusive private island & culinary experience
       </p>
-      
-      <style dangerouslySetInnerHTML={{ __html: `
-        @keyframes fadeInUp {
-          to { opacity: 1; transform: translateY(0); }
-        }
-      ` }} />
     </div>
   );
 });
