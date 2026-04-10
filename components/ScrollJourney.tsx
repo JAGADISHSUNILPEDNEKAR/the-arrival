@@ -3,7 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
 
-import Moment01 from './moments/Moment01';
+import FilmHomepage from './FilmHomepage';
 import Moment02 from './moments/Moment02';
 import Moment03 from './moments/Moment03';
 import Moment04 from './moments/Moment04';
@@ -52,7 +52,7 @@ const ScrollJourneyContent = () => {
       
       <div ref={containerRef} className="scroll-container">
         <div className="moments-wrapper relative w-full h-full">
-          <Moment01 index={0} />
+          <FilmHomepage />
           <Moment02 index={1} />
           <Moment03 index={2} />
           <Moment04 index={3} />
