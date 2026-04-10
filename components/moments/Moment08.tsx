@@ -33,8 +33,16 @@ const Moment08 = ({ index }: { index: number }) => {
     const quoteElement = textEl.querySelector('p:first-child');
     const sourceElement = textEl.querySelector('p:last-child');
     
-    const splitQuote = quoteElement ? new SplitText(quoteElement, { type: "words,lines" }) : null;
-    const splitSource = sourceElement ? new SplitText(sourceElement, { type: "chars" }) : null;
+    const splitQuote = quoteElement ? new SplitText(quoteElement, { 
+      type: "lines,words",
+      linesClass: "overflow-hidden inline-flex",
+      wordsClass: "word"
+    }) : null;
+    const splitSource = sourceElement ? new SplitText(sourceElement, { 
+      type: "words,chars",
+      wordsClass: "overflow-hidden inline-flex",
+      charsClass: "char"
+    }) : null;
 
     const tl = gsap.timeline({
       scrollTrigger: {
@@ -59,40 +67,44 @@ const Moment08 = ({ index }: { index: number }) => {
 
     // 1. Entry Reveal - standardized fade + transform
     tl.fromTo(sectionRef.current,
-      { opacity: 0, scale: 1.02 },
+      { opacity: 0, scale: 1.02, willChange: "transform, opacity" },
       { 
         opacity: 1, 
         scale: 1,
         ease: "cinematic",
-        duration: 0.5 
+        duration: 0.5,
+        clearProps: "willChange"
       }, 0.1);
 
     // 2. Cinematic Typography Reveal
     if (splitQuote?.words) {
       tl.fromTo(splitQuote.words, {
-        opacity: 0,
-        y: 20,
-        rotateX: -15,
+        y: "100%",
+        filter: "blur(4px)",
+        willChange: "transform, filter",
       }, {
-        opacity: 1,
-        y: 0,
-        rotateX: 0,
+        y: "0%",
+        filter: "blur(0px)",
         stagger: 0.015,
         duration: 0.8,
-        ease: "cinematic"
+        ease: "cinematic",
+        clearProps: "willChange,filter"
       }, 0.3);
     }
 
     if (splitSource?.chars) {
       tl.fromTo(splitSource.chars, {
-        opacity: 0,
-        y: 8,
+        y: "100%",
+        filter: "blur(4px)",
+        willChange: "transform, filter",
       }, {
-        opacity: 0.5,
-        y: 0,
+        y: "0%",
+        filter: "blur(0px)",
+        opacity: 0.5, // keep original opacity setting
         stagger: 0.01,
         duration: 0.6,
-        ease: "cinematic"
+        ease: "cinematic",
+        clearProps: "willChange,filter"
       }, 0.6);
     }
 

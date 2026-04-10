@@ -37,8 +37,16 @@ const Moment11 = ({ index }: { index: number }) => {
     const titleElement = textEl.querySelector('div');
     const pElement = textEl.querySelector('p');
     
-    const splitTitle = titleElement ? new SplitText(titleElement, { type: "chars,words", charsClass: "char" }) : null;
-    const splitSub = pElement ? new SplitText(pElement, { type: "words,lines" }) : null;
+    const splitTitle = titleElement ? new SplitText(titleElement, { 
+      type: "words,chars",
+      wordsClass: "overflow-hidden inline-flex",
+      charsClass: "char"
+    }) : null;
+    const splitSub = pElement ? new SplitText(pElement, { 
+      type: "lines,words",
+      linesClass: "overflow-hidden inline-flex",
+      wordsClass: "word"
+    }) : null;
 
     const tl = gsap.timeline({
       scrollTrigger: {
@@ -63,12 +71,13 @@ const Moment11 = ({ index }: { index: number }) => {
 
     // 1. Entry Reveal - standardized fade + transform
     tl.fromTo(sectionRef.current,
-      { opacity: 0, scale: 1.02 },
+      { opacity: 0, scale: 1.02, willChange: "transform, opacity" },
       { 
         opacity: 1, 
         scale: 1,
         ease: "cinematic",
-        duration: 0.5 
+        duration: 0.5,
+        clearProps: "willChange"
       }, 0.1);
 
     // 2. Horizon Reveal - Cinematic Drawing
@@ -93,29 +102,32 @@ const Moment11 = ({ index }: { index: number }) => {
     // 4. Cinematic Typography Reveal
     if (splitTitle?.chars) {
       tl.fromTo(splitTitle.chars, {
-        opacity: 0,
-        y: 40,
-        rotateX: -15,
+        y: "100%",
+        filter: "blur(4px)",
+        willChange: "transform, filter",
       }, {
-        opacity: 1,
-        y: 0,
-        rotateX: 0,
+        y: "0%",
+        filter: "blur(0px)",
         stagger: 0.02,
         duration: 0.8,
-        ease: "cinematic"
+        ease: "cinematic",
+        clearProps: "willChange,filter"
       }, 0.3);
     }
 
     if (splitSub?.words) {
       tl.fromTo(splitSub.words, {
-        opacity: 0,
-        y: 20,
+        y: "100%",
+        filter: "blur(4px)",
+        willChange: "transform, filter",
       }, {
+        y: "0%",
+        filter: "blur(0px)",
         opacity: 0.7,
-        y: 0,
         stagger: 0.01,
         duration: 0.6,
-        ease: "cinematic"
+        ease: "cinematic",
+        clearProps: "willChange,filter"
       }, 0.5);
     }
 

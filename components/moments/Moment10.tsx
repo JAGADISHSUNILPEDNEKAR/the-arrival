@@ -59,7 +59,11 @@ const Moment10 = ({}: { index: number }) => {
 
     // Split text for cinematic reveals - guard against missing elements
     const pElement = textEl?.querySelector('p');
-    const splitBody = pElement ? new SplitText(pElement, { type: "chars,words", charsClass: "char" }) : null;
+    const splitBody = pElement ? new SplitText(pElement, { 
+      type: "words,chars",
+      wordsClass: "overflow-hidden inline-flex",
+      charsClass: "char"
+    }) : null;
 
     const tl = gsap.timeline({
       scrollTrigger: {
@@ -84,12 +88,13 @@ const Moment10 = ({}: { index: number }) => {
 
     // 1. Entry Reveal - standardized fade + transform
     tl.fromTo(sectionEl,
-      { opacity: 0, scale: 1.02 },
+      { opacity: 0, scale: 1.02, willChange: "transform, opacity" },
       { 
         opacity: 1, 
         scale: 1,
         ease: "cinematic",
-        duration: 0.5 
+        duration: 0.5,
+        clearProps: "willChange"
       }, 0.1);
 
     // 2. Camera Depth & Environment - 0.3x ratio
@@ -117,16 +122,17 @@ const Moment10 = ({}: { index: number }) => {
     // 3. Cinematic Narrative Text Reveal
     if (splitBody?.chars) {
       tl.fromTo(splitBody.chars, {
-        opacity: 0,
-        y: 40,
-        rotateX: -20,
+        y: "100%",
+        filter: "blur(4px)",
+        willChange: "transform, filter",
       }, {
-        opacity: 0.7,
-        y: 0,
-        rotateX: 0,
+        y: "0%",
+        filter: "blur(0px)",
+        opacity: 0.6, // keeping the original text max opacity level from the CSS
         stagger: 0.02,
         duration: 1,
-        ease: "cinematic"
+        ease: "cinematic",
+        clearProps: "willChange,filter"
       }, 0.2);
     }
 
