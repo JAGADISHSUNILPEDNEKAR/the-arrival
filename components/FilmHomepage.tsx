@@ -26,42 +26,181 @@ const FilmHomepage = () => {
     useEffect(() => {
         if (!containerRef.current) return;
 
+        const reducedMotion =
+            typeof window !== 'undefined' &&
+            window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
         const ctx = gsap.context(() => {
-            // Split Hero Text for word-by-word reveal
-            const heroSplit = titleRef.current 
-                ? new SplitText(titleRef.current, { 
-                      type: "lines,words",
-                      linesClass: "overflow-hidden inline-flex",
-                      wordsClass: "word"
+            const titleSplit = titleRef.current
+                ? new SplitText(titleRef.current, {
+                      type: 'lines,words',
+                      linesClass: 'overflow-hidden inline-flex',
+                      wordsClass: 'word',
+                  })
+                : null;
+            const sentenceSplit = sentenceRef.current
+                ? new SplitText(sentenceRef.current, {
+                      type: 'lines,words',
+                      linesClass: 'overflow-hidden inline-flex',
+                      wordsClass: 'word',
                   })
                 : null;
 
-            // Simple entry timeline for preview/compiling
+            // Initial states — everything hidden, ready to enter
+            gsap.set(
+                [
+                    coordRef.current,
+                    subtitleRef.current,
+                    fragmentRef.current,
+                    invitationRef.current,
+                    continueRef.current,
+                ],
+                { opacity: 0, y: 24 }
+            );
+            gsap.set(horizonRef.current, {
+                scaleX: 0,
+                transformOrigin: 'center center',
+                opacity: 0,
+            });
+            if (titleSplit?.words) {
+                gsap.set(titleSplit.words, { y: '110%', filter: 'blur(6px)', opacity: 0 });
+            }
+            if (sentenceSplit?.words) {
+                gsap.set(sentenceSplit.words, {
+                    y: '110%',
+                    filter: 'blur(6px)',
+                    opacity: 0,
+                });
+            }
+            gsap.set(beginRef.current, { opacity: 0, y: 30 });
+
+            // Reduced motion: settle Act I + CTA visible, skip timeline + pin entirely.
+            if (reducedMotion) {
+                gsap.set(
+                    [coordRef.current, subtitleRef.current, beginRef.current, continueRef.current],
+                    { opacity: 1, y: 0 }
+                );
+                if (titleSplit?.words) {
+                    gsap.set(titleSplit.words, { y: '0%', filter: 'none', opacity: 1 });
+                }
+                return;
+            }
+
             const tl = gsap.timeline({
                 scrollTrigger: {
                     trigger: containerRef.current,
-                    start: "top top",
-                    end: "+=100%",
+                    start: 'top top',
+                    end: '+=400%', // 4 acts × ~100% scroll each
                     pin: true,
                     pinSpacing: true,
                     scrub: 1.2,
                     anticipatePin: 1,
-                }
+                },
             });
 
-            if (heroSplit?.words) {
-                gsap.set(heroSplit.words, { y: "100%", filter: "blur(4px)" });
-                tl.to(heroSplit.words, {
-                    y: "0%",
-                    filter: "blur(0px)",
-                    stagger: 0.1,
-                    duration: 1,
-                    ease: "power4.out",
-                }, 0);
+            // === ACT I — Arrival (0.00 – 0.25) ===
+            tl.to(coordRef.current, { opacity: 0.6, y: 0, duration: 0.04, ease: 'cinematic' }, 0.02);
+            if (titleSplit?.words) {
+                tl.to(
+                    titleSplit.words,
+                    {
+                        y: '0%',
+                        filter: 'blur(0px)',
+                        opacity: 1,
+                        stagger: 0.04,
+                        duration: 0.10,
+                        ease: 'cinematic',
+                    },
+                    0.05
+                );
             }
+            tl.to(
+                subtitleRef.current,
+                { opacity: 0.8, y: 0, duration: 0.06, ease: 'cinematic' },
+                0.16
+            );
+            // HOLD 0.20 – 0.25
+
+            // === ACT II — Horizon reveals (0.25 – 0.50) ===
+            // Act I dims to ambient, drifts up, soft blur
+            tl.to(
+                [coordRef.current, titleRef.current, subtitleRef.current],
+                {
+                    y: -80,
+                    opacity: 0.18,
+                    filter: 'blur(3px)',
+                    duration: 0.08,
+                    ease: 'cinematic',
+                },
+                0.27
+            );
+            // Horizon line draws across
+            tl.to(
+                horizonRef.current,
+                { scaleX: 1, opacity: 1, duration: 0.14, ease: 'cinematic' },
+                0.30
+            );
+            // Editorial fragment reveals right-aligned
+            tl.to(
+                fragmentRef.current,
+                { opacity: 0.88, y: 0, duration: 0.08, ease: 'cinematic' },
+                0.40
+            );
+            // HOLD 0.46 – 0.50
+
+            // === ACT III — The promise (0.50 – 0.75) ===
+            tl.to(
+                [horizonRef.current, fragmentRef.current],
+                { opacity: 0, duration: 0.05, ease: 'power2.in' },
+                0.50
+            );
+            tl.to(
+                [coordRef.current, titleRef.current, subtitleRef.current],
+                { opacity: 0, duration: 0.05, ease: 'power2.in' },
+                0.50
+            );
+            if (sentenceSplit?.words) {
+                tl.to(
+                    sentenceSplit.words,
+                    {
+                        y: '0%',
+                        filter: 'blur(0px)',
+                        opacity: 1,
+                        stagger: 0.025,
+                        duration: 0.10,
+                        ease: 'cinematic',
+                    },
+                    0.56
+                );
+            }
+            tl.to(
+                invitationRef.current,
+                { opacity: 0.5, y: 0, duration: 0.06, ease: 'cinematic' },
+                0.68
+            );
+            // HOLD 0.72 – 0.75
+
+            // === ACT IV — The invitation (0.75 – 1.00) ===
+            tl.to(
+                [sentenceRef.current, invitationRef.current],
+                { opacity: 0, y: -40, duration: 0.05, ease: 'power2.in' },
+                0.76
+            );
+            tl.to(
+                continueRef.current,
+                { opacity: 0.55, y: 0, duration: 0.06, ease: 'cinematic' },
+                0.82
+            );
+            tl.to(
+                beginRef.current,
+                { opacity: 1, y: 0, duration: 0.10, ease: 'cinematic' },
+                0.86
+            );
+            // HOLD 0.96 – 1.00 then unpin into Moment02
 
             return () => {
-                heroSplit?.revert();
+                titleSplit?.revert();
+                sentenceSplit?.revert();
             };
         }, containerRef);
 
@@ -232,4 +371,3 @@ const FilmHomepage = () => {
 };
 
 export default FilmHomepage;
-
