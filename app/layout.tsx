@@ -26,7 +26,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${cormorant.variable} antialiased bg-[#060e1a]`}>
+      <body
+        className={`${cormorant.variable} antialiased bg-[#060e1a]`}
+        suppressHydrationWarning
+      >
         <CustomCursor />
         <Providers>
           <SmoothScroll>
