@@ -46,10 +46,12 @@ const FilmHomepage = () => {
                   })
                 : null;
 
-            // Initial states — everything hidden, ready to enter
+            // Initial states — everything hidden, ready to enter.
+            // Coord is the exception: it starts visible at 0.6 because the
+            // Preloader hands it off in-place — fading it in here would flicker.
+            gsap.set(coordRef.current, { opacity: 0.6, y: 0 });
             gsap.set(
                 [
-                    coordRef.current,
                     subtitleRef.current,
                     fragmentRef.current,
                     invitationRef.current,
@@ -75,11 +77,10 @@ const FilmHomepage = () => {
             gsap.set(beginRef.current, { opacity: 0, y: 30 });
 
             // Reduced motion: settle Act I + CTA visible, skip timeline + pin entirely.
+            // Coord already initialised at 0.6 above; only set the others here.
             if (reducedMotion) {
-                gsap.set(
-                    [coordRef.current, subtitleRef.current, beginRef.current, continueRef.current],
-                    { opacity: 1, y: 0 }
-                );
+                gsap.set([subtitleRef.current, beginRef.current], { opacity: 1, y: 0 });
+                gsap.set(continueRef.current, { opacity: 0.55, y: 0 });
                 if (titleSplit?.words) {
                     gsap.set(titleSplit.words, { y: '0%', filter: 'none', opacity: 1 });
                 }
@@ -99,7 +100,7 @@ const FilmHomepage = () => {
             });
 
             // === ACT I — Arrival (0.00 – 0.25) ===
-            tl.to(coordRef.current, { opacity: 0.6, y: 0, duration: 0.04, ease: 'cinematic' }, 0.02);
+            // Coord is already visible (handed off from Preloader); no fade-in beat.
             if (titleSplit?.words) {
                 tl.to(
                     titleSplit.words,
