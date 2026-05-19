@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
 import { useScroll } from '@/lib/context/ScrollContext';
+import AssetSlot from '@/components/AssetSlot';
 
 const Moment03 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -175,16 +176,29 @@ const Moment03 = ({ index }: { index: number }) => {
         />
       </div>
 
-      <div 
+      <div
         ref={islandRef}
         className="absolute left-1/2 -translate-x-1/2 top-[30%] z-[4]"
         style={{
           width: 'clamp(200px, 35vw, 500px)',
           height: 'clamp(40px, 8vw, 100px)',
-          background: 'rgba(15, 40, 25, 0.85)',
-          clipPath: 'polygon(0% 100%, 5% 70%, 10% 85%, 14% 50%, 18% 70%, 22% 35%, 27% 60%, 31% 25%, 35% 55%, 39% 40%, 43% 65%, 47% 30%, 51% 55%, 55% 20%, 59% 50%, 63% 38%, 67% 60%, 71% 45%, 75% 65%, 80% 50%, 85% 70%, 90% 55%, 95% 75%, 100% 100%)'
         }}
-      />
+      >
+        <AssetSlot
+          id="moment-03-island"
+          alt="Aerial view of a private island in turquoise lagoon"
+          className="w-full h-full"
+        >
+          <div
+            className="w-full h-full"
+            style={{
+              background: 'rgba(15, 40, 25, 0.85)',
+              clipPath:
+                'polygon(0% 100%, 5% 70%, 10% 85%, 14% 50%, 18% 70%, 22% 35%, 27% 60%, 31% 25%, 35% 55%, 39% 40%, 43% 65%, 47% 30%, 51% 55%, 55% 20%, 59% 50%, 63% 38%, 67% 60%, 71% 45%, 75% 65%, 80% 50%, 85% 70%, 90% 55%, 95% 75%, 100% 100%)',
+            }}
+          />
+        </AssetSlot>
+      </div>
 
       <div 
         ref={jettyRef}

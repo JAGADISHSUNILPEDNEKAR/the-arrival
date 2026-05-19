@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap, ScrollTrigger, SplitText } from '@/lib/gsap';
 import { useScroll } from '@/lib/context/ScrollContext';
+import AssetSlot from '@/components/AssetSlot';
 
 const Moment02 = ({ index }: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -213,7 +214,7 @@ const Moment02 = ({ index }: { index: number }) => {
         </p>
       </div>
 
-      <div 
+      <div
         ref={islandRef}
         className="absolute bottom-[38%] right-[28%] z-[2]"
         style={{
@@ -222,13 +223,19 @@ const Moment02 = ({ index }: { index: number }) => {
           filter: 'drop-shadow(0 15px 25px rgba(15,35,55,0.4))'
         }}
       >
-        <div 
+        <AssetSlot
+          id="moment-02-island"
+          alt="Private island silhouette at dawn"
           className="w-full h-full"
-          style={{
-            background: 'rgba(15, 35, 55, 0.75)',
-            clipPath: 'polygon(0% 100%, 8% 60%, 15% 75%, 22% 40%, 30% 65%, 38% 30%, 45% 55%, 52% 20%, 58% 50%, 65% 35%, 72% 60%, 80% 45%, 88% 65%, 95% 55%, 100% 100%)',
-          }}
-        />
+        >
+          <div
+            className="w-full h-full"
+            style={{
+              background: 'rgba(15, 35, 55, 0.75)',
+              clipPath: 'polygon(0% 100%, 8% 60%, 15% 75%, 22% 40%, 30% 65%, 38% 30%, 45% 55%, 52% 20%, 58% 50%, 65% 35%, 72% 60%, 80% 45%, 88% 65%, 95% 55%, 100% 100%)',
+            }}
+          />
+        </AssetSlot>
       </div>
 
       <div 
