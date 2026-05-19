@@ -9,58 +9,75 @@ const GlobalNav = () => {
   useEffect(() => {
     if (!navRef.current) return;
 
-    // Initially hide the nav
     gsap.set(navRef.current, { opacity: 0, pointerEvents: 'none' });
 
     const st = ScrollTrigger.create({
-      start: "30% top", // Show after 30% of first viewport
+      start: '30% top',
       onEnter: () => {
-        gsap.to(navRef.current, { 
-          opacity: 1, 
-          pointerEvents: 'auto', 
-          duration: 1, 
-          ease: "power2.out" 
+        gsap.to(navRef.current, {
+          opacity: 1,
+          pointerEvents: 'auto',
+          duration: 1,
+          ease: 'power2.out',
         });
       },
       onLeaveBack: () => {
-        gsap.to(navRef.current, { 
-          opacity: 0, 
-          pointerEvents: 'none', 
-          duration: 0.8, 
-          ease: "power2.in" 
+        gsap.to(navRef.current, {
+          opacity: 0,
+          pointerEvents: 'none',
+          duration: 0.8,
+          ease: 'power2.in',
         });
-      }
+      },
     });
 
     return () => st.kill();
   }, []);
 
+  const handleReserve = () => {
+    document.getElementById('moment-11')?.scrollIntoView({ behavior: 'smooth' });
+  };
+
   return (
     <header
       ref={navRef}
-      className="fixed top-0 left-0 w-full z-50 transition-all duration-700 ease-in-out border-b border-transparent"
-      style={{ 
+      className="fixed top-0 left-0 w-full z-50"
+      style={{
         padding: 'clamp(1rem, 2vw, 1.5rem) clamp(1.5rem, 5vw, 4rem)',
-        backgroundColor: 'rgba(6, 14, 26, 0.05)',
-        backdropFilter: 'blur(0px)'
       }}
     >
       <div className="flex justify-between items-center w-full max-w-[1400px] mx-auto">
-        <div 
-          className="text-[rgba(240,232,210,0.9)] tracking-[0.3em] uppercase text-[10px] md:text-xs font-light"
-          style={{ fontFamily: 'var(--font-sans)' }}
-        >
-          The Arrival
-        </div>
-        <button 
-          className="uppercase text-[9px] md:text-[10px] tracking-[0.25em] px-5 md:px-7 py-2 md:py-2.5 border border-[rgba(240,232,210,0.25)] text-[rgba(240,232,210,0.85)] hover:bg-[rgba(240,232,210,0.1)] hover:text-white transition-all duration-700 backdrop-blur-sm rounded-sm"
-          style={{ fontFamily: 'var(--font-sans)' }}
-          onClick={() => {
-            const elem = document.getElementById('moment-11');
-            if (elem) elem.scrollIntoView({ behavior: 'smooth' });
+        <span
+          className="uppercase"
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: 'clamp(0.625rem, 0.75vw, 0.8rem)',
+            letterSpacing: '0.45em',
+            color: 'rgba(245,240,232,0.6)',
           }}
         >
-          Reserve
+          The Arrival
+        </span>
+        <button
+          onClick={handleReserve}
+          data-cursor="cta"
+          className="group italic font-light bg-transparent border-0 cursor-pointer p-0"
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: 'clamp(1rem, 1.4vw, 1.4rem)',
+            letterSpacing: '-0.01em',
+            color: 'rgba(245,240,232,0.85)',
+          }}
+          aria-label="Reserve — scroll to the reservation"
+        >
+          <span className="relative inline-block">
+            Reserve
+            <span
+              aria-hidden
+              className="absolute left-0 right-0 -bottom-[0.1em] h-[1px] origin-center scale-x-0 group-hover:scale-x-100 transition-transform duration-[1200ms] ease-out"
+              style={{ background: 'rgba(245,240,232,0.6)' }}
+            />
+          </span>
         </button>
       </div>
     </header>
@@ -68,4 +85,3 @@ const GlobalNav = () => {
 };
 
 export default GlobalNav;
-
