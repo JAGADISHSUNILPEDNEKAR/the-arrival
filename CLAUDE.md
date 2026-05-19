@@ -79,6 +79,24 @@ Key behaviour:
 
 Asset path convention (documented, not enforced): `public/assets/{moment-id}/{slot-id}.{ext}`. Currently wired into Moment02 (`moment-02-island`) and Moment03 (`moment-03-island`) as proof, plus four slots in MomentGallery (`gallery-morning-swim`, `gallery-walk`, `gallery-bath`, `gallery-bonfire`); the same pattern extends to every visible procedural element.
 
+### Mobile audit notes (Phase 10.2 — code review only)
+Audit was code-review based; the experience has not been opened on a real touch device.
+
+**Fixed**
+- `.moment { height: 100vh; height: 100dvh; }` in `globals.css` — and matching `h-screen h-dvh` on FilmHomepage, Preloader, MomentGallery. iOS Safari's address bar transitions previously caused pinned sections to jump when 100vh recomputed; `dvh` adjusts smoothly. The `100vh` line stays as a fallback for browsers without dvh support.
+- MomentGallery now stacks **image on top, caption below** under the `md` breakpoint. Above `md`, original asymmetric image-side + caption-opposite composition is preserved.
+- Moment05's text column now anchors right with `max-w-[60vw]` on mobile so it stays inside the shade region throughout the split-widen animation (was previously spilling into the sun region with `left-[8%] right-[8%]`).
+
+**Not addressed (deliberate)**
+- Mobile pin behaviour under iOS Safari's address-bar toggle is a known GSAP limitation. The `dvh` fix mitigates the size change but pinned ScrollTriggers can still drift on toggle. Real-device testing + potentially `ScrollTrigger.config({ ignoreMobileResize: true })` is the next intervention.
+- Type sizes use `clamp(min, vw-scaled, max)`. Mobile minimums (~28px for moment headlines) are readable but could be bumped for stronger editorial weight on phones. Per-moment tuning recommended after pixel-level review.
+
+**Per-component mobile contract**
+- Custom cursor: gated on `(pointer: fine)` — invisible on touch
+- Lenis: branches duration/wheelMultiplier/lerp/touchMultiplier on `isMobile`
+- AtmosphereLayer: DPR capped at 1.5; renders fine on mobile, mouse-parallax becomes static (no mouse events)
+- Moment2-10 timelines: scrub set to 0.8 on mobile (1.2 desktop), pin end set to `+=150%` (mobile) vs `+=250%` (desktop)
+
 ### MomentGallery — horizontal-pan-on-vertical-scroll
 `components/moments/MomentGallery.tsx` is a new moment slotted between Moment09 (the plate close-up) and Moment10 (the night silhouette) in ScrollJourney. It's the missing third emotional act — after the intimate dining close, the camera zooms *out* to show the other arrivals on the island.
 
