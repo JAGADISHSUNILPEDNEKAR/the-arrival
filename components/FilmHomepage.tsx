@@ -117,7 +117,7 @@ const FilmHomepage = () => {
             }
             tl.to(
                 subtitleRef.current,
-                { opacity: 0.8, y: 0, duration: 0.06, ease: 'cinematic' },
+                { opacity: 1, y: 0, duration: 0.06, ease: 'cinematic' },
                 0.16
             );
             // HOLD 0.20 – 0.25
@@ -252,9 +252,9 @@ const FilmHomepage = () => {
                     className="italic font-light"
                     style={{
                         fontFamily: 'var(--font-serif)',
-                        fontSize: 'clamp(3.5rem, 13vw, 12rem)',
-                        lineHeight: 0.92,
-                        letterSpacing: '-0.02em',
+                        fontSize: 'clamp(4rem, 19vw, 19rem)',
+                        lineHeight: 0.88,
+                        letterSpacing: '-0.025em',
                         color: 'rgba(255,250,240,0.96)',
                         textShadow: '0 4px 60px rgba(6,8,16,0.45)',
                     }}
@@ -263,15 +263,16 @@ const FilmHomepage = () => {
                 </h1>
                 <p
                     ref={subtitleRef}
-                    className="mt-6 md:mt-8 max-w-[28em] font-light italic"
+                    className="mt-8 md:mt-10 max-w-[34em] font-light uppercase"
                     style={{
-                        fontFamily: 'var(--font-serif)',
-                        fontSize: 'clamp(1rem, 1.5vw, 1.5rem)',
-                        lineHeight: 1.5,
-                        color: 'rgba(245,240,232,0.8)',
+                        fontFamily: 'var(--font-sans)',
+                        fontSize: 'clamp(0.7rem, 0.95vw, 1rem)',
+                        lineHeight: 1.7,
+                        letterSpacing: '0.35em',
+                        color: 'rgba(245,240,232,0.65)',
                     }}
                 >
-                    A private island restaurant, suspended above the lagoon.
+                    A private island restaurant
                 </p>
             </div>
 
