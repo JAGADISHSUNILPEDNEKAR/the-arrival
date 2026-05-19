@@ -198,15 +198,15 @@ const Moment10 = ({}: { index: number }) => {
 
 
   return (
-    <section 
+    <section
       ref={sectionRef}
-      className="moment relative w-full overflow-hidden bg-[#060810]" 
+      className="moment relative w-full overflow-hidden"
       id="moment-10"
     >
-      <div 
+      <div
         className="absolute inset-0 w-full h-full pointer-events-none"
         style={{
-          background: 'radial-gradient(ellipse 100% 100% at 50% 100%, #060a12 0%, #080c18 40%, #060810 100%)'
+          background: 'radial-gradient(ellipse 100% 100% at 50% 100%, rgba(6,10,18,0.65) 0%, rgba(8,12,24,0.60) 40%, rgba(6,8,16,0.65) 100%)'
         }}
       />
 

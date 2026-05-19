@@ -171,11 +171,11 @@ const Moment09 = ({ index }: { index: number }) => {
       className="moment relative w-full overflow-hidden" 
       id="moment-09"
     >
-      <div 
+      <div
         ref={containerRef}
         className="absolute inset-0 w-full h-full"
         style={{
-          background: 'linear-gradient(180deg, #080810 0%, #0c0c18 40%, #080810 100%)'
+          background: 'linear-gradient(180deg, rgba(8,8,16,0.82) 0%, rgba(12,12,24,0.78) 40%, rgba(8,8,16,0.82) 100%)'
         }}
       >
         <div className="absolute inset-0 pointer-events-none z-0">

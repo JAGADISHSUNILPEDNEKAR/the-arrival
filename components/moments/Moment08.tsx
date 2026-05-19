@@ -215,11 +215,11 @@ const Moment08 = ({ index }: { index: number }) => {
         </p>
       </div>
 
-      <div 
+      <div
         ref={containerRef}
         className="relative w-full h-full"
         style={{
-          background: 'linear-gradient(135deg, #1a1008 0%, #261808 40%, #1e1408 100%)'
+          background: 'linear-gradient(135deg, rgba(26,16,8,0.78) 0%, rgba(38,24,8,0.72) 40%, rgba(30,20,8,0.68) 100%)'
         }}
       >
         <div className="absolute inset-0 z-10 pointer-events-none"

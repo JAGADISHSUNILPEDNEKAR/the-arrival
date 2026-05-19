@@ -160,19 +160,19 @@ const Moment05 = ({ index }: { index: number }) => {
       className="moment relative w-full overflow-hidden" 
       id="moment-05"
     >
-      <div 
+      <div
         ref={sunSideRef}
         className="absolute top-0 left-0 h-full w-[52%] z-[1]"
         style={{
-          background: 'linear-gradient(180deg, #e8d48a 0%, #f0e0a0 40%, #f5e8b0 70%, #e0c870 100%)'
+          background: 'linear-gradient(180deg, rgba(232,212,138,0.55) 0%, rgba(240,224,160,0.50) 40%, rgba(245,232,176,0.45) 70%, rgba(224,200,112,0.40) 100%)'
         }}
       />
 
-      <div 
+      <div
         ref={shadeSideRef}
         className="absolute top-0 right-0 h-full w-[50%] z-[1]"
         style={{
-          background: 'linear-gradient(180deg, #1a3020 0%, #2a4a30 30%, #1e3828 60%, #162a1e 100%)'
+          background: 'linear-gradient(180deg, rgba(26,48,32,0.70) 0%, rgba(42,74,48,0.65) 30%, rgba(30,56,40,0.60) 60%, rgba(22,42,30,0.55) 100%)'
         }}
       >
         {dappledLights.map((light, i) => (

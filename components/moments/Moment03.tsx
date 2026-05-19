@@ -123,33 +123,33 @@ const Moment03 = ({ index }: { index: number }) => {
 
 
   return (
-    <section 
+    <section
       ref={sectionRef}
-      className="moment relative w-full overflow-hidden bg-[#1a4060]" 
+      className="moment relative w-full overflow-hidden"
       id="moment-03"
     >
       <div ref={backgroundGroupRef} className="absolute inset-0 w-full h-full">
-        <div 
+        <div
           ref={skyRef}
           className="absolute top-0 left-0 w-full h-[45%] z-0"
           style={{
-            background: 'linear-gradient(180deg, #1a4060 0%, #3a7a9a 35%, #6aadbe 55%)'
+            background: 'linear-gradient(180deg, rgba(26,64,96,0.55) 0%, rgba(58,122,154,0.50) 35%, rgba(106,173,190,0.45) 55%)'
           }}
         />
 
-        <div 
+        <div
           ref={deepWaterRef}
           className="absolute top-[35%] left-0 w-full h-[30%] z-[1]"
           style={{
-            background: 'linear-gradient(180deg, #4a9ab0 0%, #3a8a9e 100%)'
+            background: 'linear-gradient(180deg, rgba(74,154,176,0.55) 0%, rgba(58,138,158,0.55) 100%)'
           }}
         />
 
-        <div 
+        <div
           ref={shallowLagoonRef}
           className="absolute bottom-0 left-0 w-full h-[55%] z-[2]"
           style={{
-            background: 'linear-gradient(180deg, rgba(40,160,160,0.9) 0%, rgba(60,190,170,0.85) 20%, rgba(100,210,180,0.8) 40%, rgba(150,225,200,0.75) 65%, rgba(200,238,218,0.7) 85%, rgba(225,245,230,0.65) 100%)'
+            background: 'linear-gradient(180deg, rgba(40,160,160,0.60) 0%, rgba(60,190,170,0.55) 20%, rgba(100,210,180,0.50) 40%, rgba(150,225,200,0.45) 65%, rgba(200,238,218,0.40) 85%, rgba(225,245,230,0.35) 100%)'
           }}
         />
 

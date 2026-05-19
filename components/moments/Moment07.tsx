@@ -178,11 +178,11 @@ const Moment07 = ({ index }: { index: number }) => {
       className="moment relative w-full overflow-hidden" 
       id="moment-07"
     >
-      <div 
+      <div
         ref={containerRef}
         className="relative w-full h-full"
         style={{
-          background: 'linear-gradient(180deg, #2a1e12 0%, #3a2818 25%, #2e2015 60%, #1e1408 100%)'
+          background: 'linear-gradient(180deg, rgba(42,30,18,0.75) 0%, rgba(58,40,24,0.70) 25%, rgba(46,32,21,0.65) 60%, rgba(30,20,8,0.60) 100%)'
         }}
       >
         <div 

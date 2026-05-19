@@ -186,10 +186,10 @@ const Moment11 = ({ index }: { index: number }) => {
         ref={backgroundWrapperRef}
         className="absolute inset-0 w-full h-full"
       >
-        <div 
+        <div
           className="absolute inset-0 w-full h-full"
           style={{
-            background: 'linear-gradient(180deg, #050810 0%, #0a1020 20%, #0d1828 45%, #152235 65%, #1a2d42 80%, #1e3450 92%, #223858 100%)'
+            background: 'linear-gradient(180deg, rgba(5,8,16,0.65) 0%, rgba(10,16,32,0.60) 20%, rgba(13,24,40,0.55) 45%, rgba(21,34,53,0.55) 65%, rgba(26,45,66,0.55) 80%, rgba(30,52,80,0.55) 92%, rgba(34,56,88,0.55) 100%)'
           }}
         />
 

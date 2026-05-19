@@ -196,12 +196,12 @@ const Moment04 = ({ index }: { index: number }) => {
 
 
   return (
-    <section 
+    <section
       ref={sectionRef}
-      className="moment relative w-full overflow-hidden" 
+      className="moment relative w-full overflow-hidden"
       id="moment-04"
       style={{
-        background: 'linear-gradient(180deg, #5aadbe 0%, #7dc4cf 30%, #a8d8e0 55%, #d0ecf0 80%, #e8f6f8 100%)',
+        background: 'linear-gradient(180deg, rgba(90,173,190,0.50) 0%, rgba(125,196,207,0.45) 30%, rgba(168,216,224,0.40) 55%, rgba(208,236,240,0.35) 80%, rgba(232,246,248,0.30) 100%)',
       }}
     >
       <div 

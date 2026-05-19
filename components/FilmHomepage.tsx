@@ -168,13 +168,13 @@ const FilmHomepage = () => {
     ];
 
     return (
-        <div ref={containerRef} className="relative w-screen h-screen overflow-hidden bg-[#060810] text-[#dcd7c8]">
-            {/* Dynamic Atmospheric Background (Parallax Layer) */}
-            <div 
+        <div ref={containerRef} className="relative w-screen h-screen overflow-hidden text-[#dcd7c8]">
+            {/* Translucent atmospheric overlay — WebGL world breathes through. */}
+            <div
                 ref={backgroundRef}
                 className="absolute inset-0 w-full h-full pointer-events-none"
                 style={{
-                    background: 'radial-gradient(ellipse at 50% 100%, #1a1e2b 0%, #060810 70%)',
+                    background: 'radial-gradient(ellipse at 50% 100%, rgba(26,30,43,0.55) 0%, rgba(6,8,16,0.65) 70%)',
                     zIndex: 0
                 }}
             >
