@@ -16,6 +16,7 @@ import Moment10 from './moments/Moment10';
 import Moment11 from './moments/Moment11';
 import Preloader from './Preloader';
 import GlobalNav from './GlobalNav';
+import AtmosphereLayer from './Atmosphere/AtmosphereLayer';
 
 import { ScrollProvider, useScroll } from '@/lib/context/ScrollContext';
 
@@ -47,10 +48,11 @@ const ScrollJourneyContent = () => {
 
   return (
     <main className="scroll-journey relative">
+      <AtmosphereLayer />
       <Preloader />
       <GlobalNav />
-      
-      <div ref={containerRef} className="scroll-container">
+
+      <div ref={containerRef} className="scroll-container relative z-10">
         <div className="moments-wrapper relative w-full h-full">
           <FilmHomepage />
           <Moment02 index={1} />

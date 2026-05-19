@@ -76,7 +76,10 @@ html::-webkit-scrollbar {
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  background: #060e1a; /* Solid base to prevent leaks */
+  /* Background intentionally transparent: the persistent AtmosphereLayer
+     (Three.js fragment shader) is the bedrock and must be visible during
+     each moment's entry/exit fade. Body bg (#060e1a) is the WebGL fallback. */
+  background: transparent;
   will-change: opacity, transform, visibility;
   transform-origin: center center;
 }
