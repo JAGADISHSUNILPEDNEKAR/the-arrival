@@ -62,7 +62,7 @@ const Preloader = () => {
   return (
     <div
       ref={containerRef}
-      className="relative w-screen h-screen z-[10000] pointer-events-none"
+      className="relative w-screen h-screen h-dvh z-[10000] pointer-events-none"
     >
       {/* Translucent veil — atmosphere shader breathes through */}
       <div

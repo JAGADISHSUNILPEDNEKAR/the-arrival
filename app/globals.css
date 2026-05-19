@@ -70,7 +70,11 @@ html::-webkit-scrollbar {
 .moment {
   position: relative;
   width: 100%;
+  /* dvh adjusts when iOS Safari's address bar shows/hides; 100vh fallback
+     for browsers that don't support it. Without this, mobile pinned sections
+     can jump when the address bar collapses. */
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
   z-index: 1;
   opacity: 0;

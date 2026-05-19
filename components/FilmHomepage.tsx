@@ -215,7 +215,7 @@ const FilmHomepage = () => {
     return (
         <div
             ref={containerRef}
-            className="relative w-screen h-screen overflow-hidden text-[#f5f0e8]"
+            className="relative w-screen h-screen h-dvh overflow-hidden text-[#f5f0e8]"
         >
             {/* Editorial vignettes — ground type against the WebGL world below */}
             <div
