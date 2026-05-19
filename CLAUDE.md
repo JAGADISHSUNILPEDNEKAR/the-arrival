@@ -77,7 +77,16 @@ Key behaviour:
 - Wrapper carries `data-asset-slot={id}` for inspection — `document.querySelectorAll('[data-asset-slot]')` enumerates all slots
 - GSAP refs stay on the **outer positioning ancestor**, not on AssetSlot itself, so animations are unaffected by the procedural↔real swap
 
-Asset path convention (documented, not enforced): `public/assets/{moment-id}/{slot-id}.{ext}`. Currently wired into Moment02 (`moment-02-island`) and Moment03 (`moment-03-island`) as proof; the same pattern extends to every visible procedural element.
+Asset path convention (documented, not enforced): `public/assets/{moment-id}/{slot-id}.{ext}`. Currently wired into Moment02 (`moment-02-island`) and Moment03 (`moment-03-island`) as proof, plus four slots in MomentGallery (`gallery-morning-swim`, `gallery-walk`, `gallery-bath`, `gallery-bonfire`); the same pattern extends to every visible procedural element.
+
+### MomentGallery — horizontal-pan-on-vertical-scroll
+`components/moments/MomentGallery.tsx` is a new moment slotted between Moment09 (the plate close-up) and Moment10 (the night silhouette) in ScrollJourney. It's the missing third emotional act — after the intimate dining close, the camera zooms *out* to show the other arrivals on the island.
+
+- **Structure:** one pinned section, internal track of 5 panels (1 title + 4 content), `width: 500vw`. GSAP scrubs `translateX(0 → -400vw)` over a 400% pin duration. Each panel is `w-screen h-full`.
+- **Content panels:** `01 The Morning Swim`, `02 The Walk`, `03 The Bath`, `04 The Bonfire`. Image side alternates left/right for asymmetric editorial composition. Each image is an `AssetSlot` with an evocative procedural-gradient fallback (mood-coded — pre-dawn lagoon blue, golden sand with palm shadows, sunset amber, bonfire embers).
+- **Caption choreography:** per-panel captions fade in at scroll progress `0.2 × (i + 1) + 0.02` and out at `0.2 × (i + 2) − 0.04`; the last caption stays visible until unpin.
+- **Reduced motion:** the pin + horizontal track are skipped entirely. The section renders as the title card only and the user scrolls past at normal pace (alternative would force horizontal scroll on users who opted out of motion).
+- **Atmosphere interaction:** at this scroll position (~0.85 of total page), the WebGL shader is in its "intimate-dark → moonlit" transition. The translucent gallery panels let the shader through as a color grade — daytime scenes seen through a moonlit lens.
 
 ### GSAP — always import from `@/lib/gsap`
 `lib/gsap.ts` is the single place that registers `ScrollTrigger`/`SplitText`/`CustomEase` (browser-guarded) and pre-creates the `"cinematic"` CustomEase (`cubic-bezier(0.16, 1, 0.3, 1)`). Importing GSAP directly from `gsap` will skip plugin registration and break the `"cinematic"` ease used everywhere.
