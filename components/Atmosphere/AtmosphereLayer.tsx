@@ -10,6 +10,7 @@ import {
   Vector2,
   WebGLRenderer,
 } from "three";
+import { ScrollTrigger } from "@/lib/gsap";
 
 const VERTEX = /* glsl */ `
 varying vec2 vUv;
@@ -200,6 +201,21 @@ export default function AtmosphereLayer() {
     const mouseTarget = { x: 0.5, y: 0.5 };
     const start = performance.now();
 
+    // Cache the scrollable height. Reading documentElement.scrollHeight inside
+    // the rAF loop forces a synchronous layout every frame on an animated page.
+    // Invalidate on resize and on every ScrollTrigger refresh (which recomputes
+    // pin offsets and can change scrollHeight).
+    let cachedMaxScroll = Math.max(
+      0,
+      document.documentElement.scrollHeight - window.innerHeight
+    );
+    const refreshMaxScroll = () => {
+      cachedMaxScroll = Math.max(
+        0,
+        document.documentElement.scrollHeight - window.innerHeight
+      );
+    };
+
     const onMouseMove = (e: MouseEvent) => {
       mouseTarget.x = e.clientX / window.innerWidth;
       mouseTarget.y = 1 - e.clientY / window.innerHeight;
@@ -207,6 +223,7 @@ export default function AtmosphereLayer() {
     const onResize = () => {
       renderer.setSize(window.innerWidth, window.innerHeight, false);
       uniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+      refreshMaxScroll();
     };
     const onVisibility = () => {
       visible = !document.hidden;
@@ -215,6 +232,7 @@ export default function AtmosphereLayer() {
     window.addEventListener("mousemove", onMouseMove, { passive: true });
     window.addEventListener("resize", onResize);
     document.addEventListener("visibilitychange", onVisibility);
+    ScrollTrigger.addEventListener("refresh", refreshMaxScroll);
 
     const tick = () => {
       rafId = requestAnimationFrame(tick);
@@ -223,9 +241,7 @@ export default function AtmosphereLayer() {
       const now = performance.now();
       const t = (now - start) / 1000;
 
-      const maxScroll =
-        document.documentElement.scrollHeight - window.innerHeight;
-      const progress = maxScroll > 0 ? window.scrollY / maxScroll : 0;
+      const progress = cachedMaxScroll > 0 ? window.scrollY / cachedMaxScroll : 0;
       const rawVel = window.scrollY - lastScrollY;
       lastScrollY = window.scrollY;
       smoothedVel += (rawVel - smoothedVel) * 0.12;
@@ -249,6 +265,7 @@ export default function AtmosphereLayer() {
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("resize", onResize);
       document.removeEventListener("visibilitychange", onVisibility);
+      ScrollTrigger.removeEventListener("refresh", refreshMaxScroll);
       geometry.dispose();
       material.dispose();
       renderer.dispose();
