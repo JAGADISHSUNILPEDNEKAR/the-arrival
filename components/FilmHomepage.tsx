@@ -347,6 +347,7 @@ const FilmHomepage = () => {
                 <button
                     ref={beginRef}
                     onClick={handleBegin}
+                    data-cursor="cta"
                     className="group italic font-light bg-transparent border-0 cursor-pointer p-0"
                     style={{
                         fontFamily: 'var(--font-serif)',
