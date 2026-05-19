@@ -103,8 +103,10 @@ const MomentGallery = () => {
       // Reduced motion: drop pin + horizontal track. Section reads as the
       // title card only; user scrolls past at normal pace. (Captions would
       // require horizontal scroll to be discoverable, which contradicts the
-      // user preference.)
+      // user preference.) Override the .moment CSS so the section is visible.
       if (reducedMotion) {
+        sectionEl.classList.add('active');
+        gsap.set(sectionEl, { opacity: 1 });
         return;
       }
 

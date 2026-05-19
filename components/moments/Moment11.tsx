@@ -87,7 +87,12 @@ const Moment11 = ({}: { index: number }) => {
     }
 
     // Reduced motion: settle visible, no pin, no scrub.
+    // The .moment CSS rule sets opacity:0 + visibility:hidden by default —
+    // we override both by forcing opacity:1 inline and adding .active so
+    // visibility flips to visible.
     if (reducedMotion) {
+      sectionEl.classList.add('active');
+      gsap.set(sectionEl, { opacity: 1, scale: 1 });
       if (splitHeadline?.words) {
         gsap.set(splitHeadline.words, {
           y: '0%',
