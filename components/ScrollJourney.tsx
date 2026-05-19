@@ -12,6 +12,7 @@ import Moment06 from './moments/Moment06';
 import Moment07 from './moments/Moment07';
 import Moment08 from './moments/Moment08';
 import Moment09 from './moments/Moment09';
+import MomentGallery from './moments/MomentGallery';
 import Moment10 from './moments/Moment10';
 import Moment11 from './moments/Moment11';
 import Preloader from './Preloader';
@@ -58,6 +59,7 @@ const ScrollJourney = () => {
           <Moment07 index={6} />
           <Moment08 index={7} />
           <Moment09 index={8} />
+          <MomentGallery />
           <Moment10 index={9} />
           <Moment11 index={10} />
         </div>
