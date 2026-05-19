@@ -97,6 +97,30 @@ Audit was code-review based; the experience has not been opened on a real touch 
 - AtmosphereLayer: DPR capped at 1.5; renders fine on mobile, mouse-parallax becomes static (no mouse events)
 - Moment2-10 timelines: scrub set to 0.8 on mobile (1.2 desktop), pin end set to `+=150%` (mobile) vs `+=250%` (desktop)
 
+### Performance audit (Phase 10.3)
+
+**Bundle metrics from production build** (gzipped sizes, what browser actually downloads)
+- Three.js + GSAP combined: 131.6 KB gz / 552 KB raw
+- GSAP plugins (separate chunk): 48.9 KB gz / 124 KB raw
+- react-dom: 69.4 KB gz / 222 KB raw
+- Next runtime: 49 KB gz / 195 KB raw
+- Total above-fold JS: ~340 KB gzipped
+
+Three.js dominates because it tree-shakes poorly. The 131 KB chunk is acceptable for a single-page cinematic experience but is the obvious lever if you want to lazy-load AtmosphereLayer (the only Three.js consumer) — would move ~131 KB out of the critical path. Trade-off: brief moment without atmosphere shader on first paint.
+
+**Hot-path fixes shipped**
+- `AtmosphereLayer.tsx` no longer reads `document.documentElement.scrollHeight` every animation frame. Previously caused a synchronous layout each frame on an animated page. Now cached in a closure variable, invalidated only on `resize` and on `ScrollTrigger.addEventListener('refresh', ...)`.
+- `.moment` CSS no longer applies `will-change: opacity, transform, visibility` to every section all the time. With 11+ sections, that forced 11+ persistent GPU compositing layers in VRAM. Now scoped to `.moment.active` only — promotion happens just for the currently-animating section.
+
+**Hot-path inspected, not changed**
+- CustomCursor's `gsap.set` per rAF frame: kept as-is because direct `style.transform =` would conflict with the CTA-scale tween. Trivial GSAP overhead.
+- Three rAF loops (Atmosphere, CustomCursor, Lenis-via-gsap.ticker): independent but cheap. Could be consolidated under `gsap.ticker.add` for AtmosphereLayer if perf needs further squeezing.
+- `filter: blur(6px → 0px)` on SplitText word reveals: scrub-driven, GPU-heavy on text. Could be gated `isMobile && skip blur` if mid-range Android stutters. Not changed without device data.
+- ScrollTrigger pin behaviour under iOS Safari address-bar toggle: not addressed; needs real-device testing before applying `ScrollTrigger.config({ ignoreMobileResize: true })`.
+
+**Open optimization (deferred)**
+- Dynamic-import `AtmosphereLayer` via `next/dynamic` with `ssr: false`. Removes ~131 KB from the critical bundle, defers Three.js until JS hydrates. Preloader's veil at 0.88 opacity already obscures the shader at frame 0 — acceptable visual trade-off. Skipped here because the win is real but the visual nuance is best decided after pixel review.
+
 ### MomentGallery — horizontal-pan-on-vertical-scroll
 `components/moments/MomentGallery.tsx` is a new moment slotted between Moment09 (the plate close-up) and Moment10 (the night silhouette) in ScrollJourney. It's the missing third emotional act — after the intimate dining close, the camera zooms *out* to show the other arrivals on the island.
 
