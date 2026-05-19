@@ -1,23 +1,23 @@
 "use client";
 
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { gsap } from '@/lib/gsap';
 
 interface ScrollContextType {
-  masterTl: gsap.core.Timeline | null;
-  setMasterTl: (tl: gsap.core.Timeline) => void;
   isMobile: boolean;
 }
 
 const ScrollContext = createContext<ScrollContextType | undefined>(undefined);
 
 export const ScrollProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [masterTl, setMasterTl] = useState<gsap.core.Timeline | null>(null);
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768 || ('ontouchstart' in window) || (navigator.maxTouchPoints > 0));
+      setIsMobile(
+        window.innerWidth < 768 ||
+          'ontouchstart' in window ||
+          navigator.maxTouchPoints > 0
+      );
     };
 
     checkMobile();
@@ -25,16 +25,10 @@ export const ScrollProvider: React.FC<{ children: React.ReactNode }> = ({ childr
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
-  const value = React.useMemo(() => ({ 
-    masterTl, 
-    setMasterTl,
-    isMobile 
-  }), [masterTl, isMobile]);
+  const value = React.useMemo(() => ({ isMobile }), [isMobile]);
 
   return (
-    <ScrollContext.Provider value={value}>
-      {children}
-    </ScrollContext.Provider>
+    <ScrollContext.Provider value={value}>{children}</ScrollContext.Provider>
   );
 };
 

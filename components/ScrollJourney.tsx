@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
-import { gsap, ScrollTrigger } from '@/lib/gsap';
+import { ScrollTrigger } from '@/lib/gsap';
 
 import FilmHomepage from './FilmHomepage';
 import Moment02 from './moments/Moment02';
@@ -18,17 +18,12 @@ import Preloader from './Preloader';
 import GlobalNav from './GlobalNav';
 import AtmosphereLayer from './Atmosphere/AtmosphereLayer';
 
-import { ScrollProvider, useScroll } from '@/lib/context/ScrollContext';
-
-const ScrollJourneyContent = () => {
+const ScrollJourney = () => {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { setMasterTl } = useScroll();
 
   useEffect(() => {
-    // Refresh ScrollTrigger to ensure all dimensions are correct
     const timer = setTimeout(() => {
       ScrollTrigger.refresh();
-      console.log('ScrollTrigger refreshed from ScrollJourney');
     }, 1000);
 
     const handleResize = () => {
@@ -70,10 +65,5 @@ const ScrollJourneyContent = () => {
     </main>
   );
 };
-
-
-const ScrollJourney = () => (
-  <ScrollJourneyContent />
-);
 
 export default ScrollJourney;
