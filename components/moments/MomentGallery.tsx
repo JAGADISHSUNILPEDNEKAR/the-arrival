@@ -171,7 +171,7 @@ const MomentGallery = () => {
   return (
     <section
       ref={sectionRef}
-      className="moment relative w-screen h-screen overflow-hidden"
+      className="moment relative w-screen h-screen h-dvh overflow-hidden"
       id="moment-gallery"
     >
       <div
@@ -209,22 +209,28 @@ const MomentGallery = () => {
           </div>
         </div>
 
-        {/* === Panels 1..4 — Content panels =========================== */}
+        {/* === Panels 1..4 — Content panels ===========================
+            Layout:
+              • Mobile (<md): image full-width on top half, caption stacked
+                below — both span left-[8%] right-[8%] (84vw).
+              • Desktop (md+): asymmetric — image at one edge with explicit
+                width (clamp 280-720px), caption at the opposite edge,
+                alternating per panel for editorial rhythm. */}
         {CONTENT_PANELS.map((panel, i) => {
           const imageRight = panel.alignment === 'image-right';
+          // Mobile: image full-width. Desktop: anchored to one side with explicit width.
+          const imagePos = imageRight
+            ? 'md:left-auto md:right-[10%]'
+            : 'md:right-auto md:left-[10%]';
+          // Mobile: caption full-width below. Desktop: opposite the image.
+          const captionPos = imageRight
+            ? 'md:bottom-auto md:top-[30%] md:right-auto md:left-[10%]'
+            : 'md:bottom-auto md:top-[30%] md:left-auto md:right-[10%] md:text-right';
           return (
             <div key={panel.slug} className="w-screen h-full relative">
-              {/* Image area — large editorial plate */}
+              {/* Image area */}
               <div
-                className={`absolute top-[15%] ${
-                  imageRight
-                    ? 'right-[8%] md:right-[10%]'
-                    : 'left-[8%] md:left-[10%]'
-                }`}
-                style={{
-                  width: 'clamp(280px, 42vw, 720px)',
-                  height: '65vh',
-                }}
+                className={`absolute top-[10%] md:top-[15%] left-[8%] right-[8%] h-[42vh] md:h-[65vh] md:w-[42vw] md:min-w-[280px] md:max-w-[720px] ${imagePos}`}
               >
                 <AssetSlot
                   id={`gallery-${panel.slug}`}
@@ -235,22 +241,18 @@ const MomentGallery = () => {
                 </AssetSlot>
               </div>
 
-              {/* Caption area — opposite edge, asymmetric column */}
+              {/* Caption area */}
               <div
                 ref={(el) => {
                   captionRefs.current[i] = el;
                 }}
-                className={`absolute top-[28%] md:top-[30%] z-10 max-w-[26em] pointer-events-none ${
-                  imageRight
-                    ? 'left-[8%] md:left-[10%]'
-                    : 'right-[8%] md:right-[10%] text-right'
-                }`}
+                className={`absolute z-10 max-w-[26em] pointer-events-none bottom-[8%] left-[8%] right-[8%] ${captionPos}`}
               >
                 <span
                   className="block italic font-light mb-2"
                   style={{
                     fontFamily: 'var(--font-serif)',
-                    fontSize: 'clamp(2.5rem, 5vw, 4.5rem)',
+                    fontSize: 'clamp(2.25rem, 5vw, 4.5rem)',
                     lineHeight: 1,
                     color: 'rgba(245,240,232,0.35)',
                   }}
@@ -261,7 +263,7 @@ const MomentGallery = () => {
                   className="italic font-light mb-3"
                   style={{
                     fontFamily: 'var(--font-serif)',
-                    fontSize: 'clamp(1.75rem, 3.5vw, 3rem)',
+                    fontSize: 'clamp(1.5rem, 3.5vw, 3rem)',
                     lineHeight: 1.1,
                     letterSpacing: '-0.01em',
                     color: 'rgba(255,250,240,0.95)',
@@ -274,7 +276,7 @@ const MomentGallery = () => {
                   className="italic font-light"
                   style={{
                     fontFamily: 'var(--font-serif)',
-                    fontSize: 'clamp(0.95rem, 1.2vw, 1.2rem)',
+                    fontSize: 'clamp(0.9rem, 1.2vw, 1.2rem)',
                     lineHeight: 1.5,
                     color: 'rgba(245,240,232,0.75)',
                   }}
