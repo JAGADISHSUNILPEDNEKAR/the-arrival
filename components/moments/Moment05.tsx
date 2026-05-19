@@ -313,10 +313,12 @@ const Moment05 = ({}: { index: number }) => {
         ))}
       </div>
 
-      {/* Editorial column — right side, on the shade for legibility */}
+      {/* Editorial column — right-anchored, hugs the shade side for legibility.
+          On mobile the column is narrower (max-w-[60vw]) so it stays inside the
+          shade half throughout the split-widen animation. */}
       <div
         ref={textRef}
-        className="absolute top-[16%] md:top-[18%] right-[8%] md:right-[10%] left-[8%] md:left-[40%] z-20 max-w-[34em] pointer-events-none text-right"
+        className="absolute top-[12%] md:top-[18%] right-[6%] md:right-[10%] left-auto md:left-[40%] z-20 max-w-[60vw] md:max-w-[34em] pointer-events-none text-right"
       >
         <span
           ref={indexRef}
