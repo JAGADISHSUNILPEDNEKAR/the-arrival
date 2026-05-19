@@ -37,10 +37,12 @@ const Moment09 = ({ index }: { index: number }) => {
       opacity: 0.3 + Math.random() * 0.4,
     })));
 
-    setFoamData([...Array(foamCount)].map((_, i) => ({
-      left: `${25 + Math.random() * 50}%`,
-      top: `${35 + Math.random() * 30}%`,
-      size: `${10 + Math.random() * 20}px`,
+    // Pre-compute all foam positions client-side so render is pure.
+    // The render previously called Math.random() inline → SSR/client mismatch.
+    setFoamData([...Array(foamCount)].map(() => ({
+      size: 10 + Math.random() * 20,
+      top: Math.random() * 10,
+      left: Math.random() * 10,
     })));
   }, [isMobile]);
 
@@ -264,14 +266,14 @@ const Moment09 = ({ index }: { index: number }) => {
 
               <div ref={foamRef} className="absolute top-[65%] left-[42%] w-[15px] h-[15px] pointer-events-none z-20">
                 {foamData.map((f, i) => (
-                  <div 
-                    key={i} 
+                  <div
+                    key={i}
                     className="absolute bg-[rgba(245,240,220,0.85)] rounded-full backdrop-blur-[1px]"
                     style={{
                       width: `${f.size}px`,
                       height: `${f.size}px`,
-                      top: `${Math.random() * 10}px`,
-                      left: `${Math.random() * 10}px`,
+                      top: `${f.top}px`,
+                      left: `${f.left}px`,
                       boxShadow: '0 1px 2px rgba(0,0,0,0.2)'
                     }}
                   />
