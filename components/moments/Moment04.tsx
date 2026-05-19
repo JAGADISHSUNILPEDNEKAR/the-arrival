@@ -1,10 +1,16 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { gsap, ScrollTrigger, SplitText } from "@/lib/gsap";
+import { gsap, ScrollTrigger, SplitText } from '@/lib/gsap';
 import { useScroll } from '@/lib/context/ScrollContext';
 
-const Moment04 = ({ index }: { index: number }) => {
+interface Petal {
+  left: string;
+  bottom: string;
+  rotate: number;
+}
+
+const Moment04 = ({}: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const planksContainerRef = useRef<HTMLDivElement>(null);
   const planksRef = useRef<HTMLDivElement>(null);
@@ -12,188 +18,220 @@ const Moment04 = ({ index }: { index: number }) => {
   const feetLeftRef = useRef<HTMLDivElement>(null);
   const feetRightRef = useRef<HTMLDivElement>(null);
   const figureRef = useRef<HTMLDivElement>(null);
-  const textRef = useRef<HTMLDivElement>(null);
   const petalsRef = useRef<HTMLDivElement[]>([]);
-  const [petals, setPetals] = useState<any[]>([]);
+
+  const textRef = useRef<HTMLDivElement>(null);
+  const indexRef = useRef<HTMLSpanElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const subRef = useRef<HTMLParagraphElement>(null);
+
+  const [petals, setPetals] = useState<Petal[]>([]);
   const { isMobile } = useScroll();
 
+  // Generate petals client-side — rAF defers setState out of the effect body.
   useEffect(() => {
-    // Generate petals only on client
     const count = isMobile ? 3 : 6;
-    setPetals([...Array(count)].map((_, i) => ({
-      left: `${15 + (i * 12) + (Math.random() * 5)}%`,
-      bottom: `${10 + (i * 4) + (Math.random() * 10)}%`,
+    const data = [...Array(count)].map((_, i) => ({
+      left: `${15 + i * 12 + Math.random() * 5}%`,
+      bottom: `${10 + i * 4 + Math.random() * 10}%`,
       rotate: Math.random() * 30 - 15,
-    })));
+    }));
+    const rafId = requestAnimationFrame(() => setPetals(data));
+    return () => cancelAnimationFrame(rafId);
   }, [isMobile]);
 
   useEffect(() => {
-    const textEl = textRef.current;
-    if (!sectionRef.current || !textEl) return;
+    const sectionEl = sectionRef.current;
+    if (!sectionEl) return;
 
-    // Split text for cinematic reveals - guard against missing elements
-    const h2Element = textEl.querySelector('h2');
-    const pElement = textEl.querySelector('p');
-    
-    const splitTitle = h2Element ? new SplitText(h2Element, { 
-      type: "words,chars",
-      wordsClass: "overflow-hidden inline-flex",
-      charsClass: "char"
-    }) : null;
-    const splitBody = pElement ? new SplitText(pElement, { 
-      type: "lines,words",
-      linesClass: "overflow-hidden inline-flex",
-      wordsClass: "word"
-    }) : null;
+    const reducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    const splitTitle = titleRef.current
+      ? new SplitText(titleRef.current, {
+          type: 'lines,words',
+          linesClass: 'overflow-hidden inline-flex',
+          wordsClass: 'word',
+        })
+      : null;
+
+    // Initial states
+    gsap.set([indexRef.current, subRef.current], { opacity: 0, y: 24 });
+    if (splitTitle?.words) {
+      gsap.set(splitTitle.words, {
+        y: '110%',
+        filter: 'blur(6px)',
+        opacity: 0,
+      });
+    }
+    gsap.set(planksContainerRef.current, { opacity: 0, y: 80, scale: 0.95 });
+    gsap.set(feetRef.current, { opacity: 0, y: 30 });
+
+    if (reducedMotion) {
+      sectionEl.classList.add('active');
+      gsap.set(sectionEl, { opacity: 1, scale: 1 });
+      gsap.set(indexRef.current, { opacity: 0.35, y: 0 });
+      gsap.set(subRef.current, { opacity: 0.85, y: 0 });
+      if (splitTitle?.words) {
+        gsap.set(splitTitle.words, { y: '0%', filter: 'none', opacity: 1 });
+      }
+      gsap.set(planksContainerRef.current, { opacity: 1, y: 0, scale: 1 });
+      gsap.set(feetRef.current, { opacity: 1, y: 0 });
+      return () => {
+        splitTitle?.revert();
+      };
+    }
 
     const tl = gsap.timeline({
       scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top top",
-        end: isMobile ? "+=150%" : "+=250%",
+        trigger: sectionEl,
+        start: 'top top',
+        end: isMobile ? '+=150%' : '+=250%',
         pin: true,
         pinSpacing: true,
         scrub: isMobile ? 0.8 : 1.2,
-        onToggle: self => {
-          if (self.isActive) {
-            sectionRef.current?.classList.add('active');
-          } else {
-            sectionRef.current?.classList.remove('active');
-          }
-        }
-      }
+        onToggle: (self) => {
+          sectionEl.classList.toggle('active', self.isActive);
+        },
+      },
     });
 
-    // 100ms kinetic threshold
-    tl.set({}, {}, 0.1);
+    // === Beat 1 (0.00 – 0.15) — Section enters; slow plank parallax ===
+    tl.fromTo(
+      sectionEl,
+      { opacity: 0, scale: 1.02 },
+      { opacity: 1, scale: 1, ease: 'cinematic', duration: 0.5 },
+      0.05
+    );
+    // Plank perspective tilts gradually across the entire scrub
+    tl.to(planksRef.current, { rotateX: '45deg', force3D: true, ease: 'none' }, 0);
 
-    // 1. Entry Reveal - standardized fade + transform
-    tl.fromTo(sectionRef.current,
-      { opacity: 0, scale: 1.02, willChange: "transform, opacity" },
-      { 
-        opacity: 1, 
-        scale: 1,
-        ease: "cinematic",
-        duration: 0.5,
-        clearProps: "willChange"
-      }, 0.1);
-
-    // 2. Cinematic Typography Reveal
-    if (splitTitle?.chars) {
-      tl.fromTo(splitTitle.chars, {
-        y: "100%",
-        filter: "blur(4px)",
-        willChange: "transform, filter",
-      }, {
-        y: "0%",
-        filter: "blur(0px)",
-        stagger: 0.02,
-        duration: 0.8,
-        ease: "cinematic",
-        clearProps: "willChange,filter"
-      }, 0.2);
+    // === Beat 2 (0.15 – 0.32) — Index + headline reveal ===
+    tl.to(
+      indexRef.current,
+      { opacity: 0.35, y: 0, duration: 0.08, ease: 'cinematic' },
+      0.15
+    );
+    if (splitTitle?.words) {
+      tl.to(
+        splitTitle.words,
+        {
+          y: '0%',
+          filter: 'blur(0px)',
+          opacity: 1,
+          stagger: 0.04,
+          duration: 0.15,
+          ease: 'cinematic',
+        },
+        0.18
+      );
     }
 
-    if (splitBody?.words) {
-      tl.fromTo(splitBody.words, {
-        y: "100%",
-        filter: "blur(4px)",
-        willChange: "transform, filter",
-      }, {
-        y: "0%",
-        filter: "blur(0px)",
-        stagger: 0.005,
-        duration: 0.6,
-        ease: "cinematic",
-        clearProps: "willChange,filter"
-      }, 0.4);
-    }
+    // === HOLD 0.32 – 0.42 ===
 
-    // 3. Planks and feet entrance - Cinematic Kinetic (+40px)
-    tl.fromTo(planksContainerRef.current,
-      { y: 80, opacity: 0, scale: 0.95 },
-      {
-        y: 0,
-        opacity: 1,
-        scale: 1,
-        force3D: true,
-        ease: "cinematic",
-        duration: 0.8
-      }, 0.15);
-
-    tl.fromTo(feetRef.current,
-      { opacity: 0, y: 30 },
+    // === Beat 3 (0.42 – 0.60) — Sub + planks + feet reveal ===
+    tl.to(
+      subRef.current,
+      { opacity: 0.85, y: 0, duration: 0.10, ease: 'cinematic' },
+      0.42
+    );
+    tl.to(
+      planksContainerRef.current,
       {
         opacity: 1,
         y: 0,
+        scale: 1,
         force3D: true,
-        duration: 0.6,
-        ease: "cinematic"
-      }, 0.3);
+        duration: 0.18,
+        ease: 'cinematic',
+      },
+      0.42
+    );
+    tl.to(
+      feetRef.current,
+      { opacity: 1, y: 0, duration: 0.12, ease: 'cinematic' },
+      0.50
+    );
 
-    // 4. Parallax mapping - 0.3x for Jetty, 1x for Text
-    tl.to(planksRef.current, {
-      rotateX: "45deg",
-      ease: "none",
-      force3D: true,
-    }, 0.1);
-
-    tl.to(planksContainerRef.current, {
-      y: "-20vh",
-      scale: 1.1,
-      ease: "none",
-      force3D: true,
-    }, 0.1);
-
-    tl.to(figureRef.current, {
-      scale: 2.8,
-      y: "-80px",
-      opacity: 0.1,
-      force3D: true,
-      ease: "none",
-    }, 0.2);
-
-    // 5. Petals (Multi-speed 3D drift)
+    // Petals drift continuously across the scrub
     petalsRef.current.forEach((petal, i) => {
-      if (petal) {
-        tl.to(petal, {
-          y: -200 - (i * 30),
-          x: (i % 2 === 0 ? 60 : -60),
-          rotation: (i % 2 === 0 ? 180 : -180),
+      if (!petal) return;
+      tl.to(
+        petal,
+        {
+          y: -200 - i * 30,
+          x: i % 2 === 0 ? 60 : -60,
+          rotation: i % 2 === 0 ? 180 : -180,
           opacity: 0,
           scale: 1.8,
-          ease: "none"
-        }, 0.1);
-      }
+          ease: 'none',
+        },
+        0.20
+      );
     });
 
-    tl.to(feetLeftRef.current, { scale: 1.2, opacity: 0.5, y: -20, ease: "none" }, 0.2);
-    tl.to(feetRightRef.current, { scale: 1.2, opacity: 0.5, y: -20, ease: "none" }, 0.4);
+    // === HOLD 0.60 – 0.72 ===
 
-    // 6. Exit transition
-    tl.to(textRef.current, {
-      opacity: 0,
-      y: -120, 
-      scale: 1.1,
-      force3D: true,
-      ease: "cinematic",
-    }, 0.8);
+    // === Beat 4 (0.72 – 0.88) — Camera moves along the jetty ===
+    tl.to(
+      planksContainerRef.current,
+      {
+        y: '-20vh',
+        scale: 1.1,
+        force3D: true,
+        ease: 'none',
+      },
+      0.72
+    );
+    tl.to(
+      figureRef.current,
+      {
+        scale: 2.8,
+        y: '-80px',
+        opacity: 0.1,
+        force3D: true,
+        ease: 'none',
+      },
+      0.72
+    );
+    tl.to(
+      feetLeftRef.current,
+      { scale: 1.2, opacity: 0.5, y: -20, ease: 'none' },
+      0.74
+    );
+    tl.to(
+      feetRightRef.current,
+      { scale: 1.2, opacity: 0.5, y: -20, ease: 'none' },
+      0.78
+    );
 
-    tl.to(sectionRef.current, {
-      opacity: 0,
-      scale: 0.98,
-      y: -40,
-      ease: "cinematic",
-    }, 0.9);
+    // === Beat 5 (0.88 – 1.00) — Exit ===
+    tl.to(
+      textRef.current,
+      {
+        opacity: 0,
+        y: -120,
+        scale: 1.1,
+        force3D: true,
+        ease: 'cinematic',
+      },
+      0.88
+    );
+    tl.to(
+      sectionEl,
+      { opacity: 0, scale: 0.98, y: -40, ease: 'cinematic' },
+      0.92
+    );
 
     return () => {
       tl.kill();
-      if (splitTitle) splitTitle.revert();
-      if (splitBody) splitBody.revert();
-      ScrollTrigger.getAll().filter(st => st.vars.trigger === sectionRef.current).forEach(st => st.kill());
+      splitTitle?.revert();
+      ScrollTrigger.getAll()
+        .filter((st) => st.vars.trigger === sectionEl)
+        .forEach((st) => st.kill());
     };
   }, [petals, isMobile]);
-
 
   return (
     <section
@@ -201,101 +239,109 @@ const Moment04 = ({ index }: { index: number }) => {
       className="moment relative w-full overflow-hidden"
       id="moment-04"
       style={{
-        background: 'linear-gradient(180deg, rgba(90,173,190,0.50) 0%, rgba(125,196,207,0.45) 30%, rgba(168,216,224,0.40) 55%, rgba(208,236,240,0.35) 80%, rgba(232,246,248,0.30) 100%)',
+        background:
+          'linear-gradient(180deg, rgba(90,173,190,0.50) 0%, rgba(125,196,207,0.45) 30%, rgba(168,216,224,0.40) 55%, rgba(208,236,240,0.35) 80%, rgba(232,246,248,0.30) 100%)',
       }}
     >
-      <div 
+      {/* Editorial column — left, dark text against bright translucent lagoon */}
+      <div
         ref={textRef}
-        className="absolute top-[20%] left-[10%] md:left-[15%] z-20 max-w-[400px] pointer-events-auto"
+        className="absolute top-[16%] md:top-[18%] left-[8%] md:left-[10%] right-[8%] md:right-[10%] z-20 max-w-[34em] pointer-events-none"
       >
-        <h2 
-          className="italic font-light mb-6 drop-shadow-md"
+        <span
+          ref={indexRef}
+          className="block italic font-light mb-3 md:mb-4"
           style={{
             fontFamily: 'var(--font-serif)',
-            fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
-            color: 'rgba(25, 65, 85, 0.95)',
-            letterSpacing: '0.05em',
-            lineHeight: '1.2'
+            fontSize: 'clamp(1.75rem, 2.8vw, 2.5rem)',
+            lineHeight: 1,
+            color: 'rgba(15,50,70,0.35)',
+          }}
+        >
+          III.
+        </span>
+        <h2
+          ref={titleRef}
+          className="italic font-light mb-6 md:mb-8"
+          style={{
+            fontFamily: 'var(--font-serif)',
+            fontSize: 'clamp(1.75rem, 3.8vw, 3.5rem)',
+            lineHeight: 1.05,
+            letterSpacing: '-0.01em',
+            color: 'rgba(15,50,70,0.95)',
           }}
         >
           Leave the noise behind.
         </h2>
         <p
-          className="font-light mb-8 drop-shadow-sm"
+          ref={subRef}
+          className="italic font-light max-w-[28em]"
           style={{
-            fontFamily: 'var(--font-sans)',
-            fontSize: 'clamp(0.85rem, 1vw, 1rem)',
-            color: 'rgba(25, 65, 85, 0.8)',
-            letterSpacing: '0.05em',
-            lineHeight: '1.8'
+            fontFamily: 'var(--font-serif)',
+            fontSize: 'clamp(1rem, 1.4vw, 1.4rem)',
+            lineHeight: 1.5,
+            color: 'rgba(15,50,70,0.85)',
           }}
         >
-          Your barefoot journey begins the moment you step onto the weathered jetty. Feel the rhythm of the tides matching your pulse as you cross into absolute privacy.
+          Cross by barefoot. The tides keep time.
         </p>
-        <button 
-          className="uppercase text-xs tracking-widest px-6 py-3 border border-[rgba(25,65,85,0.4)] text-[rgba(25,65,85,0.9)] hover:bg-[rgba(25,65,85,0.05)] transition-colors duration-500 backdrop-blur-sm"
-          style={{ fontFamily: 'var(--font-sans)', opacity: 1 }}
-        >
-          Discover The Estate
-        </button>
       </div>
 
-      <div 
+      {/* Jetty composition — planks, figure, petals, feet */}
+      <div
         ref={planksContainerRef}
         className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[55vw] max-w-[700px] h-[70%] z-10"
         style={{ perspective: '800px' }}
       >
-        <div 
+        <div
           ref={planksRef}
           className="relative w-full h-full origin-bottom"
           style={{ transform: 'rotateX(25deg)' }}
         >
-          <div 
+          <div
             className="absolute inset-0 w-full h-full"
             style={{
-              background: `
-                repeating-linear-gradient(
-                  0deg,
-                  rgba(160,110,60,0.9) 0px,
-                  rgba(180,130,75,0.85) 18px,
-                  rgba(40,160,180,0.8) 18px,
-                  rgba(40,160,180,0.8) 21px,
-                  rgba(160,110,60,0.9) 21px
-                )
-              `
-            }}
-          />
-          
-          <div 
-            className="absolute inset-0 w-full h-full pointer-events-none"
-            style={{
-              background: `
-                repeating-linear-gradient(
-                  92deg,
-                  transparent 0px,
-                  rgba(0,0,0,0.04) 1px,
-                  transparent 2px,
-                  transparent 8px
-                )
-              `
+              background: `repeating-linear-gradient(
+                0deg,
+                rgba(160,110,60,0.9) 0px,
+                rgba(180,130,75,0.85) 18px,
+                rgba(40,160,180,0.8) 18px,
+                rgba(40,160,180,0.8) 21px,
+                rgba(160,110,60,0.9) 21px
+              )`,
             }}
           />
 
-          <div 
+          <div
+            className="absolute inset-0 w-full h-full pointer-events-none"
+            style={{
+              background: `repeating-linear-gradient(
+                92deg,
+                transparent 0px,
+                rgba(0,0,0,0.04) 1px,
+                transparent 2px,
+                transparent 8px
+              )`,
+            }}
+          />
+
+          <div
             ref={figureRef}
             className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-[20px] z-[4]"
             style={{
               width: '8px',
               height: '20px',
               borderRadius: '4px 4px 0 0',
-              background: 'rgba(240,235,220,0.7)'
+              background: 'rgba(240,235,220,0.7)',
             }}
           />
 
           {petals.map((petal, i) => (
-            <div 
+            <div
               key={i}
-              ref={el => { petalsRef.current[i] = el!; }}
+              ref={(el) => {
+                if (el) petalsRef.current[i] = el;
+              }}
               className="absolute"
               style={{
                 width: '8px',
@@ -310,7 +356,7 @@ const Moment04 = ({ index }: { index: number }) => {
           ))}
 
           <div ref={feetRef} className="absolute inset-0 z-[5] pointer-events-none">
-            <div 
+            <div
               ref={feetLeftRef}
               className="absolute left-[38%] bottom-[15%]"
               style={{
@@ -320,7 +366,7 @@ const Moment04 = ({ index }: { index: number }) => {
                 background: 'rgba(210, 170, 130, 0.7)',
               }}
             />
-            <div 
+            <div
               ref={feetRightRef}
               className="absolute left-[58%] bottom-[22%]"
               style={{
