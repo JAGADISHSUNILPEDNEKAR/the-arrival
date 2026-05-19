@@ -42,6 +42,9 @@ A single Three.js fragment shader on a full-screen plane lives at `fixed inset-0
 - **Why the existing moments suddenly work as transitions:** every `Moment0X.tsx` already tweens `sectionRef` opacity 0→1→0 across its own scrub. The body color was masking the world underneath; with `.moment { background: transparent }` stripped in `globals.css`, those existing fades now reveal the atmosphere between scenes. No new transition code was needed — the choreography was already there, just blocked.
 - **Per-moment internal gradients** (e.g. Moment02's `linear-gradient(180deg, #0e2038...)`) are still opaque mid-scene by design. Next phase can dial them translucent so the world bleeds through mid-act too.
 
+### Preloader → FilmHomepage shared-element contract
+`Preloader.tsx` and `FilmHomepage.tsx` share one visually-persistent element: the **coord micro** ("From the Maldives") at `top-[26%] md:top-[28%] left-[8%] md:left-[10%]`. Same font, size, letter-spacing, color (`rgba(245,240,232,0.6)`). When Preloader unpins, FilmHomepage's Act I coord is already initialised at opacity 0.6 — the coord appears to persist in-place, masking the component handoff. Do not add a fade-in tween to FilmHomepage's coord; do not move the coord in Preloader. If you change one position/style, change the other.
+
 ### GSAP — always import from `@/lib/gsap`
 `lib/gsap.ts` is the single place that registers `ScrollTrigger`/`SplitText`/`CustomEase` (browser-guarded) and pre-creates the `"cinematic"` CustomEase (`cubic-bezier(0.16, 1, 0.3, 1)`). Importing GSAP directly from `gsap` will skip plugin registration and break the `"cinematic"` ease used everywhere.
 
