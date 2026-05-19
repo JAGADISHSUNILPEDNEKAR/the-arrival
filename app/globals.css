@@ -84,7 +84,6 @@ html::-webkit-scrollbar {
      (Three.js fragment shader) is the bedrock and must be visible during
      each moment's entry/exit fade. Body bg (#060e1a) is the WebGL fallback. */
   background: transparent;
-  will-change: opacity, transform, visibility;
   transform-origin: center center;
 }
 
@@ -92,6 +91,10 @@ html::-webkit-scrollbar {
   visibility: visible;
   pointer-events: auto;
   z-index: 10;
+  /* will-change is only applied to the active moment to limit GPU layers.
+     With 11+ sections always claiming compositing layers, mobile VRAM
+     suffers; this scopes promotion to the one currently animating. */
+  will-change: opacity, transform;
 }
 
 
