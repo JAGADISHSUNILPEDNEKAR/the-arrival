@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import SmoothScroll from "@/components/SmoothScroll";
@@ -26,7 +26,6 @@ export const metadata: Metadata = {
   authors: [{ name: 'The Arrival' }],
   applicationName: 'The Arrival',
   category: 'Restaurant',
-  themeColor: '#060e1a',
   openGraph: {
     type: 'website',
     locale: 'en_US',
@@ -44,6 +43,11 @@ export const metadata: Metadata = {
     index: true,
     follow: true,
   },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#060e1a',
+  colorScheme: 'dark',
 };
 
 // Restaurant schema for rich results.
