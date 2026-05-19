@@ -45,6 +45,40 @@ A single Three.js fragment shader on a full-screen plane lives at `fixed inset-0
 ### Preloader → FilmHomepage shared-element contract
 `Preloader.tsx` and `FilmHomepage.tsx` share one visually-persistent element: the **coord micro** ("From the Maldives") at `top-[26%] md:top-[28%] left-[8%] md:left-[10%]`. Same font, size, letter-spacing, color (`rgba(245,240,232,0.6)`). When Preloader unpins, FilmHomepage's Act I coord is already initialised at opacity 0.6 — the coord appears to persist in-place, masking the component handoff. Do not add a fade-in tween to FilmHomepage's coord; do not move the coord in Preloader. If you change one position/style, change the other.
 
+### AssetSlot — procedural → real-footage swap
+`components/AssetSlot.tsx` is the swappable-media primitive. Today the site renders 100% procedural visuals (CSS gradients, `clipPath` silhouettes). Tomorrow when you have real Maldives photography or video, drop a `src` into the existing slot and it fades in over the procedural fallback — no layout, animation, or composition changes.
+
+Pattern:
+```tsx
+<div ref={islandRef} className="..." style={{ width: '...', height: '...' }}>
+  <AssetSlot id="moment-02-island" alt="..." className="w-full h-full">
+    {/* procedural fallback — renders verbatim when no src */}
+    <div style={{ clipPath: 'polygon(...)' }} />
+  </AssetSlot>
+</div>
+```
+
+To populate a slot:
+```tsx
+<AssetSlot
+  id="moment-02-island"
+  alt="..."
+  src={{ image: '/assets/moment-02/island.webp' }}
+  className="w-full h-full"
+>
+  {/* fallback still here; only renders if src is removed */}
+</AssetSlot>
+```
+
+Key behaviour:
+- No `src` → wrapper div renders with `data-asset-state="fallback"` and children verbatim
+- `src.image` only → `<img loading="lazy" decoding="async">` with 700ms fade-in on load
+- `src.video` provided → SSR still renders the poster image; client swaps to autoplaying `<video muted loop playsInline>` *only if* `prefers-reduced-motion` is not set (accessibility + hydration safety)
+- Wrapper carries `data-asset-slot={id}` for inspection — `document.querySelectorAll('[data-asset-slot]')` enumerates all slots
+- GSAP refs stay on the **outer positioning ancestor**, not on AssetSlot itself, so animations are unaffected by the procedural↔real swap
+
+Asset path convention (documented, not enforced): `public/assets/{moment-id}/{slot-id}.{ext}`. Currently wired into Moment02 (`moment-02-island`) and Moment03 (`moment-03-island`) as proof; the same pattern extends to every visible procedural element.
+
 ### GSAP — always import from `@/lib/gsap`
 `lib/gsap.ts` is the single place that registers `ScrollTrigger`/`SplitText`/`CustomEase` (browser-guarded) and pre-creates the `"cinematic"` CustomEase (`cubic-bezier(0.16, 1, 0.3, 1)`). Importing GSAP directly from `gsap` will skip plugin registration and break the `"cinematic"` ease used everywhere.
 
