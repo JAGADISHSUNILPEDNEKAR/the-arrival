@@ -18,6 +18,7 @@ import Moment11 from './moments/Moment11';
 import Preloader from './Preloader';
 import GlobalNav from './GlobalNav';
 import AtmosphereLayer from './Atmosphere/AtmosphereLayer';
+import AudioToggle from './AudioToggle';
 
 const ScrollJourney = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -47,6 +48,7 @@ const ScrollJourney = () => {
       <AtmosphereLayer />
       <Preloader />
       <GlobalNav />
+      <AudioToggle />
 
       <div ref={containerRef} className="scroll-container relative z-10">
         <div className="moments-wrapper relative w-full h-full">
