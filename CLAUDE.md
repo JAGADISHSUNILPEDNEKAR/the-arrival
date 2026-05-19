@@ -121,6 +121,18 @@ Three.js dominates because it tree-shakes poorly. The 131 KB chunk is acceptable
 **Open optimization (deferred)**
 - Dynamic-import `AtmosphereLayer` via `next/dynamic` with `ssr: false`. Removes ~131 KB from the critical bundle, defers Three.js until JS hydrates. Preloader's veil at 0.88 opacity already obscures the shader at frame 0 — acceptable visual trade-off. Skipped here because the win is real but the visual nuance is best decided after pixel review.
 
+### AudioToggle — opt-in ambient loop
+`components/AudioToggle.tsx` is the audio analogue to AssetSlot. Loads `/audio/ambient.mp3`. If the file is present and `canplaythrough` fires, a small editorial micro-button appears bottom-right with the same scroll fade-in as GlobalNav. If the file is absent, the toggle UI never renders — no 404 in the visible UI; same procedural-fallback contract.
+
+Defaults:
+- OFF on first visit (respects browser autoplay restrictions and user expectation)
+- Click toggles. Volume fades up over 2s via GSAP, down over 0.8s
+- State persists via `localStorage` key `arrival.audio.enabled`
+- Returning user who had it ON gets it resumed silently when the browser permits; otherwise falls back to OFF without error UI
+- `data-cursor="cta"` so the custom cursor responds on hover, matching Begin/Reserve
+
+The audio file is the user's to supply. `public/audio/README.md` documents recommended properties: MP3, 30s–2min seamlessly loopable, mastered quiet (player caps volume at 0.35), no sharp transients. Drop a real ocean recording at `public/audio/ambient.mp3` and the toggle appears automatically — no code change.
+
 ### MomentGallery — horizontal-pan-on-vertical-scroll
 `components/moments/MomentGallery.tsx` is a new moment slotted between Moment09 (the plate close-up) and Moment10 (the night silhouette) in ScrollJourney. It's the missing third emotional act — after the intimate dining close, the camera zooms *out* to show the other arrivals on the island.
 
