@@ -35,14 +35,17 @@ float hash(vec2 p) {
   return fract(p.x * p.y);
 }
 
-// Luxury day-arc palette: 6 stops from night arrival -> moonlit ocean.
-// Each helper returns the colour at narrative progress t in [0,1].
+// Palette tracks the existing 11-moment narrative arc:
+//   0.0 night arrival  -> 0.2 dawn break  -> 0.4 midday lagoon
+//   0.6 golden warm    -> 0.8 intimate dining dark  -> 1.0 moonlit ocean
+// Mid-page intentionally darkens for the dining acts (Moment06-09) so the
+// world below intimate scenes feels warm and close, not bright tropical.
 vec3 paletteSky(float t) {
   vec3 c0 = vec3(0.024, 0.055, 0.102); // night arrival
-  vec3 c1 = vec3(0.063, 0.090, 0.180); // pre-dawn
-  vec3 c2 = vec3(0.420, 0.620, 0.690); // dawn sky
-  vec3 c3 = vec3(0.510, 0.760, 0.820); // midday sky
-  vec3 c4 = vec3(0.890, 0.620, 0.470); // golden hour
+  vec3 c1 = vec3(0.150, 0.220, 0.310); // dawn break
+  vec3 c2 = vec3(0.510, 0.760, 0.820); // midday sky
+  vec3 c3 = vec3(0.540, 0.380, 0.310); // golden warm
+  vec3 c4 = vec3(0.140, 0.090, 0.060); // intimate dining dark
   vec3 c5 = vec3(0.110, 0.140, 0.230); // moonlit
   if (t < 0.2) return mix(c0, c1, t / 0.2);
   if (t < 0.4) return mix(c1, c2, (t - 0.2) / 0.2);
@@ -51,12 +54,12 @@ vec3 paletteSky(float t) {
   return mix(c4, c5, (t - 0.8) / 0.2);
 }
 vec3 paletteOcean(float t) {
-  vec3 c0 = vec3(0.012, 0.027, 0.055);
-  vec3 c1 = vec3(0.039, 0.078, 0.137);
-  vec3 c2 = vec3(0.090, 0.290, 0.380);
-  vec3 c3 = vec3(0.090, 0.460, 0.560);
-  vec3 c4 = vec3(0.450, 0.320, 0.380);
-  vec3 c5 = vec3(0.039, 0.063, 0.118);
+  vec3 c0 = vec3(0.012, 0.027, 0.055); // night ocean
+  vec3 c1 = vec3(0.060, 0.140, 0.240); // pre-dawn ocean
+  vec3 c2 = vec3(0.090, 0.460, 0.560); // midday lagoon
+  vec3 c3 = vec3(0.360, 0.260, 0.220); // golden ocean
+  vec3 c4 = vec3(0.080, 0.050, 0.030); // intimate close
+  vec3 c5 = vec3(0.039, 0.063, 0.118); // moonlit
   if (t < 0.2) return mix(c0, c1, t / 0.2);
   if (t < 0.4) return mix(c1, c2, (t - 0.2) / 0.2);
   if (t < 0.6) return mix(c2, c3, (t - 0.4) / 0.2);
@@ -65,11 +68,11 @@ vec3 paletteOcean(float t) {
 }
 vec3 paletteGlow(float t) {
   vec3 c0 = vec3(0.04, 0.06, 0.10);
-  vec3 c1 = vec3(0.45, 0.35, 0.28);
-  vec3 c2 = vec3(0.85, 0.65, 0.45);
-  vec3 c3 = vec3(0.30, 0.45, 0.50);
-  vec3 c4 = vec3(0.95, 0.55, 0.35);
-  vec3 c5 = vec3(0.20, 0.25, 0.35);
+  vec3 c1 = vec3(0.55, 0.40, 0.30); // pre-dawn glow
+  vec3 c2 = vec3(0.85, 0.65, 0.45); // midday warm horizon
+  vec3 c3 = vec3(0.95, 0.55, 0.35); // sunset peak
+  vec3 c4 = vec3(0.65, 0.40, 0.25); // ember
+  vec3 c5 = vec3(0.20, 0.25, 0.35); // moonlit cool
   if (t < 0.2) return mix(c0, c1, t / 0.2);
   if (t < 0.4) return mix(c1, c2, (t - 0.2) / 0.2);
   if (t < 0.6) return mix(c2, c3, (t - 0.4) / 0.2);
