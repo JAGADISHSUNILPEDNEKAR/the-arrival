@@ -196,25 +196,26 @@ interface Waypoint {
 }
 
 const WAYPOINTS: Waypoint[] = [
-  // Hero — entering, vast emptiness
-  { scrollVH: 0,   pos: new Vector3(0,    18,   65),  look: new Vector3(0,    9,    0) },
-  { scrollVH: 1,   pos: new Vector3(0,    16,   58),  look: new Vector3(0,    6,    0) },
-  // Hero — descending, horizon focuses
-  { scrollVH: 2,   pos: new Vector3(0,    11,   44),  look: new Vector3(0,    2,    0) },
-  // Hero — approaching the closer hero island
-  { scrollVH: 3,   pos: new Vector3(1.5,  7,    30),  look: new Vector3(-1.5, 0.5,  0) },
-  // Hero — Act IV low approach
-  { scrollVH: 4,   pos: new Vector3(3.5,  4,    18),  look: new Vector3(-3,   0,    0) },
-  // Bridge from hero exit toward sanctuary
-  { scrollVH: 4.5, pos: new Vector3(2,    3,    11),  look: new Vector3(-4,   0.4,  -1) },
-  // Moment02 — sanctuary becomes the focal point
-  { scrollVH: 5,   pos: new Vector3(0,    2.2,  5),   look: new Vector3(-5,   0.5,  -3) },
-  // Moment02 mid — closest approach to sanctuary
-  { scrollVH: 5.5, pos: new Vector3(-2,   1.8,  -1),  look: new Vector3(-7,   0.4,  -5) },
-  // Moment02 late — passing sanctuary, heading toward next territory
-  { scrollVH: 6,   pos: new Vector3(-4,   1.6,  -6),  look: new Vector3(-8,   0.3,  -10) },
-  // Moment02 end — exit anchor for smooth curve termination
-  { scrollVH: 6.5, pos: new Vector3(-6,   1.4,  -11), look: new Vector3(-9,   0.2,  -15) },
+  // Hero — pre-Act I, high & far. Island visible as small distant silhouette.
+  { scrollVH: 0,   pos: new Vector3(0,    22,   32),  look: new Vector3(0,    6,    -16) },
+  // Hero Act I — descending
+  { scrollVH: 1,   pos: new Vector3(0,    18,   22),  look: new Vector3(0,    4,    -18) },
+  // Hero Act II — horizon focuses, island grows in frame
+  { scrollVH: 2,   pos: new Vector3(0,    12,   12),  look: new Vector3(0,    2,    -22) },
+  // Hero Act III — low altitude, island fills more of view
+  { scrollVH: 3,   pos: new Vector3(0,    7,    2),   look: new Vector3(0,    1,    -25) },
+  // Hero Act IV — very close to water, island close ahead
+  { scrollVH: 4,   pos: new Vector3(0,    3.5,  -5),  look: new Vector3(0,    1,    -27) },
+  // Bridge from hero exit into Moment02
+  { scrollVH: 4.5, pos: new Vector3(0,    2.8,  -10), look: new Vector3(-1,   1,    -28) },
+  // Moment02 enter — sees jetty + pavilion ahead clearly
+  { scrollVH: 5,   pos: new Vector3(0,    2.2,  -13), look: new Vector3(-1,   1,    -28) },
+  // Moment02 mid — at the jetty's outer end, looking inland
+  { scrollVH: 5.5, pos: new Vector3(0,    1.8,  -16), look: new Vector3(-1,   1.2,  -28) },
+  // Moment02 late — moving along the jetty
+  { scrollVH: 6,   pos: new Vector3(-0.5, 1.6,  -18), look: new Vector3(-1,   1.3,  -28) },
+  // Moment02 end — arrived. Camera dwells at the shore, looking at pavilion.
+  { scrollVH: 6.5, pos: new Vector3(-1,   1.5,  -20), look: new Vector3(-1,   1.3,  -28) },
 ];
 
 const JOURNEY_END_VH = WAYPOINTS[WAYPOINTS.length - 1].scrollVH;
