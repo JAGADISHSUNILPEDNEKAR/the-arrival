@@ -61,7 +61,6 @@ const MomentGallery = () => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const titleRef = useRef<HTMLDivElement>(null);
-  const captionRefs = useRef<(HTMLDivElement | null)[]>([]);
   const { isMobile } = useScroll();
 
   useEffect(() => {
@@ -73,14 +72,22 @@ const MomentGallery = () => {
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
+    // Captions are looked up via data attribute (rather than a ref array)
+    // because the previous inline ref-callback pattern was unstable under
+    // React 19 — only the last ref reliably stayed populated, leaving
+    // captions 0-2 silently skipped from the gsap.set + tween wiring.
+    // querySelectorAll runs at effect time after refs are committed, so
+    // every caption is found deterministically.
+    const captionEls = Array.from(
+      sectionEl.querySelectorAll<HTMLDivElement>('[data-gallery-caption]')
+    );
+
     const ctx = gsap.context(() => {
-      gsap.set(captionRefs.current, { opacity: 0, y: 30 });
+      gsap.set(captionEls, { opacity: 0, y: 30 });
       gsap.set(titleRef.current, { opacity: 1, y: 0 });
 
       // Reduced motion: drop pin + horizontal track. Section reads as the
-      // title card only; user scrolls past at normal pace. (Captions would
-      // require horizontal scroll to be discoverable, which contradicts the
-      // user preference.) Override the .moment CSS so the section is visible.
+      // title card only; user scrolls past at normal pace.
       if (reducedMotion) {
         sectionEl.classList.add('active');
         gsap.set(sectionEl, { opacity: 1 });
@@ -119,12 +126,11 @@ const MomentGallery = () => {
         0.16
       );
 
-      // Per-panel caption reveals. captionRefs[i] corresponds to content panel
+      // Per-panel caption reveals. caption[i] corresponds to content panel
       // (i+1) in the track. Content panel i is dominant from progress
       // 0.2*(i+1) to 0.2*(i+2). Caption enters just inside, exits just before
       // the next takes over. The last caption holds until unpin.
-      captionRefs.current.forEach((cap, i) => {
-        if (!cap) return;
+      captionEls.forEach((cap, i) => {
         const enterAt = (i + 1) * 0.2 + 0.02;
         const exitAt = (i + 2) * 0.2 - 0.04;
         tl.to(
@@ -192,7 +198,7 @@ const MomentGallery = () => {
             this section. The captions remain, sliding past the camera-
             driven world below them. Caption position alternates per panel
             (left/right) for editorial rhythm. */}
-        {CONTENT_PANELS.map((panel, i) => {
+        {CONTENT_PANELS.map((panel) => {
           const imageRight = panel.alignment === 'image-right';
           // Caption position: opposite of where the image would have been,
           // so the panel's gaze direction still alternates left/right.
@@ -201,11 +207,9 @@ const MomentGallery = () => {
             : 'md:bottom-auto md:top-[30%] md:left-auto md:right-[10%] md:text-right';
           return (
             <div key={panel.slug} className="w-screen h-full relative">
-              {/* Caption area */}
+              {/* Caption area — looked up by data attribute in the effect */}
               <div
-                ref={(el) => {
-                  captionRefs.current[i] = el;
-                }}
+                data-gallery-caption=""
                 className={`absolute z-10 max-w-[26em] pointer-events-none bottom-[8%] left-[8%] right-[8%] ${captionPos}`}
               >
                 <span
