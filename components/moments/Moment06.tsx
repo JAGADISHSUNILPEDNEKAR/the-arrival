@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap, ScrollTrigger, SplitText } from '@/lib/gsap';
 import { useScroll } from '@/lib/context/ScrollContext';
+import { buildKineticWordsFor, KineticWord } from '@/lib/kineticWord';
 
 const Moment06 = ({}: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
@@ -72,6 +73,11 @@ const Moment06 = ({}: { index: number }) => {
         splitTitle?.revert();
       };
     }
+
+    // Kinetic-typography controllers for the chapter's anchor word.
+    const kineticTitle: KineticWord[] = buildKineticWordsFor(
+      splitTitle?.words as Element[] | undefined
+    );
 
     const tl = gsap.timeline({
       scrollTrigger: {
@@ -145,6 +151,8 @@ const Moment06 = ({}: { index: number }) => {
         0.18
       );
     }
+    // Kinetic breath on "lantern" — fires once after the word lands.
+    tl.call(() => kineticTitle.forEach((kw) => kw.play()), [], 0.42);
 
     // === HOLD 0.32 – 0.42 ===
 
@@ -218,6 +226,7 @@ const Moment06 = ({}: { index: number }) => {
 
     return () => {
       tl.kill();
+      kineticTitle.forEach((kw) => kw.revert());
       splitTitle?.revert();
       ScrollTrigger.getAll()
         .filter((st) => st.vars.trigger === sectionEl)
