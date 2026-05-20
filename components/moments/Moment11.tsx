@@ -4,13 +4,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { gsap, ScrollTrigger, SplitText } from '@/lib/gsap';
 import { useScroll } from '@/lib/context/ScrollContext';
 
-interface Star {
-  id: number;
-  top: string;
-  left: string;
-  opacity: number;
-}
-
 /**
  * Chapter IX — the invitation. Currently the emotional climax of the scroll.
  *
@@ -28,10 +21,6 @@ interface Star {
  */
 const Moment11 = ({}: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
-  const horizonRef = useRef<HTMLDivElement>(null);
-  const waterRef = useRef<HTMLDivElement>(null);
-  const waterPatternRef = useRef<HTMLDivElement>(null);
-  const starRefs = useRef<HTMLDivElement[]>([]);
 
   const headlineRef = useRef<HTMLParagraphElement>(null);
   const subRef = useRef<HTMLParagraphElement>(null);
@@ -43,24 +32,11 @@ const Moment11 = ({}: { index: number }) => {
   const thankYouTitleRef = useRef<HTMLParagraphElement>(null);
   const thankYouNoteRef = useRef<HTMLParagraphElement>(null);
 
-  const [starsData, setStarsData] = useState<Star[]>([]);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [nameBlurred, setNameBlurred] = useState(false);
   const [sent, setSent] = useState(false);
   const { isMobile } = useScroll();
-
-  useEffect(() => {
-    const count = isMobile ? 8 : 15;
-    const stars = Array.from({ length: count }).map((_, i) => ({
-      id: i,
-      top: `${Math.random() * 30}%`,
-      left: `${Math.random() * 100}%`,
-      opacity: 0.15 + Math.random() * 0.2,
-    }));
-    const rafId = requestAnimationFrame(() => setStarsData(stars));
-    return () => cancelAnimationFrame(rafId);
-  }, [isMobile]);
 
   useEffect(() => {
     const sectionEl = sectionRef.current;
@@ -89,11 +65,6 @@ const Moment11 = ({}: { index: number }) => {
     gsap.set([subRef.current, formRef.current], { opacity: 0, y: 30 });
     // Reassurance starts hidden — gated behind name blur, not scroll progress.
     gsap.set(reassureRef.current, { opacity: 0, y: 30 });
-    gsap.set(horizonRef.current, {
-      scaleX: 0,
-      opacity: 0,
-      transformOrigin: 'center center',
-    });
     gsap.set(ceremonyRef.current, { opacity: 1, pointerEvents: 'none' });
     gsap.set(ceremonyBlackoutRef.current, { opacity: 0 });
     gsap.set([thankYouTitleRef.current, thankYouNoteRef.current], {
@@ -110,7 +81,6 @@ const Moment11 = ({}: { index: number }) => {
       }
       gsap.set([subRef.current, formRef.current], { opacity: 1, y: 0 });
       gsap.set(subRef.current, { opacity: 0.7 });
-      gsap.set(horizonRef.current, { scaleX: 1, opacity: 1 });
       return () => {
         splitHeadline?.revert();
       };
@@ -137,28 +107,8 @@ const Moment11 = ({}: { index: number }) => {
       { opacity: 1, scale: 1, ease: 'cinematic', duration: 0.5 },
       0.1
     );
-
-    tl.to(
-      horizonRef.current,
-      { scaleX: 1, opacity: 1, duration: 0.6, ease: 'cinematic' },
-      0.18
-    );
-
-    tl.to(
-      waterPatternRef.current,
-      { backgroundPositionX: '300px', scale: 1.2, ease: 'none' },
-      0.1
-    );
-    tl.to(waterRef.current, { y: '-8vh', scaleY: 1.15, ease: 'none' }, 0.1);
-    starRefs.current.forEach((star) => {
-      if (star) {
-        tl.to(
-          star,
-          { opacity: 0.9, scale: 2.5, y: '-12vh', ease: 'none' },
-          0.1
-        );
-      }
-    });
+    // (Background visuals are owned by JourneyScene — no horizon/water/star
+    // tweens here anymore. The moonlit ocean is rendered, not CSS.)
 
     if (splitHeadline?.words) {
       tl.to(
@@ -196,7 +146,7 @@ const Moment11 = ({}: { index: number }) => {
         .filter((st) => st.vars.trigger === sectionEl)
         .forEach((st) => st.kill());
     };
-  }, [starsData, isMobile]);
+  }, [isMobile]);
 
   // Gated reassurance reveal — only after name is filled and field is blurred.
   useEffect(() => {
@@ -294,62 +244,8 @@ const Moment11 = ({}: { index: number }) => {
       className="moment relative w-full overflow-hidden"
       id="moment-11"
     >
-      {/* Translucent moonlit ocean — atmosphere shader breathes through */}
-      <div className="absolute inset-0 w-full h-full">
-        <div
-          className="absolute inset-0 w-full h-full"
-          style={{
-            background:
-              'linear-gradient(180deg, rgba(5,8,16,0.65) 0%, rgba(10,16,32,0.60) 20%, rgba(13,24,40,0.55) 45%, rgba(21,34,53,0.55) 65%, rgba(26,45,66,0.55) 80%, rgba(30,52,80,0.55) 92%, rgba(34,56,88,0.55) 100%)',
-          }}
-        />
-
-        <div className="absolute inset-0 w-full h-full pointer-events-none">
-          {starsData.map((star, i) => (
-            <div
-              key={star.id}
-              ref={(el) => {
-                if (el) starRefs.current[i] = el;
-              }}
-              className="absolute w-[1px] h-[1px] bg-white rounded-full"
-              style={{
-                top: star.top,
-                left: star.left,
-                opacity: star.opacity,
-              }}
-            />
-          ))}
-        </div>
-
-        <div
-          ref={horizonRef}
-          className="absolute left-0 w-full h-[1px] z-10 origin-center"
-          style={{
-            top: '55%',
-            background:
-              'linear-gradient(90deg, transparent 0%, rgba(100,140,170,0.25) 20%, rgba(130,165,190,0.35) 50%, rgba(100,140,170,0.25) 80%, transparent 100%)',
-          }}
-        />
-
-        <div
-          ref={waterRef}
-          className="absolute bottom-0 left-0 w-full h-[45%] z-[5] overflow-hidden"
-          style={{
-            background:
-              'linear-gradient(180deg, rgba(20,45,70,0.8) 0%, rgba(15,35,55,0.9) 40%, rgba(10,25,40,0.95) 100%)',
-          }}
-        >
-          <div
-            ref={waterPatternRef}
-            className="absolute inset-0 w-full h-full opacity-30"
-            style={{
-              background:
-                'repeating-linear-gradient(92deg, transparent 0%, rgba(255,255,255,0.008) 50%, transparent 100%)',
-              backgroundSize: '80px 100%',
-            }}
-          />
-        </div>
-      </div>
+      {/* Moonlit ocean is rendered by JourneyScene at this scroll position
+          — no CSS background here. */}
 
       {/* Editorial column — fades into ceremony on submit */}
       <div className="absolute top-[18%] md:top-[20%] left-[8%] md:left-[10%] right-[8%] md:right-[10%] z-20 max-w-[42em] pointer-events-none">
