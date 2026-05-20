@@ -241,6 +241,10 @@ const FRAGMENT_PARTICLE = /* glsl */ `
 //                        gallery's horizontal track scrolls four captions
 //                        past — the user sees both island reveal and
 //                        caption beats simultaneously.
+//   scrollVH 28.5–31  → Moment10 (IX), camera drifts away from the island
+//                       into open water, looking back at the pavilion
+//                       silhouette with the lantern as a warm distant
+//                       point. The "remembered longer than others" beat.
 //
 // Main island is centered at world position (0, 0, -28). The camera
 // approaches it from positive Z, lands at the shore (Moment02), then rises
@@ -358,6 +362,17 @@ const WAYPOINTS: Waypoint[] = [
   { scrollVH: 28.0, pos: new Vector3(-12, 8,    -16),    look: new Vector3(0,  0,    -28) },
   // Gallery end — settled near shore, low altitude, ready for Moment10
   { scrollVH: 28.5, pos: new Vector3(-3,  5,    -16),    look: new Vector3(-1, 0.8,  -28) },
+  // Moment10 enter — descending toward water level near the shore
+  { scrollVH: 29.0, pos: new Vector3(-2,  3,    -13),    look: new Vector3(-1, 1.0,  -28) },
+  // Moment10 — at low altitude near the jetty's outer end
+  { scrollVH: 29.5, pos: new Vector3(0,   2,    -10),    look: new Vector3(-1, 1.2,  -28) },
+  // Moment10 — drifting out into open water, pavilion in middle distance
+  { scrollVH: 30.0, pos: new Vector3(3,   1.8,  -6),     look: new Vector3(-1, 1.2,  -28) },
+  // Moment10 — further out, the lantern is now a tiny warm point
+  { scrollVH: 30.5, pos: new Vector3(5,   1.8,  -2),     look: new Vector3(-1, 1.2,  -28) },
+  // Moment10 end — adrift, looking back at the island with the pavilion's
+  // lantern as a remembered point of light
+  { scrollVH: 31.0, pos: new Vector3(6,   2,    2),      look: new Vector3(-1, 1.2,  -28) },
 ];
 
 const JOURNEY_END_VH = WAYPOINTS[WAYPOINTS.length - 1].scrollVH;
