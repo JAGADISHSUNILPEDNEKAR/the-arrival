@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { gsap, SplitText } from '@/lib/gsap';
+import { buildKineticWordsFor, KineticWord } from '@/lib/kineticWord';
 
 const FilmHomepage = () => {
     const containerRef = useRef<HTMLDivElement>(null);
@@ -45,6 +46,21 @@ const FilmHomepage = () => {
                       wordsClass: 'word',
                   })
                 : null;
+            // fragmentRef has no reveal-stagger, but we split it for word
+            // lookup so the kinetic helper can target "lagoon" and "equator".
+            const fragmentSplit = fragmentRef.current
+                ? new SplitText(fragmentRef.current, {
+                      type: 'words',
+                      wordsClass: 'word',
+                  })
+                : null;
+
+            // Kinetic controllers — populated past the reduced-motion gate.
+            let kineticTitle: KineticWord[] = [];
+            let kineticSentence: KineticWord[] = [];
+            let kineticFragment: KineticWord[] = [];
+            const playAll = (group: KineticWord[]) =>
+                group.forEach((kw) => kw.play());
 
             // Initial states — everything hidden, ready to enter.
             // Coord is the exception: it starts visible at 0.6 because the
@@ -87,6 +103,18 @@ const FilmHomepage = () => {
                 return;
             }
 
+            // Past the gate: build kinetic-typography controllers for the six
+            // anchor words. Skipped under reduced motion above.
+            kineticTitle = buildKineticWordsFor(
+                titleSplit?.words as Element[] | undefined
+            );
+            kineticSentence = buildKineticWordsFor(
+                sentenceSplit?.words as Element[] | undefined
+            );
+            kineticFragment = buildKineticWordsFor(
+                fragmentSplit?.words as Element[] | undefined
+            );
+
             const tl = gsap.timeline({
                 scrollTrigger: {
                     trigger: containerRef.current,
@@ -115,6 +143,8 @@ const FilmHomepage = () => {
                     0.05
                 );
             }
+            // Kinetic breath on "Arrival" — fires once after the title settles.
+            tl.call(() => playAll(kineticTitle), [], 0.18);
             tl.to(
                 subtitleRef.current,
                 { opacity: 1, y: 0, duration: 0.06, ease: 'cinematic' },
@@ -147,6 +177,8 @@ const FilmHomepage = () => {
                 { opacity: 0.88, y: 0, duration: 0.08, ease: 'cinematic' },
                 0.40
             );
+            // Kinetic breath on "lagoon" + "equator" after the fragment settles.
+            tl.call(() => playAll(kineticFragment), [], 0.46);
             // HOLD 0.46 – 0.50
 
             // === ACT III — The promise (0.50 – 0.75) ===
@@ -174,6 +206,8 @@ const FilmHomepage = () => {
                     0.56
                 );
             }
+            // Kinetic breath on "invisible" after the sentence settles.
+            tl.call(() => playAll(kineticSentence), [], 0.66);
             tl.to(
                 invitationRef.current,
                 { opacity: 0.5, y: 0, duration: 0.06, ease: 'cinematic' },
@@ -200,8 +234,12 @@ const FilmHomepage = () => {
             // HOLD 0.96 – 1.00 then unpin into Moment02
 
             return () => {
+                kineticTitle.forEach((kw) => kw.revert());
+                kineticSentence.forEach((kw) => kw.revert());
+                kineticFragment.forEach((kw) => kw.revert());
                 titleSplit?.revert();
                 sentenceSplit?.revert();
+                fragmentSplit?.revert();
             };
         }, containerRef);
 
