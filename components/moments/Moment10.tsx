@@ -53,7 +53,7 @@ const Moment10 = ({}: { index: number }) => {
 
     if (reducedMotion) {
       sectionEl.classList.add('active');
-      gsap.set(sectionEl, { opacity: 1, scale: 1 });
+      gsap.set(sectionEl, { opacity: 1, scale: 1, filter: 'none' });
       gsap.set(indexRef.current, { opacity: 0.35, y: 0 });
       if (splitTitle?.words) {
         gsap.set(splitTitle.words, { y: '0%', filter: 'none', opacity: 1 });
@@ -77,15 +77,23 @@ const Moment10 = ({}: { index: number }) => {
       },
     });
 
-    // === Beat 1 (0.00 – 0.12) — Section enters as camera descends to shore ===
+    // === Beat 1 (0.02 – 0.12) — Section enters with camera settle ===
     tl.fromTo(
       sectionEl,
-      { opacity: 0 },
-      { opacity: 1, ease: 'cinematic', duration: 0.5 },
-      0.05
+      { opacity: 0, scale: 1.015, filter: 'blur(1px)' },
+      {
+        opacity: 1,
+        scale: 1,
+        filter: 'blur(0px)',
+        ease: 'cinematic',
+        duration: 0.10,
+      },
+      0.02
     );
 
     // === Beat 2 (0.20 – 0.45) — Index, then the quote arrives ===
+    // The centered-quote composition keeps its later index/quote entry —
+    // this is the meditative reflection beat, not a chapter headline.
     tl.to(
       indexRef.current,
       { opacity: 0.35, y: 0, duration: 0.10, ease: 'cinematic' },
@@ -108,10 +116,10 @@ const Moment10 = ({}: { index: number }) => {
 
     // === HOLD 0.45 – 0.88 — Long dwell, camera drifts out into open water ===
 
-    // === Beat 3 (0.88 – 1.00) — Text exit ===
+    // === Beat 3 (0.88 – 1.00) — Text exit: fade to void (night arc) ===
     tl.to(
       textRef.current,
-      { opacity: 0, y: -60, force3D: true, ease: 'cinematic' },
+      { opacity: 0, scale: 0.985, force3D: true, ease: 'cinematic' },
       0.88
     );
     tl.to(
