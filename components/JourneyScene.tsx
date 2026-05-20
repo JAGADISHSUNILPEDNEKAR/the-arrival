@@ -136,6 +136,26 @@ const FRAGMENT_ISLAND = /* glsl */ `
   }
 `;
 
+// Emissive lantern — warm golden glow with subtle candle flicker. Reuses
+// VERTEX_ISLAND (just passes world position). Distance-fog still applies
+// so the lantern fades correctly into atmospheric depth.
+const FRAGMENT_LANTERN = /* glsl */ `
+  precision mediump float;
+  uniform vec3 uCameraPos;
+  uniform float uFogNear;
+  uniform float uFogFar;
+  uniform float uTime;
+  varying vec3 vWorldPos;
+
+  void main() {
+    float d = length(uCameraPos - vWorldPos);
+    float alpha = 1.0 - smoothstep(uFogNear, uFogFar, d);
+    float flicker = 0.90 + sin(uTime * 4.0) * 0.045 + sin(uTime * 11.0) * 0.035;
+    vec3 col = vec3(0.98, 0.72, 0.38) * flicker;
+    gl_FragColor = vec4(col, alpha);
+  }
+`;
+
 const VERTEX_PARTICLE = /* glsl */ `
   precision mediump float;
   uniform float uTime;
@@ -204,6 +224,9 @@ const FRAGMENT_PARTICLE = /* glsl */ `
 //                       through palm framing — the "pavilion at dusk, lit
 //                       by lantern, veiled by palm" beat. Sun direction in
 //                       the shader transitions to dusk during this range.
+//   scrollVH 16.5–19  → Moment07 (VI), camera moves INTO the open pavilion
+//                       and settles close to a table with a lit lantern at
+//                       its center — the "a table waiting" beat.
 //
 // Main island is centered at world position (0, 0, -28). The camera
 // approaches it from positive Z, lands at the shore (Moment02), then rises
@@ -281,6 +304,16 @@ const WAYPOINTS: Waypoint[] = [
   { scrollVH: 16.0, pos: new Vector3(-1,   1.75, -22.7), look: new Vector3(-1, 1.75, -28) },
   // Moment06 end — intimate dwell on the pavilion
   { scrollVH: 16.5, pos: new Vector3(-1,   1.8,  -22.4), look: new Vector3(-1, 1.7,  -28) },
+  // Moment07 enter — moving toward the pavilion entrance
+  { scrollVH: 17.0, pos: new Vector3(-1,  1.6,  -24),    look: new Vector3(-1, 1.0,  -28) },
+  // Moment07 — at the pavilion's open front, table coming into view
+  { scrollVH: 17.5, pos: new Vector3(-1,  1.5,  -25.4),  look: new Vector3(-1, 0.95, -28) },
+  // Moment07 — passing under the roof, between front columns
+  { scrollVH: 18.0, pos: new Vector3(-1,  1.4,  -26.5),  look: new Vector3(-1, 0.95, -28) },
+  // Moment07 — over the table, lantern glow filling the frame
+  { scrollVH: 18.5, pos: new Vector3(-1,  1.3,  -27.1),  look: new Vector3(-1, 0.9,  -28) },
+  // Moment07 end — intimate close on the lantern, leaning over the table
+  { scrollVH: 19.0, pos: new Vector3(-1,  1.2,  -27.3),  look: new Vector3(-1, 0.88, -28) },
 ];
 
 const JOURNEY_END_VH = WAYPOINTS[WAYPOINTS.length - 1].scrollVH;
@@ -443,7 +476,10 @@ export default function JourneyScene() {
       return [new Mesh(trunkGeo, mat), new Mesh(canopyGeo, mat)];
     };
 
-    // === Over-water-style pavilion — box base + thin overhanging roof ===
+    // === Open pavilion — floor platform + 4 corner columns + roof slab ===
+    // Architecturally open (no walls) so the camera can move INTO it during
+    // Moment07 without clipping through geometry, and so palm silhouettes
+    // read through it from earlier moments.
     const makePavilion = (
       px: number,
       pz: number,
@@ -452,13 +488,69 @@ export default function JourneyScene() {
       depth: number,
       color: Vector3
     ): Mesh[] => {
-      const baseH = height * 0.85;
-      const baseGeo = new BoxGeometry(width, baseH, depth);
-      baseGeo.translate(px, baseH / 2, pz);
-      const roofGeo = new BoxGeometry(width * 1.18, height * 0.06, depth * 1.18);
-      roofGeo.translate(px, baseH + height * 0.03, pz);
+      const meshes: Mesh[] = [];
       const mat = makeSilhouetteMaterial(color);
-      return [new Mesh(baseGeo, mat), new Mesh(roofGeo, mat)];
+
+      // Floor platform — slightly raised
+      const platformH = 0.4;
+      const platformGeo = new BoxGeometry(width, platformH, depth);
+      platformGeo.translate(px, platformH / 2, pz);
+      meshes.push(new Mesh(platformGeo, mat));
+
+      // Four corner columns — set in slightly from each corner
+      const columnH = height * 0.92;
+      const columnInset = 0.45;
+      const cornerOffsets: [number, number][] = [
+        [-width / 2 + columnInset, -depth / 2 + columnInset],
+        [ width / 2 - columnInset, -depth / 2 + columnInset],
+        [-width / 2 + columnInset,  depth / 2 - columnInset],
+        [ width / 2 - columnInset,  depth / 2 - columnInset],
+      ];
+      cornerOffsets.forEach(([ox, oz]) => {
+        const geo = new CylinderGeometry(0.13, 0.18, columnH, 6);
+        geo.translate(px + ox, platformH + columnH / 2, pz + oz);
+        meshes.push(new Mesh(geo, mat));
+      });
+
+      // Roof slab — overhanging, suspended on the columns
+      const roofH = 0.18;
+      const roofGeo = new BoxGeometry(width * 1.18, roofH, depth * 1.18);
+      roofGeo.translate(px, platformH + columnH + roofH / 2, pz);
+      meshes.push(new Mesh(roofGeo, mat));
+
+      return meshes;
+    };
+
+    // === Dining table — long thin plank at table height ===
+    const makeTable = (
+      px: number,
+      pz: number,
+      length: number,
+      tableHeight: number,
+      color: Vector3
+    ): Mesh => {
+      const topGeo = new BoxGeometry(length, 0.08, 0.85);
+      topGeo.translate(px, tableHeight, pz);
+      return new Mesh(topGeo, makeSilhouetteMaterial(color));
+    };
+
+    // === Lantern — small emissive sphere on the table ===
+    const makeLantern = (px: number, py: number, pz: number): Mesh => {
+      const geo = new SphereGeometry(0.13, 10, 10);
+      geo.translate(px, py, pz);
+      const mat = new ShaderMaterial({
+        vertexShader: VERTEX_ISLAND,
+        fragmentShader: FRAGMENT_LANTERN,
+        uniforms: {
+          uCameraPos: sharedUniforms.uCameraPos,
+          uFogNear: sharedUniforms.uFogNear,
+          uFogFar: sharedUniforms.uFogFar,
+          uTime: sharedUniforms.uTime,
+        },
+        transparent: true,
+        depthWrite: false,
+      });
+      return new Mesh(geo, mat);
     };
 
     // === Jetty — thin elongated plank just above water ===
@@ -504,12 +596,22 @@ export default function JourneyScene() {
       });
     });
 
-    // Pavilion — center of the island. Suggested structure, not detailed.
+    // Pavilion — open architecture, camera can move into it in Moment07.
     const pavilionMeshes = makePavilion(
-      -1, -28, 5.5, 2.8, 4,
+      -1, -28, 6, 2.7, 5,
       new Vector3(0.06, 0.10, 0.13)
     );
     pavilionMeshes.forEach((m) => scene.add(m));
+
+    // Table — centered inside the pavilion. Slightly off-axis toward the
+    // back so camera entering from front gets an approach-to-table beat.
+    const table = makeTable(-1, -28.2, 2.2, 0.88, new Vector3(0.08, 0.06, 0.04));
+    scene.add(table);
+
+    // Lantern — on the table center. Emissive, flickers; the visual focal
+    // point at the end of Moment07's interior approach.
+    const lantern = makeLantern(-1, 1.05, -28.2);
+    scene.add(lantern);
 
     // Jetty — extends from the island near-edge toward the camera's
     // approach path. Visible cue that "this is where you arrive."
@@ -663,6 +765,7 @@ export default function JourneyScene() {
         mainIsland,
         ...palmMeshes,
         ...pavilionMeshes,
+        table,
         jetty,
       ];
       const disposedMaterials = new Set<ShaderMaterial>();
@@ -674,6 +777,9 @@ export default function JourneyScene() {
           disposedMaterials.add(mat);
         }
       });
+      // Lantern uses its own emissive shader — not shared.
+      lantern.geometry.dispose();
+      (lantern.material as ShaderMaterial).dispose();
       partGeo.dispose();
       partMat.dispose();
       renderer.dispose();
