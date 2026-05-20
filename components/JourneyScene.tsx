@@ -193,11 +193,13 @@ const FRAGMENT_PARTICLE = /* glsl */ `
 //   scrollVH 4–6.5  → Moment02 (I), approach and arrive at the island shore
 //   scrollVH 6.5–9  → Moment03 (II), aerial reveal of the full island
 //                     (the "twenty-eight acres" scale moment)
-//   scrollVH 9–11.5 → Moment04 (III), descent from aerial onto the jetty,
-//                     then walk down the jetty toward the island — the
-//                     "cross by barefoot, the tides keep time" beat
-//   At Moment04 end the camera is at the island-side end of the jetty,
-//   palms ahead — ready for Moment05's descent into shade.
+//   scrollVH 9–11.5  → Moment04 (III), descent from aerial onto the jetty,
+//                      then walk down the jetty toward the island — the
+//                      "cross by barefoot, the tides keep time" beat
+//   scrollVH 11.5–14 → Moment05 (IV), step off the jetty onto the island
+//                      and into the palm shade — the "out of the sun, into
+//                      the shade" beat. Camera ends close to a nearby palm
+//                      which frames the left side of the view.
 //
 // Main island is centered at world position (0, 0, -28). The camera
 // approaches it from positive Z, lands at the shore (Moment02), then rises
@@ -253,6 +255,16 @@ const WAYPOINTS: Waypoint[] = [
   { scrollVH: 11.0, pos: new Vector3(0,    1.7, -18), look: new Vector3(-1.5, 1.5,  -27) },
   // Moment04 end — at the island-side end of the jetty, palms framing view
   { scrollVH: 11.5, pos: new Vector3(-0.5, 1.7, -20), look: new Vector3(-2,   1.5,  -28) },
+  // Moment05 enter — stepping off the jetty onto the island
+  { scrollVH: 12.0, pos: new Vector3(-1.5, 1.7, -22), look: new Vector3(-2.5, 1.5,  -28) },
+  // Moment05 — moving toward the palm zone, light dimming
+  { scrollVH: 12.5, pos: new Vector3(-2.5, 1.7, -24), look: new Vector3(-2.5, 1.5,  -28) },
+  // Moment05 — entering the palm canopy area
+  { scrollVH: 13.0, pos: new Vector3(-3,   1.7, -25.5), look: new Vector3(-2,  1.6,  -28) },
+  // Moment05 — under the canopy, close to the nearest palm trunk
+  { scrollVH: 13.5, pos: new Vector3(-3,   1.7, -26),   look: new Vector3(-1.5, 1.6, -29) },
+  // Moment05 end — dwell in palm shade, looking toward pavilion
+  { scrollVH: 14.0, pos: new Vector3(-2.8, 1.7, -26.5), look: new Vector3(-1,  1.6,  -29) },
 ];
 
 const JOURNEY_END_VH = WAYPOINTS[WAYPOINTS.length - 1].scrollVH;
