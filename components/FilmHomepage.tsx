@@ -192,6 +192,12 @@ const FilmHomepage = () => {
                 { opacity: 0, duration: 0.05, ease: 'power2.in' },
                 0.50
             );
+            // Sentence: "An island for those who prefer to be invisible." (9 words)
+            // Tightened to land the final word ("invisible.") at 0.72 — leaving a
+            // 0.04 dwell before Act IV exit fires at 0.76. Previous timing
+            // (start 0.56, stagger 0.025, duration 0.10) put the last word's
+            // reveal at 0.76, colliding with the exit and cutting it off.
+            // New math: last word starts at 0.52 + 8*0.015 = 0.64, completes at 0.72.
             if (sentenceSplit?.words) {
                 tl.to(
                     sentenceSplit.words,
@@ -199,11 +205,11 @@ const FilmHomepage = () => {
                         y: '0%',
                         filter: 'blur(0px)',
                         opacity: 1,
-                        stagger: 0.025,
-                        duration: 0.10,
+                        stagger: 0.015,
+                        duration: 0.08,
                         ease: 'cinematic',
                     },
-                    0.56
+                    0.52
                 );
             }
             // Kinetic breath on "invisible" after the sentence settles.
