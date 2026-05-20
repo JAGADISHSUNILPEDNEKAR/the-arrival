@@ -245,6 +245,11 @@ const FRAGMENT_PARTICLE = /* glsl */ `
 //                       into open water, looking back at the pavilion
 //                       silhouette with the lantern as a warm distant
 //                       point. The "remembered longer than others" beat.
+//   scrollVH 31–33.5  → Moment11, the invitation. Camera settles into a
+//                       wide moonlit ocean view; the island and pavilion
+//                       remain visible as a small distant presence while
+//                       the user writes. Moment11's own ceremony overlay
+//                       takes over visually on submit.
 //
 // Main island is centered at world position (0, 0, -28). The camera
 // approaches it from positive Z, lands at the shore (Moment02), then rises
@@ -373,6 +378,16 @@ const WAYPOINTS: Waypoint[] = [
   // Moment10 end — adrift, looking back at the island with the pavilion's
   // lantern as a remembered point of light
   { scrollVH: 31.0, pos: new Vector3(6,   2,    2),      look: new Vector3(-1, 1.2,  -28) },
+  // Moment11 enter — drifting further out, gaze widening
+  { scrollVH: 31.5, pos: new Vector3(4,   2.5,  8),      look: new Vector3(-2, 1.0,  -25) },
+  // Moment11 — open ocean view begins to dominate
+  { scrollVH: 32.0, pos: new Vector3(0,   3,    14),     look: new Vector3(-3, 0.8,  -22) },
+  // Moment11 — wide moonlit horizon, island recedes
+  { scrollVH: 32.5, pos: new Vector3(-3,  3.5,  20),     look: new Vector3(-3, 0.5,  -16) },
+  // Moment11 — settled in moonlit ocean, island as faint distant presence
+  { scrollVH: 33.0, pos: new Vector3(-5,  4,    26),     look: new Vector3(-3, 0.3,  -10) },
+  // Moment11 end — final dwell, the page's closing landscape
+  { scrollVH: 33.5, pos: new Vector3(-6,  4.5,  30),     look: new Vector3(-3, 0.2,  -5) },
 ];
 
 const JOURNEY_END_VH = WAYPOINTS[WAYPOINTS.length - 1].scrollVH;
