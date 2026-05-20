@@ -1,19 +1,45 @@
 "use client";
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from '@/lib/gsap';
 
 /**
- * The opening veil. Sits over the persistent AtmosphereLayer so the WebGL
- * world is visible from frame zero. The top-left coord micro is positioned
- * to match FilmHomepage's Act I coord exactly — when this component unpins,
- * the coord appears to persist into the hero, masking the handoff.
+ * The opening ritual. A fixed full-screen autoplay overlay that sits over
+ * the persistent AtmosphereLayer at frame zero, runs a ~4.8s entry ceremony
+ * (coord count-up → atmosphere reveal), then unmounts so FilmHomepage's
+ * hero takes over.
+ *
+ * The "FROM THE MALDIVES" coord micro is locked to FilmHomepage's Act I
+ * coord position (top-[26%] md:top-[28%] left-[8%] md:left-[10%]) and fades
+ * out synchronously with the veil lift — at which point FilmHomepage's
+ * coord, pre-positioned at the same place with the same alpha, becomes the
+ * visible element. The handoff is invisible. Do not move either coord.
+ *
+ * Returning visits (sessionStorage gate) and reduced-motion users get a
+ * compressed ~1s fade-out instead of the full ritual.
  */
+const MALDIVES_LAT_DEG = 3;
+const MALDIVES_LAT_MIN = 15;
+const MALDIVES_LON_DEG = 73;
+const MALDIVES_LON_MIN = 0;
+
+const STORAGE_KEY = 'arrival.entry.seen';
+
+const formatPair = (deg: number, min: number, suffix: 'N' | 'E') => {
+  const d = String(Math.floor(deg)).padStart(2, '0');
+  const m = String(Math.floor(min)).padStart(2, '0');
+  return `${d}°${m}'${suffix}`;
+};
+
+const targetCoordString = `${formatPair(MALDIVES_LAT_DEG, MALDIVES_LAT_MIN, 'N')} · ${formatPair(MALDIVES_LON_DEG, MALDIVES_LON_MIN, 'E')}`;
+
 const Preloader = () => {
   const containerRef = useRef<HTMLDivElement>(null);
   const veilRef = useRef<HTMLDivElement>(null);
-  const lineRef = useRef<HTMLDivElement>(null);
+  const coordLabelRef = useRef<HTMLSpanElement>(null);
+  const coordValueRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
+  const [mounted, setMounted] = useState(true);
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -22,47 +48,118 @@ const Preloader = () => {
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Reduced motion: settle as a static editorial title card, no pin.
-    if (reducedMotion) {
-      if (lineRef.current) lineRef.current.style.transform = 'scaleY(1)';
-      if (veilRef.current) veilRef.current.style.opacity = '0.4';
-      return;
-    }
+    const isReturning =
+      typeof window !== 'undefined' &&
+      sessionStorage.getItem(STORAGE_KEY) === '1';
 
-    const ctx = gsap.context(() => {
-      gsap.set(lineRef.current, { scaleY: 0, transformOrigin: 'top center' });
-
-      const tl = gsap.timeline({
-        scrollTrigger: {
-          trigger: containerRef.current,
-          start: 'top top',
-          end: '+=100%',
-          pin: true,
-          scrub: true,
+    // Returning visitor or reduced-motion: skip the ritual.
+    if (reducedMotion || isReturning) {
+      if (coordValueRef.current) {
+        coordValueRef.current.textContent = targetCoordString;
+      }
+      gsap.set(coordValueRef.current, { opacity: 0.55 });
+      const exit = gsap.to(containerRef.current, {
+        opacity: 0,
+        duration: 0.9,
+        ease: 'cinematic',
+        delay: 0.3,
+        onComplete: () => {
+          sessionStorage.setItem(STORAGE_KEY, '1');
+          setMounted(false);
         },
       });
+      return () => {
+        exit.kill();
+      };
+    }
 
-      // Vertical line fills as user scrolls.
-      tl.to(lineRef.current, { scaleY: 1, ease: 'none' }, 0);
+    // Full ritual initial state
+    gsap.set(coordValueRef.current, { opacity: 0, y: 6 });
+    gsap.set(hintRef.current, { opacity: 0 });
 
-      // Scroll hint fades at midpoint.
-      tl.to(hintRef.current, { opacity: 0, y: 8, ease: 'none' }, 0.5);
+    const counter = { lat: 0, latMin: 0, lon: 0, lonMin: 0 };
+    const renderCoord = () => {
+      if (!coordValueRef.current) return;
+      const latStr = formatPair(counter.lat, counter.latMin, 'N');
+      const lonStr = formatPair(counter.lon, counter.lonMin, 'E');
+      coordValueRef.current.textContent = `${latStr} · ${lonStr}`;
+    };
+    renderCoord();
 
-      // Veil lifts — atmosphere takes over.
-      tl.to(veilRef.current, { opacity: 0, ease: 'none' }, 0.55);
+    const tl = gsap.timeline({
+      onComplete: () => {
+        sessionStorage.setItem(STORAGE_KEY, '1');
+        setMounted(false);
+      },
+    });
 
-      // Line fades before unpin so it doesn't pop against the hero's empty
-      // Act-I column where the title will materialize next.
-      tl.to(lineRef.current, { opacity: 0, ease: 'none' }, 0.78);
-    }, containerRef);
+    // === Phase A (0.0 – 0.4s) — coord value fades in ===
+    tl.to(coordValueRef.current, {
+      opacity: 0.55,
+      y: 0,
+      duration: 0.4,
+      ease: 'cinematic',
+    });
 
-    return () => ctx.revert();
+    // === Phase B (0.4 – 1.6s) — latitude climbs ===
+    tl.to(counter, {
+      lat: MALDIVES_LAT_DEG,
+      latMin: MALDIVES_LAT_MIN,
+      duration: 1.2,
+      ease: 'power3.out',
+      onUpdate: renderCoord,
+    });
+
+    // === Phase B (1.6 – 2.6s) — longitude climbs ===
+    tl.to(counter, {
+      lon: MALDIVES_LON_DEG,
+      lonMin: MALDIVES_LON_MIN,
+      duration: 1.0,
+      ease: 'power3.out',
+      onUpdate: renderCoord,
+    });
+
+    // === Silence (2.6 – 3.0s) — coord settles, world about to reveal ===
+    tl.to({}, { duration: 0.4 });
+
+    // === Phase C (3.0 – 4.2s) — veil lifts; label fades in lockstep ===
+    // The synchronized fade preserves the documented handoff: FilmHomepage's
+    // pre-positioned coord (always at 0.6) takes over without perceptible
+    // change because both are at the same place with the same style.
+    tl.to(
+      veilRef.current,
+      { opacity: 0, duration: 1.2, ease: 'cinematic' },
+      'reveal'
+    );
+    tl.to(
+      coordLabelRef.current,
+      { opacity: 0, duration: 1.2, ease: 'cinematic' },
+      'reveal'
+    );
+    tl.to(
+      hintRef.current,
+      { opacity: 0.4, duration: 0.5, ease: 'cinematic' },
+      'reveal+=0.5'
+    );
+
+    // === Phase D (4.2 – 4.8s) — lat/lon fades; container unmounts on complete ===
+    tl.to(coordValueRef.current, {
+      opacity: 0,
+      duration: 0.6,
+      ease: 'cinematic',
+    });
+
+    return () => {
+      tl.kill();
+    };
   }, []);
+
+  if (!mounted) return null;
 
   return (
     <div
       ref={containerRef}
-      className="relative w-screen h-screen h-dvh z-[10000] pointer-events-none"
+      className="fixed inset-0 z-[10000] pointer-events-none"
     >
       {/* Translucent veil — atmosphere shader breathes through */}
       <div
@@ -74,11 +171,10 @@ const Preloader = () => {
         }}
       />
 
-      {/* Top-left column — visually anchored to FilmHomepage Act I coord.
-          The coord persists across the handoff; the line is a loading marker
-          that fades before unpin so the hero title materializes in its space. */}
-      <div className="absolute top-[26%] md:top-[28%] left-[8%] md:left-[10%] z-[2] flex flex-col gap-8 md:gap-10">
+      {/* Coord column — anchored to FilmHomepage's Act I coord position. */}
+      <div className="absolute top-[26%] md:top-[28%] left-[8%] md:left-[10%] z-[2] flex flex-col gap-5 md:gap-6">
         <span
+          ref={coordLabelRef}
           className="block uppercase"
           style={{
             fontFamily: 'var(--font-sans)',
@@ -89,13 +185,18 @@ const Preloader = () => {
         >
           From the Maldives
         </span>
-        <div className="relative w-[1px] h-[60px] overflow-hidden">
-          <div className="absolute inset-0" style={{ background: 'rgba(245,240,232,0.12)' }} />
-          <div
-            ref={lineRef}
-            className="absolute inset-0"
-            style={{ background: 'rgba(245,240,232,0.55)' }}
-          />
+        <div
+          ref={coordValueRef}
+          className="font-light"
+          style={{
+            fontFamily: 'var(--font-sans)',
+            fontSize: 'clamp(0.7rem, 0.85vw, 0.9rem)',
+            letterSpacing: '0.25em',
+            color: 'rgba(245,240,232,0.55)',
+            fontVariantNumeric: 'tabular-nums',
+          }}
+        >
+          {targetCoordString}
         </div>
       </div>
 
