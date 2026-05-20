@@ -72,18 +72,20 @@ const MomentGallery = () => {
       typeof window !== 'undefined' &&
       window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-    // Captions are looked up via data attribute (rather than a ref array)
-    // because the previous inline ref-callback pattern was unstable under
-    // React 19 — only the last ref reliably stayed populated, leaving
-    // captions 0-2 silently skipped from the gsap.set + tween wiring.
-    // querySelectorAll runs at effect time after refs are committed, so
-    // every caption is found deterministically.
+    // Captions are looked up via a stable class name + sorted by index so
+    // the forEach order matches the panels' visual order regardless of
+    // querySelector return order. Per-caption gsap.set + fromTo means every
+    // caption gets its own initial state and tween, with no reliance on
+    // batch-target behavior or array initial-state inheritance.
     const captionEls = Array.from(
-      sectionEl.querySelectorAll<HTMLDivElement>('[data-gallery-caption]')
-    );
+      sectionEl.querySelectorAll<HTMLDivElement>('.gallery-caption')
+    ).sort((a, b) => {
+      const ai = parseInt(a.dataset.captionIndex ?? '0', 10);
+      const bi = parseInt(b.dataset.captionIndex ?? '0', 10);
+      return ai - bi;
+    });
 
     const ctx = gsap.context(() => {
-      gsap.set(captionEls, { opacity: 0, y: 30 });
       gsap.set(titleRef.current, { opacity: 1, y: 0 });
 
       // Reduced motion: drop pin + horizontal track. Section reads as the
@@ -91,8 +93,14 @@ const MomentGallery = () => {
       if (reducedMotion) {
         sectionEl.classList.add('active');
         gsap.set(sectionEl, { opacity: 1 });
+        captionEls.forEach((cap) => gsap.set(cap, { opacity: 1, y: 0 }));
         return;
       }
+
+      // Explicit per-caption initial state (rather than batched set).
+      captionEls.forEach((cap) => {
+        gsap.set(cap, { opacity: 0, y: 30 });
+      });
 
       const tl = gsap.timeline({
         scrollTrigger: {
@@ -126,22 +134,24 @@ const MomentGallery = () => {
         0.16
       );
 
-      // Per-panel caption reveals. caption[i] corresponds to content panel
-      // (i+1) in the track. Content panel i is dominant from progress
-      // 0.2*(i+1) to 0.2*(i+2). Caption enters just inside, exits just before
-      // the next takes over. The last caption holds until unpin.
+      // Per-panel caption reveals. Uses fromTo so the FROM state is
+      // explicit at the tween's start — eliminates any chance of the
+      // initial gsap.set being overridden by a stale state before the
+      // tween runs. Each caption holds visible across a real chunk of
+      // scroll (0.10 of timeline = ~40vh) so the user can't miss them.
       captionEls.forEach((cap, i) => {
         const enterAt = (i + 1) * 0.2 + 0.02;
         const exitAt = (i + 2) * 0.2 - 0.04;
-        tl.to(
+        tl.fromTo(
           cap,
-          { opacity: 1, y: 0, duration: 0.05, ease: 'cinematic' },
+          { opacity: 0, y: 30 },
+          { opacity: 1, y: 0, duration: 0.08, ease: 'cinematic' },
           enterAt
         );
         if (i < CONTENT_PANELS.length - 1) {
           tl.to(
             cap,
-            { opacity: 0, y: -30, duration: 0.05, ease: 'power2.in' },
+            { opacity: 0, y: -30, duration: 0.06, ease: 'power2.in' },
             exitAt
           );
         }
@@ -198,7 +208,7 @@ const MomentGallery = () => {
             this section. The captions remain, sliding past the camera-
             driven world below them. Caption position alternates per panel
             (left/right) for editorial rhythm. */}
-        {CONTENT_PANELS.map((panel) => {
+        {CONTENT_PANELS.map((panel, i) => {
           const imageRight = panel.alignment === 'image-right';
           // Caption position: opposite of where the image would have been,
           // so the panel's gaze direction still alternates left/right.
@@ -207,10 +217,10 @@ const MomentGallery = () => {
             : 'md:bottom-auto md:top-[30%] md:left-auto md:right-[10%] md:text-right';
           return (
             <div key={panel.slug} className="w-screen h-full relative">
-              {/* Caption area — looked up by data attribute in the effect */}
+              {/* Caption area — class + index for stable lookup in effect */}
               <div
-                data-gallery-caption=""
-                className={`absolute z-10 max-w-[26em] pointer-events-none bottom-[8%] left-[8%] right-[8%] ${captionPos}`}
+                className={`gallery-caption absolute z-10 max-w-[26em] pointer-events-none bottom-[8%] left-[8%] right-[8%] ${captionPos}`}
+                data-caption-index={i}
               >
                 <span
                   className="block italic font-light mb-2"
