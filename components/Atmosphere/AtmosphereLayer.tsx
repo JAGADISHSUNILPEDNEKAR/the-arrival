@@ -142,6 +142,36 @@ void main() {
 }
 `;
 
+// === Chapter-anchor progress shaping ===
+// The shader interpolates a 6-stop palette across uProgress ∈ [0,1]. If we
+// pipe in raw scroll progress, the palette is in constant motion — fine for
+// a continuous descent, wrong for an 11-chapter narrative where each scene
+// should feel like an inhabited room rather than a stop on a moving belt.
+//
+// SHAPE_SEGMENTS = 5 produces five atmospheric "rooms" (arrival, lagoon,
+// golden, intimate, moonlit). Within each room: held at the lower palette
+// stop for the first ~55%, smoothstep-rises across 40%, lands at the upper.
+// The existing 0.04 chase lerp on uProgress smooths the rapid-rise window
+// further, so transitions read as "passing through a doorway" rather than
+// a step. Plateau values (0.0, 0.2, 0.4, 0.6, 0.8, 1.0) align exactly with
+// the shader's palette stops in paletteSky/Ocean/Glow.
+const SHAPE_SEGMENTS = 5;
+const SHAPE_HOLD_END = 0.55;
+const SHAPE_RISE_END = 0.95;
+
+const shapeProgress = (raw: number): number => {
+  const clamped = Math.min(1, Math.max(0, raw));
+  if (clamped >= 1) return 1;
+  const scaled = clamped * SHAPE_SEGMENTS;
+  const idx = Math.floor(scaled);
+  const local = scaled - idx;
+  // Smoothstep in [SHAPE_HOLD_END, SHAPE_RISE_END]
+  const span = SHAPE_RISE_END - SHAPE_HOLD_END;
+  const tNorm = Math.min(1, Math.max(0, (local - SHAPE_HOLD_END) / span));
+  const eased = tNorm * tNorm * (3 - 2 * tNorm);
+  return Math.min(1, (idx + eased) / SHAPE_SEGMENTS);
+};
+
 export default function AtmosphereLayer() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -241,7 +271,8 @@ export default function AtmosphereLayer() {
       const now = performance.now();
       const t = (now - start) / 1000;
 
-      const progress = cachedMaxScroll > 0 ? window.scrollY / cachedMaxScroll : 0;
+      const rawProgress = cachedMaxScroll > 0 ? window.scrollY / cachedMaxScroll : 0;
+      const progress = shapeProgress(rawProgress);
       const rawVel = window.scrollY - lastScrollY;
       lastScrollY = window.scrollY;
       smoothedVel += (rawVel - smoothedVel) * 0.12;
