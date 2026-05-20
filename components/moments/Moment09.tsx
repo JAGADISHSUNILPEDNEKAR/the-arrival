@@ -103,14 +103,16 @@ const Moment09 = ({}: { index: number }) => {
       0.12
     );
     if (splitTitle?.words) {
+      // Eight courses. One ocean. — slower, more deliberate; the line is
+      // the brand promise of the menu, not just a moment beat.
       tl.to(
         splitTitle.words,
         {
           y: '0%',
           filter: 'blur(0px)',
           opacity: 1,
-          stagger: 0.04,
-          duration: 0.15,
+          stagger: 0.03,
+          duration: 0.18,
           ease: 'cinematic',
         },
         0.15

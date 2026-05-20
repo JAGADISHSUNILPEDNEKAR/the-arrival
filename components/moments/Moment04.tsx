@@ -97,14 +97,16 @@ const Moment04 = ({}: { index: number }) => {
       0.12
     );
     if (splitTitle?.words) {
+      // Imperative line — slower, more deliberate stagger lets each word
+      // land with weight ("Leave. The. Noise. Behind.").
       tl.to(
         splitTitle.words,
         {
           y: '0%',
           filter: 'blur(0px)',
           opacity: 1,
-          stagger: 0.04,
-          duration: 0.15,
+          stagger: 0.03,
+          duration: 0.18,
           ease: 'cinematic',
         },
         0.15
