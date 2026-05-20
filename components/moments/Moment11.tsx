@@ -27,6 +27,7 @@ const Moment11 = ({}: { index: number }) => {
   const [starsData, setStarsData] = useState<Star[]>([]);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [nameBlurred, setNameBlurred] = useState(false);
   const [sent, setSent] = useState(false);
   const { isMobile } = useScroll();
 
@@ -190,12 +191,7 @@ const Moment11 = ({}: { index: number }) => {
       0.7
     );
 
-    // Reassurance settles last, low opacity
-    tl.to(
-      reassureRef.current,
-      { opacity: 0.5, y: 0, duration: 0.6, ease: 'cinematic' },
-      0.85
-    );
+    // No reassurance beat — it's gated by name engagement below.
 
     return () => {
       tl.kill();
@@ -205,6 +201,18 @@ const Moment11 = ({}: { index: number }) => {
         .forEach((st) => st.kill());
     };
   }, [starsData, isMobile]);
+
+  // Gated reassurance reveal — only after name is filled and field is blurred.
+  useEffect(() => {
+    if (sent) return;
+    if (!nameBlurred || !name.trim()) return;
+    gsap.to(reassureRef.current, {
+      opacity: 0.5,
+      y: 0,
+      duration: 1.1,
+      ease: 'cinematic',
+    });
+  }, [nameBlurred, name, sent]);
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
@@ -354,6 +362,9 @@ const Moment11 = ({}: { index: number }) => {
                     'rgba(245,240,232,0.7)';
                 }}
                 onBlur={(e) => {
+                  if (e.currentTarget.value.trim().length > 0) {
+                    setNameBlurred(true);
+                  }
                   e.currentTarget.style.borderBottomColor =
                     'rgba(245,240,232,0.3)';
                 }}
