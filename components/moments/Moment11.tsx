@@ -11,6 +11,21 @@ interface Star {
   opacity: number;
 }
 
+/**
+ * Chapter IX — the invitation. Currently the emotional climax of the scroll.
+ *
+ * Two deliberate moves separate this from a standard contact form:
+ *
+ *   1. The reassurance ("Your message reaches our director directly…") is
+ *      gated behind the name field. It only appears once the user has filled
+ *      in their name and blurred the field — so the system reads as if it's
+ *      acknowledging them, not advertising itself.
+ *
+ *   2. Submission is a full-section ceremony rather than an inline swap. The
+ *      editorial column fades out, a blackout overlay rises, and a centered
+ *      serif-italic thank-you reveals from blur. The persistent bottom
+ *      signature stays on top as the page's closing line.
+ */
 const Moment11 = ({}: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
   const horizonRef = useRef<HTMLDivElement>(null);
@@ -22,7 +37,11 @@ const Moment11 = ({}: { index: number }) => {
   const subRef = useRef<HTMLParagraphElement>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const reassureRef = useRef<HTMLParagraphElement>(null);
-  const thankYouRef = useRef<HTMLDivElement>(null);
+
+  const ceremonyRef = useRef<HTMLDivElement>(null);
+  const ceremonyBlackoutRef = useRef<HTMLDivElement>(null);
+  const thankYouTitleRef = useRef<HTMLParagraphElement>(null);
+  const thankYouNoteRef = useRef<HTMLParagraphElement>(null);
 
   const [starsData, setStarsData] = useState<Star[]>([]);
   const [name, setName] = useState('');
@@ -31,8 +50,6 @@ const Moment11 = ({}: { index: number }) => {
   const [sent, setSent] = useState(false);
   const { isMobile } = useScroll();
 
-  // Generate stars client-side so SSR/client agree.
-  // Wrapped in rAF to satisfy react-hooks/set-state-in-effect.
   useEffect(() => {
     const count = isMobile ? 8 : 15;
     const stars = Array.from({ length: count }).map((_, i) => ({
@@ -62,7 +79,6 @@ const Moment11 = ({}: { index: number }) => {
         })
       : null;
 
-    // Initial states
     if (splitHeadline?.words) {
       gsap.set(splitHeadline.words, {
         y: '110%',
@@ -70,45 +86,31 @@ const Moment11 = ({}: { index: number }) => {
         opacity: 0,
       });
     }
-    gsap.set([subRef.current, formRef.current, reassureRef.current], {
-      opacity: 0,
-      y: 30,
-    });
+    gsap.set([subRef.current, formRef.current], { opacity: 0, y: 30 });
+    // Reassurance starts hidden — gated behind name blur, not scroll progress.
+    gsap.set(reassureRef.current, { opacity: 0, y: 30 });
     gsap.set(horizonRef.current, {
       scaleX: 0,
       opacity: 0,
       transformOrigin: 'center center',
     });
-    if (thankYouRef.current) {
-      gsap.set(thankYouRef.current, {
-        opacity: 0,
-        y: 30,
-        pointerEvents: 'none',
-      });
-    }
+    gsap.set(ceremonyRef.current, { opacity: 1, pointerEvents: 'none' });
+    gsap.set(ceremonyBlackoutRef.current, { opacity: 0 });
+    gsap.set([thankYouTitleRef.current, thankYouNoteRef.current], {
+      opacity: 0,
+      y: 30,
+      filter: 'blur(8px)',
+    });
 
-    // Reduced motion: settle visible, no pin, no scrub.
-    // The .moment CSS rule sets opacity:0 + visibility:hidden by default —
-    // we override both by forcing opacity:1 inline and adding .active so
-    // visibility flips to visible.
     if (reducedMotion) {
       sectionEl.classList.add('active');
       gsap.set(sectionEl, { opacity: 1, scale: 1 });
       if (splitHeadline?.words) {
-        gsap.set(splitHeadline.words, {
-          y: '0%',
-          filter: 'none',
-          opacity: 1,
-        });
+        gsap.set(splitHeadline.words, { y: '0%', filter: 'none', opacity: 1 });
       }
-      gsap.set([subRef.current, formRef.current, reassureRef.current], {
-        opacity: 1,
-        y: 0,
-      });
-      gsap.set(horizonRef.current, { scaleX: 1, opacity: 1 });
-      // Reassurance is meant to read low-opacity.
-      gsap.set(reassureRef.current, { opacity: 0.5 });
+      gsap.set([subRef.current, formRef.current], { opacity: 1, y: 0 });
       gsap.set(subRef.current, { opacity: 0.7 });
+      gsap.set(horizonRef.current, { scaleX: 1, opacity: 1 });
       return () => {
         splitHeadline?.revert();
       };
@@ -129,7 +131,6 @@ const Moment11 = ({}: { index: number }) => {
       },
     });
 
-    // Section entry — opacity reveal (matches every other moment's pattern)
     tl.fromTo(
       sectionEl,
       { opacity: 0, scale: 1.02 },
@@ -137,14 +138,12 @@ const Moment11 = ({}: { index: number }) => {
       0.1
     );
 
-    // Horizon line draws across
     tl.to(
       horizonRef.current,
       { scaleX: 1, opacity: 1, duration: 0.6, ease: 'cinematic' },
       0.18
     );
 
-    // Water + stars ambient kinetic (parallax depth)
     tl.to(
       waterPatternRef.current,
       { backgroundPositionX: '300px', scale: 1.2, ease: 'none' },
@@ -161,7 +160,6 @@ const Moment11 = ({}: { index: number }) => {
       }
     });
 
-    // Headline words mask-up with blur (matches Hero Act III language)
     if (splitHeadline?.words) {
       tl.to(
         splitHeadline.words,
@@ -177,14 +175,12 @@ const Moment11 = ({}: { index: number }) => {
       );
     }
 
-    // Sub instruction
     tl.to(
       subRef.current,
       { opacity: 0.7, y: 0, duration: 0.6, ease: 'cinematic' },
       0.55
     );
 
-    // Form as a group
     tl.to(
       formRef.current,
       { opacity: 1, y: 0, duration: 0.8, ease: 'cinematic' },
@@ -216,24 +212,80 @@ const Moment11 = ({}: { index: number }) => {
 
   const handleSend = (e: React.FormEvent) => {
     e.preventDefault();
-    if (sent) return; // block re-submission
+    if (sent) return;
     if (!name.trim() || !email.trim() || !email.includes('@')) return;
     setSent(true);
-    // Form + reassurance fade out, thank-you crossfades in.
-    gsap.to([formRef.current, reassureRef.current, subRef.current], {
-      opacity: 0,
-      y: -20,
-      duration: 0.6,
-      ease: 'cinematic',
+
+    const reducedMotion =
+      typeof window !== 'undefined' &&
+      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    if (reducedMotion) {
+      gsap.set(
+        [
+          headlineRef.current,
+          subRef.current,
+          formRef.current,
+          reassureRef.current,
+        ],
+        { opacity: 0 }
+      );
+      gsap.set(ceremonyBlackoutRef.current, { opacity: 0.94 });
+      gsap.set([thankYouTitleRef.current, thankYouNoteRef.current], {
+        opacity: 1,
+        y: 0,
+        filter: 'none',
+      });
+      gsap.set(ceremonyRef.current, { pointerEvents: 'auto' });
+      return;
+    }
+
+    // Editorial column dissolves
+    gsap.to(
+      [
+        headlineRef.current,
+        subRef.current,
+        formRef.current,
+        reassureRef.current,
+      ],
+      {
+        opacity: 0,
+        y: -24,
+        filter: 'blur(4px)',
+        duration: 0.9,
+        ease: 'cinematic',
+      }
+    );
+
+    // Blackout rises — mutes the lagoon so the ceremony exists alone
+    gsap.to(ceremonyBlackoutRef.current, {
+      opacity: 0.94,
+      duration: 1.1,
+      ease: 'power2.inOut',
+      delay: 0.15,
     });
-    gsap.to(thankYouRef.current, {
-      opacity: 1,
+
+    // Thank-you title — serif italic, emerges from blur after a deliberate pause
+    gsap.to(thankYouTitleRef.current, {
+      opacity: 0.96,
       y: 0,
-      pointerEvents: 'auto',
-      duration: 0.9,
-      delay: 0.4,
-      ease: 'cinematic',
+      filter: 'blur(0px)',
+      duration: 1.4,
+      ease: 'expo.out',
+      delay: 0.85,
     });
+
+    // Second line — small uppercase sans, lands after the title settles
+    gsap.to(thankYouNoteRef.current, {
+      opacity: 0.7,
+      y: 0,
+      filter: 'blur(0px)',
+      duration: 1.0,
+      ease: 'cinematic',
+      delay: 1.5,
+    });
+
+    gsap.set(ceremonyRef.current, { pointerEvents: 'auto', delay: 0.5 });
   };
 
   return (
@@ -252,7 +304,6 @@ const Moment11 = ({}: { index: number }) => {
           }}
         />
 
-        {/* Stars */}
         <div className="absolute inset-0 w-full h-full pointer-events-none">
           {starsData.map((star, i) => (
             <div
@@ -270,7 +321,6 @@ const Moment11 = ({}: { index: number }) => {
           ))}
         </div>
 
-        {/* Horizon line */}
         <div
           ref={horizonRef}
           className="absolute left-0 w-full h-[1px] z-10 origin-center"
@@ -281,7 +331,6 @@ const Moment11 = ({}: { index: number }) => {
           }}
         />
 
-        {/* Water layer below horizon */}
         <div
           ref={waterRef}
           className="absolute bottom-0 left-0 w-full h-[45%] z-[5] overflow-hidden"
@@ -302,7 +351,7 @@ const Moment11 = ({}: { index: number }) => {
         </div>
       </div>
 
-      {/* Editorial column — matches hero voice anchor at left-[10%] */}
+      {/* Editorial column — fades into ceremony on submit */}
       <div className="absolute top-[18%] md:top-[20%] left-[8%] md:left-[10%] right-[8%] md:right-[10%] z-20 max-w-[42em] pointer-events-none">
         <p
           ref={headlineRef}
@@ -332,8 +381,6 @@ const Moment11 = ({}: { index: number }) => {
           Leave us your name and a place to reach you.
         </p>
 
-        {/* Form + thank-you sit in a relative container so the thank-you
-            can absolute-position over the form's slot when sent. */}
         <div className="mt-10 md:mt-12 relative" style={{ minHeight: '17em' }}>
           <form
             ref={formRef}
@@ -348,6 +395,13 @@ const Moment11 = ({}: { index: number }) => {
                 required
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                onBlur={(e) => {
+                  if (e.currentTarget.value.trim().length > 0) {
+                    setNameBlurred(true);
+                  }
+                  e.currentTarget.style.borderBottomColor =
+                    'rgba(245,240,232,0.3)';
+                }}
                 placeholder="—"
                 className="w-full bg-transparent pb-3 italic font-light focus:outline-none"
                 style={{
@@ -360,13 +414,6 @@ const Moment11 = ({}: { index: number }) => {
                 onFocus={(e) => {
                   e.currentTarget.style.borderBottomColor =
                     'rgba(245,240,232,0.7)';
-                }}
-                onBlur={(e) => {
-                  if (e.currentTarget.value.trim().length > 0) {
-                    setNameBlurred(true);
-                  }
-                  e.currentTarget.style.borderBottomColor =
-                    'rgba(245,240,232,0.3)';
                 }}
               />
             </FieldLabel>
@@ -420,27 +467,6 @@ const Moment11 = ({}: { index: number }) => {
               </span>
             </button>
           </form>
-
-          {/* Thank-you state — replaces form on submit, lives in the same slot */}
-          <div
-            ref={thankYouRef}
-            className="absolute inset-0 flex flex-col justify-start"
-            aria-live="polite"
-          >
-            <p
-              className="italic font-light"
-              style={{
-                fontFamily: 'var(--font-serif)',
-                fontSize: 'clamp(1.5rem, 3vw, 2.5rem)',
-                lineHeight: 1.2,
-                color: 'rgba(255,250,240,0.95)',
-              }}
-            >
-              Thank you, {name.trim() || 'guest'}.
-              <br />
-              We will write within the hour.
-            </p>
-          </div>
         </div>
 
         <p
@@ -459,9 +485,50 @@ const Moment11 = ({}: { index: number }) => {
         </p>
       </div>
 
-      {/* Bottom signature */}
+      {/* Ceremony — full-section overlay that takes over on submit */}
       <div
-        className="absolute bottom-10 left-0 w-full text-center z-20 pointer-events-none uppercase"
+        ref={ceremonyRef}
+        className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none"
+        aria-live="polite"
+      >
+        <div
+          ref={ceremonyBlackoutRef}
+          className="absolute inset-0 bg-black"
+        />
+        <div className="relative z-10 w-full max-w-[28em] px-8 text-center">
+          <p
+            ref={thankYouTitleRef}
+            className="italic font-light"
+            style={{
+              fontFamily: 'var(--font-serif)',
+              fontSize: 'clamp(2rem, 5vw, 4.5rem)',
+              lineHeight: 1.1,
+              letterSpacing: '-0.02em',
+              color: 'rgba(255,250,240,0.96)',
+              textShadow: '0 4px 60px rgba(0,0,0,0.85)',
+            }}
+          >
+            Thank you, {name.trim() || 'guest'}.
+          </p>
+          <p
+            ref={thankYouNoteRef}
+            className="mt-10 md:mt-14 uppercase mx-auto max-w-[24em]"
+            style={{
+              fontFamily: 'var(--font-sans)',
+              fontSize: 'clamp(0.7rem, 0.95vw, 1rem)',
+              letterSpacing: '0.35em',
+              lineHeight: 1.7,
+              color: 'rgba(245,240,232,0.7)',
+            }}
+          >
+            We will write within the hour.
+          </p>
+        </div>
+      </div>
+
+      {/* Persistent signature — stays on top through the ceremony */}
+      <div
+        className="absolute bottom-10 left-0 w-full text-center z-40 pointer-events-none uppercase"
         style={{
           fontFamily: 'var(--font-sans)',
           fontSize: '10px',
