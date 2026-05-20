@@ -51,7 +51,7 @@ const Moment08 = ({}: { index: number }) => {
 
     if (reducedMotion) {
       sectionEl.classList.add('active');
-      gsap.set(sectionEl, { opacity: 1 });
+      gsap.set(sectionEl, { opacity: 1, scale: 1, filter: 'none' });
       gsap.set(blackoutRef.current, { opacity: 0.92 });
       gsap.set(indexRef.current, { opacity: 0.4, y: 0 });
       gsap.set(sourceRef.current, { opacity: 0.55, y: 0 });
@@ -78,10 +78,19 @@ const Moment08 = ({}: { index: number }) => {
     });
 
     // === Beat 1 (0.00 – 0.18) — Section enters; world fades to near-black ===
+    // Scale + blur clear slowly alongside the blackout — a ceremonial settle
+    // appropriate to the testimonial silence beat (vs the fast camera-settle
+    // used on other moments).
     tl.fromTo(
       sectionEl,
-      { opacity: 0 },
-      { opacity: 1, ease: 'cinematic', duration: 0.5 },
+      { opacity: 0, scale: 1.015, filter: 'blur(1px)' },
+      {
+        opacity: 1,
+        scale: 1,
+        filter: 'blur(0px)',
+        ease: 'cinematic',
+        duration: 0.5,
+      },
       0
     );
     tl.to(blackoutRef.current, { opacity: 0.92, ease: 'power2.inOut' }, 0.04);
