@@ -5,6 +5,7 @@ import {
   BoxGeometry,
   BufferGeometry,
   CylinderGeometry,
+  DoubleSide,
   Float32BufferAttribute,
   Mesh,
   PerspectiveCamera,
@@ -91,15 +92,17 @@ const FRAGMENT_WATER = /* glsl */ `
     ));
     float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 3.0);
 
-    // Sun glint — warm, tight specular highlight
+    // Sun glint — warm, tight specular highlight. Intensity dialed down
+    // significantly to avoid the harsh caustic-grid pattern that emerges
+    // when high-frequency wave normals create dense bright-spot clusters.
     vec3 sunReflect = reflect(-uSunDir, normal);
-    float sunSpec = pow(max(dot(sunReflect, viewDir), 0.0), 80.0);
-    vec3 sunHighlight = vec3(1.0, 0.92, 0.78) * sunSpec * 1.6;
+    float sunSpec = pow(max(dot(sunReflect, viewDir), 0.0), 120.0);
+    vec3 sunHighlight = vec3(1.0, 0.92, 0.78) * sunSpec * 0.45;
 
     // Moon glint — cooler, broader, fades in as the sun fades out
     vec3 moonReflect = reflect(-uMoonDir, normal);
-    float moonSpec = pow(max(dot(moonReflect, viewDir), 0.0), 45.0);
-    vec3 moonHighlight = vec3(0.62, 0.72, 0.92) * moonSpec * 0.85 * uMoonIntensity;
+    float moonSpec = pow(max(dot(moonReflect, viewDir), 0.0), 60.0);
+    vec3 moonHighlight = vec3(0.62, 0.72, 0.92) * moonSpec * 0.40 * uMoonIntensity;
 
     float distFromCam = length(uCameraPos - vWorldPos);
     float deepMix = smoothstep(10.0, 80.0, distFromCam);
@@ -108,7 +111,7 @@ const FRAGMENT_WATER = /* glsl */ `
     col += sunHighlight;
     col += moonHighlight;
 
-    float crest = smoothstep(0.30, 0.55, vWave) * 0.18;
+    float crest = smoothstep(0.30, 0.55, vWave) * 0.08;
     col += vec3(0.85, 0.88, 0.92) * crest;
 
     float alpha = 1.0 - smoothstep(uFogNear, uFogFar, distFromCam);
@@ -208,7 +211,7 @@ const FRAGMENT_PARTICLE = /* glsl */ `
     float distFromCam = length(uCameraPos - vWorldPos);
     float fogAlpha = 1.0 - smoothstep(uFogNear, uFogFar * 0.85, distFromCam);
 
-    gl_FragColor = vec4(vec3(0.85, 0.88, 0.95), soft * vAlpha * fogAlpha * 0.45);
+    gl_FragColor = vec4(vec3(0.85, 0.88, 0.95), soft * vAlpha * fogAlpha * 0.22);
   }
 `;
 
@@ -549,14 +552,17 @@ export default function JourneyScene() {
         },
         transparent: true,
         depthWrite: false,
+        // DoubleSide ensures geometry renders from any camera angle —
+        // the cone-fan island triangle winding was hiding islands when
+        // camera circled to the "wrong" side.
+        side: DoubleSide,
       });
 
-    // === Palm tree — hexagonal trunk + radial frond canopy ===
-    // Fronds are thin triangles radiating from the trunk top with a slight
-    // downward droop. Each palm gets a randomized rotation so the cluster
-    // doesn't read as 6 identical copies. Reads as a palm silhouette from
-    // any angle (aerial overhead, ground-level under canopy, distant
-    // horizon) where the previous flattened sphere just looked like a ball.
+    // === Palm tree — hexagonal trunk + flattened sphere canopy ===
+    // Solid sphere-canopy reads as a palm silhouette from every angle.
+    // The radial-triangle approach attempted earlier rendered as
+    // single-pixel-wide "spider leg" sticks from most angles, especially
+    // when viewed edge-on. Sphere is angle-invariant.
     const makePalm = (
       px: number,
       pz: number,
@@ -570,44 +576,12 @@ export default function JourneyScene() {
       const trunkGeo = new CylinderGeometry(0.10, 0.20, trunkH, 6);
       trunkGeo.translate(px, trunkH / 2, pz);
 
-      // Fronds — single BufferGeometry with multiple triangle fronds.
-      // Each frond: two narrow base points near the trunk top + one tip
-      // extending outward and drooping below the base plane.
-      const frondCount = 8;
-      const frondLength = height * 0.42;
-      const baseY = trunkH;
-      const rotOffset = (px * 0.31 + pz * 0.19) % (Math.PI * 2);
-      const positions: number[] = [];
-      for (let i = 0; i < frondCount; i++) {
-        const ang = rotOffset + (i / frondCount) * Math.PI * 2;
-        const baseAng1 = ang - 0.16;
-        const baseAng2 = ang + 0.16;
-        const b1x = px + Math.cos(baseAng1) * 0.14;
-        const b1z = pz + Math.sin(baseAng1) * 0.14;
-        const b2x = px + Math.cos(baseAng2) * 0.14;
-        const b2z = pz + Math.sin(baseAng2) * 0.14;
-        const tipX = px + Math.cos(ang) * frondLength;
-        const tipZ = pz + Math.sin(ang) * frondLength;
-        // Tip droops below the base — gravity feel
-        const tipY = baseY - frondLength * 0.32;
-        // Slight upward kink at the base so frond curves down rather than
-        // sloping flat — render front + back face for visibility from
-        // every angle (no backface culling needed).
-        positions.push(
-          b1x, baseY + 0.05, b1z,
-          b2x, baseY + 0.05, b2z,
-          tipX, tipY,        tipZ,
-          // Reverse-wound copy for the back face
-          b2x, baseY + 0.05, b2z,
-          b1x, baseY + 0.05, b1z,
-          tipX, tipY,        tipZ,
-        );
-      }
-      const frondGeo = new BufferGeometry();
-      frondGeo.setAttribute("position", new Float32BufferAttribute(positions, 3));
-      frondGeo.computeVertexNormals();
+      // Canopy — flattened sphere (wider than tall) for palm-crown silhouette
+      const canopyGeo = new SphereGeometry(height * 0.22, 8, 6);
+      canopyGeo.scale(1.65, 0.50, 1.65);
+      canopyGeo.translate(px, trunkH + height * 0.06, pz);
 
-      return [new Mesh(trunkGeo, mat), new Mesh(frondGeo, mat)];
+      return [new Mesh(trunkGeo, mat), new Mesh(canopyGeo, mat)];
     };
 
     // === Open pavilion — floor platform + 4 corner columns + roof slab ===
@@ -713,14 +687,16 @@ export default function JourneyScene() {
     };
 
     // === Context islands — distant atmospheric silhouettes on the horizon ===
-    const contextLeft = makeIsland(20, 2.5, 12, -28, -55, new Vector3(0.04, 0.07, 0.12));
+    const contextLeft = makeIsland(22, 4.0, 14, -28, -55, new Vector3(0.04, 0.07, 0.12));
     scene.add(contextLeft);
-    const contextRight = makeIsland(15, 2.0, 9, 24, -62, new Vector3(0.04, 0.07, 0.12));
+    const contextRight = makeIsland(16, 3.2, 10, 24, -62, new Vector3(0.04, 0.07, 0.12));
     scene.add(contextRight);
 
     // === Main island — the destination ===
-    // Wider, lower profile than a single peak; broad shoreline silhouette.
-    const mainIsland = makeIsland(20, 1.8, 14, 0, -28, new Vector3(0.08, 0.13, 0.18));
+    // Taller silhouette (3.5 vs the previous 1.8) so the island reads
+    // from distance instead of being a flat horizontal bump that the
+    // user could only see when very close.
+    const mainIsland = makeIsland(22, 3.5, 16, 0, -28, new Vector3(0.08, 0.13, 0.18));
     scene.add(mainIsland);
 
     // Palms — scattered across the main island
@@ -771,15 +747,19 @@ export default function JourneyScene() {
     scene.add(jetty);
 
     // === Atmospheric haze particles ===
-    const PARTICLE_COUNT = 600;
+    // Particle count + size dialed down dramatically. The previous 600
+    // particles at sizes 1.4-4.0 were dominating the hero frame. Now
+    // 180 smaller particles read as subtle atmospheric flecks, not as
+    // a snowstorm.
+    const PARTICLE_COUNT = 180;
     const partPositions = new Float32Array(PARTICLE_COUNT * 3);
     const partSizes = new Float32Array(PARTICLE_COUNT);
     const partSeeds = new Float32Array(PARTICLE_COUNT);
     for (let i = 0; i < PARTICLE_COUNT; i++) {
-      partPositions[i * 3 + 0] = (Math.random() - 0.5) * 80;
-      partPositions[i * 3 + 1] = Math.random() * 20 + 0.5;
-      partPositions[i * 3 + 2] = (Math.random() - 0.5) * 80 + 0;
-      partSizes[i] = 1.4 + Math.random() * 2.6;
+      partPositions[i * 3 + 0] = (Math.random() - 0.5) * 100;
+      partPositions[i * 3 + 1] = Math.random() * 14 + 2;
+      partPositions[i * 3 + 2] = (Math.random() - 0.5) * 100 - 10;
+      partSizes[i] = 0.7 + Math.random() * 1.2;
       partSeeds[i] = Math.random();
     }
     const partGeo = new BufferGeometry();
