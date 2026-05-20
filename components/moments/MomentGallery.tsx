@@ -134,24 +134,37 @@ const MomentGallery = () => {
         0.16
       );
 
-      // Per-panel caption reveals. Uses fromTo so the FROM state is
-      // explicit at the tween's start — eliminates any chance of the
-      // initial gsap.set being overridden by a stale state before the
-      // tween runs. Each caption holds visible across a real chunk of
-      // scroll (0.10 of timeline = ~40vh) so the user can't miss them.
+      // Per-panel caption reveals. BOTH enter and exit are fromTo with
+      // immediateRender:false — so the timeline only applies state when
+      // the playhead actually crosses each tween, never on creation.
+      // This eliminates the gsap.set→.to interaction that was leaving
+      // captions 0-2 silently invisible.
       captionEls.forEach((cap, i) => {
         const enterAt = (i + 1) * 0.2 + 0.02;
         const exitAt = (i + 2) * 0.2 - 0.04;
         tl.fromTo(
           cap,
           { opacity: 0, y: 30 },
-          { opacity: 1, y: 0, duration: 0.08, ease: 'cinematic' },
+          {
+            opacity: 1,
+            y: 0,
+            duration: 0.08,
+            ease: 'cinematic',
+            immediateRender: false,
+          },
           enterAt
         );
         if (i < CONTENT_PANELS.length - 1) {
-          tl.to(
+          tl.fromTo(
             cap,
-            { opacity: 0, y: -30, duration: 0.06, ease: 'power2.in' },
+            { opacity: 1, y: 0 },
+            {
+              opacity: 0,
+              y: -30,
+              duration: 0.06,
+              ease: 'power2.in',
+              immediateRender: false,
+            },
             exitAt
           );
         }
