@@ -236,6 +236,11 @@ const FRAGMENT_PARTICLE = /* glsl */ `
 //                       reveal the ocean visible past the pavilion's back
 //                       columns — the "eight courses, one ocean" beat.
 //                       Sun is at night by now; no water glint.
+//   scrollVH 24.5–28.5 → MomentGallery ("Four other arrivals"), camera
+//                        rises to aerial and orbits the island while the
+//                        gallery's horizontal track scrolls four captions
+//                        past — the user sees both island reveal and
+//                        caption beats simultaneously.
 //
 // Main island is centered at world position (0, 0, -28). The camera
 // approaches it from positive Z, lands at the shore (Moment02), then rises
@@ -337,6 +342,22 @@ const WAYPOINTS: Waypoint[] = [
   { scrollVH: 24.0, pos: new Vector3(-1,  1.8,  -26.4),  look: new Vector3(-1, 0.55, -32) },
   // Moment09 end — dwell on plate-foreground + ocean-background composition
   { scrollVH: 24.5, pos: new Vector3(-1,  1.95, -26.0),  look: new Vector3(-1, 0.45, -34) },
+  // Gallery enter — rising from the table view into aerial orbit
+  { scrollVH: 25.0, pos: new Vector3(5,   8,    -22),    look: new Vector3(0,  0,    -28) },
+  // Gallery — east aerial (Morning Swim caption sliding into frame)
+  { scrollVH: 25.5, pos: new Vector3(15,  13,   -28),    look: new Vector3(0,  0,    -28) },
+  // Gallery — northeast aerial (between Swim and Walk)
+  { scrollVH: 26.0, pos: new Vector3(12,  14,   -42),    look: new Vector3(0,  0,    -28) },
+  // Gallery — north aerial (Walk caption)
+  { scrollVH: 26.5, pos: new Vector3(-3,  16,   -45),    look: new Vector3(0,  0,    -28) },
+  // Gallery — northwest aerial (between Walk and Bath)
+  { scrollVH: 27.0, pos: new Vector3(-15, 14,   -38),    look: new Vector3(0,  0,    -28) },
+  // Gallery — west aerial (Bath caption)
+  { scrollVH: 27.5, pos: new Vector3(-18, 11,   -28),    look: new Vector3(0,  0,    -28) },
+  // Gallery — southwest, descending (Bonfire caption)
+  { scrollVH: 28.0, pos: new Vector3(-12, 8,    -16),    look: new Vector3(0,  0,    -28) },
+  // Gallery end — settled near shore, low altitude, ready for Moment10
+  { scrollVH: 28.5, pos: new Vector3(-3,  5,    -16),    look: new Vector3(-1, 0.8,  -28) },
 ];
 
 const JOURNEY_END_VH = WAYPOINTS[WAYPOINTS.length - 1].scrollVH;
