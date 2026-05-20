@@ -124,24 +124,35 @@ const MomentGallery = () => {
         0
       );
 
-      // Horizontal track translation: 0 → -400vw over full scrub.
-      tl.to(trackEl, { x: '-400vw', ease: 'none' }, 0);
-
-      // Title fades out as we leave Panel 0.
+      // Hold horizontal track stationary 0 → 0.20, then translate
+      // 0 → -400vw across 0.20 → 1.00. The 0.20 stationary window gives the
+      // title card a proper editorial dwell beat before the gallery moves.
       tl.to(
-        titleRef.current,
-        { opacity: 0, y: -40, duration: 0.04, ease: 'cinematic' },
-        0.16
+        trackEl,
+        { x: '-400vw', ease: 'none', duration: 0.80 },
+        0.20
       );
 
-      // Per-panel caption reveals. BOTH enter and exit are fromTo with
-      // immediateRender:false — so the timeline only applies state when
-      // the playhead actually crosses each tween, never on creation.
-      // This eliminates the gsap.set→.to interaction that was leaving
-      // captions 0-2 silently invisible.
+      // Title fades while perfectly centered and stationary (track hasn't
+      // started moving yet at 0.12 → 0.20).
+      tl.to(
+        titleRef.current,
+        { opacity: 0, y: -40, duration: 0.08, ease: 'cinematic' },
+        0.12
+      );
+
+      // Per-panel caption reveals, re-timed to align with the new track
+      // motion: each content panel is fully centered at 0.40, 0.60, 0.80,
+      // 1.00. Captions enter as their panel nears center and exit as the
+      // next panel begins arriving.
+      //
+      // BOTH enter and exit are fromTo with immediateRender:false — so the
+      // timeline only applies state when the playhead actually crosses each
+      // tween, never on creation. This eliminates the gsap.set→.to
+      // interaction that was leaving captions silently invisible.
       captionEls.forEach((cap, i) => {
-        const enterAt = (i + 1) * 0.2 + 0.02;
-        const exitAt = (i + 2) * 0.2 - 0.04;
+        const enterAt = 0.32 + i * 0.20;
+        const exitAt = 0.40 + i * 0.20;
         tl.fromTo(
           cap,
           { opacity: 0, y: 30 },
@@ -161,7 +172,7 @@ const MomentGallery = () => {
             {
               opacity: 0,
               y: -30,
-              duration: 0.06,
+              duration: 0.08,
               ease: 'power2.in',
               immediateRender: false,
             },
