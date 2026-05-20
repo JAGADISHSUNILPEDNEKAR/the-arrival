@@ -196,10 +196,14 @@ const FRAGMENT_PARTICLE = /* glsl */ `
 //   scrollVH 9–11.5  → Moment04 (III), descent from aerial onto the jetty,
 //                      then walk down the jetty toward the island — the
 //                      "cross by barefoot, the tides keep time" beat
-//   scrollVH 11.5–14 → Moment05 (IV), step off the jetty onto the island
-//                      and into the palm shade — the "out of the sun, into
-//                      the shade" beat. Camera ends close to a nearby palm
-//                      which frames the left side of the view.
+//   scrollVH 11.5–14  → Moment05 (IV), step off the jetty onto the island
+//                       and into the palm shade — the "out of the sun, into
+//                       the shade" beat. Camera ends close to a nearby palm
+//                       which frames the left side of the view.
+//   scrollVH 14–16.5  → Moment06 (V), camera moves toward the pavilion
+//                       through palm framing — the "pavilion at dusk, lit
+//                       by lantern, veiled by palm" beat. Sun direction in
+//                       the shader transitions to dusk during this range.
 //
 // Main island is centered at world position (0, 0, -28). The camera
 // approaches it from positive Z, lands at the shore (Moment02), then rises
@@ -265,6 +269,18 @@ const WAYPOINTS: Waypoint[] = [
   { scrollVH: 13.5, pos: new Vector3(-3,   1.7, -26),   look: new Vector3(-1.5, 1.6, -29) },
   // Moment05 end — dwell in palm shade, looking toward pavilion
   { scrollVH: 14.0, pos: new Vector3(-2.8, 1.7, -26.5), look: new Vector3(-1,  1.6,  -29) },
+  // Moment06 enter — moving toward the pavilion through palm framing
+  { scrollVH: 14.4, pos: new Vector3(-2.3, 1.7, -26),   look: new Vector3(-1,  1.6,  -28.5) },
+  // Moment06 — palms framing the view on either side
+  { scrollVH: 14.8, pos: new Vector3(-1.8, 1.7, -25),   look: new Vector3(-1,  1.6,  -28) },
+  // Moment06 — pavilion centering as camera moves to its axis
+  { scrollVH: 15.2, pos: new Vector3(-1.3, 1.7, -24),   look: new Vector3(-1,  1.7,  -28) },
+  // Moment06 — straight-on view, pavilion fills frame, palm canopies edge the top
+  { scrollVH: 15.6, pos: new Vector3(-1,   1.7, -23.2), look: new Vector3(-1,  1.7,  -28) },
+  // Moment06 — closer, dusk lighting peak
+  { scrollVH: 16.0, pos: new Vector3(-1,   1.75, -22.7), look: new Vector3(-1, 1.75, -28) },
+  // Moment06 end — intimate dwell on the pavilion
+  { scrollVH: 16.5, pos: new Vector3(-1,   1.8,  -22.4), look: new Vector3(-1, 1.7,  -28) },
 ];
 
 const JOURNEY_END_VH = WAYPOINTS[WAYPOINTS.length - 1].scrollVH;
@@ -311,7 +327,13 @@ export default function JourneyScene() {
     camera.position.copy(WAYPOINTS[0].pos);
     camera.lookAt(WAYPOINTS[0].look);
 
-    const sunDir = new Vector3(0.5, 0.45, -0.7).normalize();
+    // Sun direction transitions from day → dusk during the scroll range
+    // approaching the pavilion-at-dusk moment. The water shader's fresnel
+    // and sun-glint respond to this, giving a real lighting shift, not a
+    // CSS overlay tint.
+    const SUN_DAY = new Vector3(0.5, 0.45, -0.7).normalize();
+    const SUN_DUSK = new Vector3(0.75, 0.12, -0.35).normalize();
+    const sunDir = SUN_DAY.clone();
     const sharedUniforms = {
       uTime: { value: 0 },
       uCameraPos: { value: camera.position.clone() },
@@ -617,6 +639,12 @@ export default function JourneyScene() {
       const heightT = Math.min(1, Math.max(0, (camera.position.y - 1.5) / 16.5));
       sharedUniforms.uFogNear.value = 28 + heightT * 6;
       sharedUniforms.uFogFar.value = 140 + heightT * 30;
+
+      // Sun direction: day → dusk transition during the lead-up to and
+      // through Moment06. Eased so the change is gradual, not stepped.
+      const sunT = Math.min(1, Math.max(0, (scrollVH - 11) / 5));
+      const sunEased = sunT * sunT * (3 - 2 * sunT);
+      sharedUniforms.uSunDir.value.lerpVectors(SUN_DAY, SUN_DUSK, sunEased);
 
       renderer.render(scene, camera);
     };
