@@ -99,14 +99,16 @@ const Moment07 = ({}: { index: number }) => {
       0.12
     );
     if (splitTitle?.words) {
+      // Short declarative headline — snappier stagger lets "A table
+      // waiting." land sharply, the way the lantern's emissive snaps on.
       tl.to(
         splitTitle.words,
         {
           y: '0%',
           filter: 'blur(0px)',
           opacity: 1,
-          stagger: 0.04,
-          duration: 0.15,
+          stagger: 0.05,
+          duration: 0.12,
           ease: 'cinematic',
         },
         0.15

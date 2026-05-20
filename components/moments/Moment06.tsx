@@ -114,14 +114,16 @@ const Moment06 = ({}: { index: number }) => {
       0.12
     );
     if (splitTitle?.words) {
+      // Short atmospheric headline — snappier stagger gives "The pavilion
+      // at dusk." a quick, almost-whispered cadence.
       tl.to(
         splitTitle.words,
         {
           y: '0%',
           filter: 'blur(0px)',
           opacity: 1,
-          stagger: 0.04,
-          duration: 0.15,
+          stagger: 0.05,
+          duration: 0.12,
           ease: 'cinematic',
         },
         0.15
