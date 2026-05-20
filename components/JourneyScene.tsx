@@ -72,6 +72,8 @@ const FRAGMENT_WATER = /* glsl */ `
   uniform float uTime;
   uniform vec3 uCameraPos;
   uniform vec3 uSunDir;
+  uniform vec3 uMoonDir;
+  uniform float uMoonIntensity;
   uniform vec3 uDeepColor;
   uniform vec3 uShallowColor;
   uniform vec3 uHorizonColor;
@@ -89,15 +91,22 @@ const FRAGMENT_WATER = /* glsl */ `
     ));
     float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 3.0);
 
-    vec3 reflectDir = reflect(-uSunDir, normal);
-    float spec = pow(max(dot(reflectDir, viewDir), 0.0), 80.0);
-    vec3 sunHighlight = vec3(1.0, 0.92, 0.78) * spec * 1.6;
+    // Sun glint — warm, tight specular highlight
+    vec3 sunReflect = reflect(-uSunDir, normal);
+    float sunSpec = pow(max(dot(sunReflect, viewDir), 0.0), 80.0);
+    vec3 sunHighlight = vec3(1.0, 0.92, 0.78) * sunSpec * 1.6;
+
+    // Moon glint — cooler, broader, fades in as the sun fades out
+    vec3 moonReflect = reflect(-uMoonDir, normal);
+    float moonSpec = pow(max(dot(moonReflect, viewDir), 0.0), 45.0);
+    vec3 moonHighlight = vec3(0.62, 0.72, 0.92) * moonSpec * 0.85 * uMoonIntensity;
 
     float distFromCam = length(uCameraPos - vWorldPos);
     float deepMix = smoothstep(10.0, 80.0, distFromCam);
     vec3 baseCol = mix(uShallowColor, uDeepColor, deepMix);
     vec3 col = mix(baseCol, uHorizonColor, fresnel * 0.65);
     col += sunHighlight;
+    col += moonHighlight;
 
     float crest = smoothstep(0.30, 0.55, vWave) * 0.18;
     col += vec3(0.85, 0.88, 0.92) * crest;
@@ -443,11 +452,16 @@ export default function JourneyScene() {
     const SUN_DUSK = new Vector3(0.75, 0.12, -0.35).normalize();
     const SUN_NIGHT = new Vector3(0.3, -0.35, -0.5).normalize();
     const sunDir = SUN_DAY.clone();
+    // Moon stays roughly fixed above the camera-rear-left. Its intensity
+    // is what changes — it fades in as the sun fades below the horizon.
+    const MOON_DIR = new Vector3(-0.35, 0.55, 0.4).normalize();
     const sharedUniforms = {
       uTime: { value: 0 },
       uCameraPos: { value: camera.position.clone() },
       uPixelRatio: { value: renderer.getPixelRatio() },
       uSunDir: { value: sunDir },
+      uMoonDir: { value: MOON_DIR },
+      uMoonIntensity: { value: 0 },
       uFogNear: { value: 30.0 },
       uFogFar: { value: 150.0 },
     };
@@ -462,6 +476,8 @@ export default function JourneyScene() {
         uTime: sharedUniforms.uTime,
         uCameraPos: sharedUniforms.uCameraPos,
         uSunDir: sharedUniforms.uSunDir,
+        uMoonDir: sharedUniforms.uMoonDir,
+        uMoonIntensity: sharedUniforms.uMoonIntensity,
         uFogNear: sharedUniforms.uFogNear,
         uFogFar: sharedUniforms.uFogFar,
         uDeepColor: { value: new Vector3(0.025, 0.075, 0.135) },
@@ -856,6 +872,18 @@ export default function JourneyScene() {
         sharedUniforms.uSunDir.value.lerpVectors(SUN_DUSK, SUN_NIGHT, eased);
       } else {
         sharedUniforms.uSunDir.value.copy(SUN_NIGHT);
+      }
+
+      // Moon intensity — inverse curve to the sun's descent. Fades in
+      // across the same scrollVH 19→22 window so as the sun glint
+      // disappears, the moon glint takes its place.
+      if (scrollVH < 19) {
+        sharedUniforms.uMoonIntensity.value = 0;
+      } else if (scrollVH < 22) {
+        const t = (scrollVH - 19) / 3;
+        sharedUniforms.uMoonIntensity.value = t * t * (3 - 2 * t);
+      } else {
+        sharedUniforms.uMoonIntensity.value = 1;
       }
 
       renderer.render(scene, camera);
