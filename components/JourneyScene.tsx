@@ -188,15 +188,17 @@ const FRAGMENT_PARTICLE = /* glsl */ `
 // position + lookAt target. Smoothstep interpolation between waypoints means
 // velocity is zero at each anchor — creates the "dwell" feel at each moment.
 //
-// Narrative arc — arrival at the island:
-//   scrollVH 0–4   → hero, descending from sky toward distant island
+// Narrative arc:
+//   scrollVH 0–4   → hero, descending from sky toward the island
 //   scrollVH 4–6.5 → Moment02, approach and arrive at the island shore
-//   At Moment02 end, the camera stops at the jetty looking inland at the
-//   pavilion — the user feels they have arrived. Subsequent moments will
-//   take the journey inland and into the pavilion.
+//   scrollVH 6.5–9 → Moment03, aerial reveal of the full island (the
+//                    "twenty-eight acres" scale moment)
+//   At Moment03 end the camera is high above the island, positioned over
+//   the palms — ready to descend into shade for Moment04.
 //
 // Main island is centered at world position (0, 0, -28). The camera
-// approaches it from positive Z, ending at the jetty around z = -15.
+// approaches it from positive Z, lands at the shore (Moment02), then rises
+// vertically for the aerial reveal (Moment03).
 interface Waypoint {
   scrollVH: number;
   pos: Vector3;
@@ -224,6 +226,18 @@ const WAYPOINTS: Waypoint[] = [
   { scrollVH: 6,   pos: new Vector3(-0.5, 1.6,  -18), look: new Vector3(-1,   1.3,  -28) },
   // Moment02 end — arrived. Camera dwells at the shore, looking at pavilion.
   { scrollVH: 6.5, pos: new Vector3(-1,   1.5,  -20), look: new Vector3(-1,   1.3,  -28) },
+  // Moment03 enter — begin rising vertically from the shore
+  { scrollVH: 7.0, pos: new Vector3(-1,   6,    -19), look: new Vector3(-1,   0.8,  -28) },
+  // Moment03 mid-rise — full island starting to fit in frame
+  { scrollVH: 7.4, pos: new Vector3(-1,   13,   -20), look: new Vector3(-1,   0.3,  -28) },
+  // Moment03 — high aerial, looking down at the layout
+  { scrollVH: 7.8, pos: new Vector3(0,    21,   -20), look: new Vector3(0,    0,    -28) },
+  // Moment03 peak — full aerial reveal, slight tilt for cinematic frame
+  { scrollVH: 8.2, pos: new Vector3(1,    26,   -19), look: new Vector3(0,    0,    -28) },
+  // Moment03 hold — slow orbit at peak altitude
+  { scrollVH: 8.6, pos: new Vector3(0,    27,   -21), look: new Vector3(0,    0,    -28) },
+  // Moment03 end — descent prep, positioned above the palm shade area
+  { scrollVH: 9.0, pos: new Vector3(-4,   24,   -23), look: new Vector3(-4,   0,    -28) },
 ];
 
 const JOURNEY_END_VH = WAYPOINTS[WAYPOINTS.length - 1].scrollVH;
