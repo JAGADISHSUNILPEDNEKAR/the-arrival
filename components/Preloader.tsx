@@ -218,13 +218,22 @@ const Preloader = () => {
         </span>
         <span
           aria-hidden
-          style={{
-            color: 'rgba(245,240,232,0.4)',
-            fontSize: '0.85rem',
-            lineHeight: 1,
-          }}
+          className="scroll-hint-chevron"
+          style={{ color: 'rgba(245,240,232,1)', lineHeight: 0 }}
         >
-          ↓
+          <svg
+            width="14"
+            height="22"
+            viewBox="0 0 14 22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.25"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M3 8 L7 14 L11 8" />
+          </svg>
         </span>
       </div>
     </div>

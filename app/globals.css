@@ -97,4 +97,29 @@ html::-webkit-scrollbar {
   will-change: opacity, transform;
 }
 
+/* Preloader scroll-hint chevron — gentle bounce on the y-axis with a paired
+   opacity pulse. The animation runs continuously while the hint is visible;
+   the Preloader unmount handles its disappearance after the entry ritual. */
+@keyframes scroll-hint-bounce {
+  0%, 100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateY(5px);
+    opacity: 0.75;
+  }
+}
+
+.scroll-hint-chevron {
+  display: inline-block;
+  animation: scroll-hint-bounce 2.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scroll-hint-chevron {
+    animation: none;
+  }
+}
+
 
