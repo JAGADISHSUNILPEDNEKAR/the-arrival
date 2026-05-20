@@ -30,20 +30,36 @@ No test runner is configured.
 ### Composition (top-down)
 1. `app/layout.tsx` loads Cormorant Garamond (exposed as `--font-serif`), mounts the global `<CustomCursor>` **outside** the providers, then wraps children in `<Providers><SmoothScroll>`.
 2. `app/page.tsx` renders `<ScrollJourney/>` — the whole site.
-3. `components/ScrollJourney.tsx` renders `<AtmosphereLayer>` (bedrock world) + `<Preloader>` + `<GlobalNav>` + a vertical stack of scenes: `FilmHomepage` followed by `Moment02..Moment11`. Each scene self-pins; the page has no shared master timeline (the `ScrollContext.masterTl` slot exists but is currently unused — `setMasterTl` is read but never called).
+3. `components/ScrollJourney.tsx` renders the persistent layers — `<AtmosphereLayer>` (bedrock world) + `<Preloader>` (autoplay entry overlay) + `<GlobalNav>` + `<AudioToggle>` + two `<MomentWipe>` overlays for the two narratively-loaded seams — alongside a vertical stack of scenes: `FilmHomepage` followed by `Moment02..Moment11` and `MomentGallery`. Each scene self-pins; the page has no shared master timeline (the `ScrollContext.masterTl` slot exists but is currently unused — `setMasterTl` is read but never called).
 
 ### Persistent atmosphere (`components/Atmosphere/AtmosphereLayer.tsx`)
 A single Three.js fragment shader on a full-screen plane lives at `fixed inset-0 z-0` behind every moment. It is the world; the moments are color-grading overlays on top.
 
 - **Stack:** raw `three` (no `@react-three/fiber`). One `OrthographicCamera`, one `PlaneGeometry(2,2)`, one `ShaderMaterial`. DPR capped at 1.5, `mediump` precision, depth disabled.
-- **Uniforms driven on every rAF:** `uTime` (continuous), `uProgress` (= `scrollY / (scrollHeight − innerHeight)`, lerped 0.04), `uVelocity` (scroll-delta, lerped 0.08, decays in ~400ms), `uMouse` (lerped 0.05), `uResolution`.
+- **Uniforms driven on every rAF:** `uTime` (continuous), `uProgress` (raw `scrollY/maxScroll` passed through `shapeProgress()` — see Chapter-anchor settle below — then lerped 0.04), `uVelocity` (scroll-delta, lerped 0.08, decays in ~400ms), `uMouse` (lerped 0.05), `uResolution`.
 - **Shader narrative:** 6-stop luxury day-arc palette (night arrival → pre-dawn → dawn → midday lagoon → golden hour → moonlit). Horizon line drifts subtly with progress. Wave shimmer = layered sins on the ocean half. Stars only at the dark ends of the arc. Film grain + vignette ground it editorially.
-- **Visibility gates:** skips `requestAnimationFrame` work when `document.hidden`; freezes `uTime`/`uVelocity` under `prefers-reduced-motion`; gracefully no-ops if `WebGLRenderer` construction throws (body `#060e1a` is the fallback).
+- **Chapter-anchor settle (top of `AtmosphereLayer.tsx`):** raw scroll progress is piecewise-shaped through `shapeProgress()` *before* it enters the lerp into `uProgress`. With `SHAPE_SEGMENTS=5`, the input is held at one of the 6 palette stops (0.0, 0.2, 0.4, 0.6, 0.8, 1.0) for ~55% of each segment, then smoothstep-rises across 40%. The user feels 5 atmospheric "rooms" — arrival → lagoon → golden → intimate → moonlit — with quick transitions between, rather than a continuously sliding palette. Tune via the three constants at the top of the file (`SHAPE_SEGMENTS`, `SHAPE_HOLD_END`, `SHAPE_RISE_END`); lowering `SHAPE_HOLD_END` makes the plateaus gentler, raising it makes them sharper.
+- **Visibility gates:** skips `requestAnimationFrame` work when `document.hidden`; freezes `uTime`/`uVelocity` under `prefers-reduced-motion`; gracefully no-ops if `WebGLRenderer` construction throws (body `#060e1a` is the fallback). The progress shaping still applies under reduced motion (it's deterministic, not animated).
 - **Why the existing moments suddenly work as transitions:** every `Moment0X.tsx` already tweens `sectionRef` opacity 0→1→0 across its own scrub. The body color was masking the world underneath; with `.moment { background: transparent }` stripped in `globals.css`, those existing fades now reveal the atmosphere between scenes. No new transition code was needed — the choreography was already there, just blocked.
-- **Per-moment internal gradients** (e.g. Moment02's `linear-gradient(180deg, #0e2038...)`) are still opaque mid-scene by design. Next phase can dial them translucent so the world bleeds through mid-act too.
+- **Per-moment internal gradients** (e.g. Moment02's `linear-gradient(180deg, #0e2038...)`) are still opaque mid-scene by design. Next phase can dial them translucent so the world bleeds through mid-act too. **Moment08 is the deliberate exception** — it has no per-section gradient; instead a `blackoutRef` overlay scrubs to `opacity: 0.92` to mute the atmosphere during the testimonial isolation.
 
-### Preloader → FilmHomepage shared-element contract
-`Preloader.tsx` and `FilmHomepage.tsx` share one visually-persistent element: the **coord micro** ("From the Maldives") at `top-[26%] md:top-[28%] left-[8%] md:left-[10%]`. Same font, size, letter-spacing, color (`rgba(245,240,232,0.6)`). When Preloader unpins, FilmHomepage's Act I coord is already initialised at opacity 0.6 — the coord appears to persist in-place, masking the component handoff. Do not add a fade-in tween to FilmHomepage's coord; do not move the coord in Preloader. If you change one position/style, change the other.
+### Preloader entry ritual + FilmHomepage handoff contract
+
+`Preloader.tsx` is a `fixed inset-0 z-[10000] pointer-events-none` autoplay overlay that plays a ~4.8s entry ceremony on first visit and then unmounts via `setMounted(false)`. It is **not** scroll-pinned and consumes no document height — so `FilmHomepage`'s hero starts at scroll 0 directly underneath it.
+
+Full ritual phases (first visit only):
+1. 0.0 – 0.4s — GPS coord value fades in (`00°00'N · 00°00'E`)
+2. 0.4 – 1.6s — latitude climbs to `03°15'N` via `power3.out` (Maldives center, deliberately rounded — feels deliberate, not precise)
+3. 1.6 – 2.6s — longitude climbs to `73°00'E`
+4. 2.6 – 3.0s — silence at target (the navigation has locked on)
+5. 3.0 – 4.2s — veil lifts; the Preloader's "FROM THE MALDIVES" coord label fades **synchronously** with the veil (so FilmHomepage's identical-position coord, initialised at opacity 0.6 from frame zero, takes over invisibly); scroll hint fades in at the bottom
+6. 4.2 – 4.8s — lat/lon fades out; `onComplete` writes `sessionStorage.setItem('arrival.entry.seen', '1')` and unmounts the component
+
+**Returning visits and `prefers-reduced-motion`**: skip the ritual entirely; ~1s fade-out only.
+
+**Shared-element handoff (unchanged from the original architecture):** `Preloader.tsx` and `FilmHomepage.tsx` share one visually-persistent element — the **coord micro** ("From the Maldives") at `top-[26%] md:top-[28%] left-[8%] md:left-[10%]`. Same font, size, letter-spacing, color (`rgba(245,240,232,0.6)`). FilmHomepage's Act I coord is initialised at opacity 0.6 from frame zero, so when Preloader's label fades during Phase 5 above, the identical coord is already in place underneath. **Do not add a fade-in tween to FilmHomepage's coord; do not move the coord in Preloader. If you change one position/style, change the other.** The numerical lat/lon below the label is Preloader-only — a transient locating marker, no FilmHomepage equivalent.
+
+**FilmHomepage hero — scale-tension typography (deliberate brand choice):** the `<h1>The Arrival</h1>` is set at `clamp(4rem, 18vw, 18rem)` (wraps to two lines on most desktop widths — intentional editorial confidence), while the strapline ("A private island restaurant, suspended above the lagoon") drops to a small-uppercase-sans voice at `clamp(0.7rem, 0.95vw, 1rem)` with `letter-spacing: 0.35em`. The contrast between voices — enormous serif italic vs. tiny sans uppercase — is the luxury-hierarchy move (Tom Ford, The Row, Aesop). Harmonizing them back to a similar voice and scale would collapse the brand voice.
 
 ### AssetSlot — procedural → real-footage swap
 `components/AssetSlot.tsx` is the swappable-media primitive. Today the site renders 100% procedural visuals (CSS gradients, `clipPath` silhouettes). Tomorrow when you have real Maldives photography or video, drop a `src` into the existing slot and it fades in over the procedural fallback — no layout, animation, or composition changes.
@@ -95,7 +111,7 @@ Audit was code-review based; the experience has not been opened on a real touch 
 - Custom cursor: gated on `(pointer: fine)` — invisible on touch
 - Lenis: branches duration/wheelMultiplier/lerp/touchMultiplier on `isMobile`
 - AtmosphereLayer: DPR capped at 1.5; renders fine on mobile, mouse-parallax becomes static (no mouse events)
-- Moment2-10 timelines: scrub set to 0.8 on mobile (1.2 desktop), pin end set to `+=150%` (mobile) vs `+=250%` (desktop)
+- Moment2-10 timelines: scrub set to 0.8 on mobile (1.2 desktop), pin end set to `+=150%` (mobile) vs `+=250%` (desktop). **Moment08 is the exception** — pinned `+=180%` / `+=300%` to enforce the testimonial silence beat and the post-reveal dwell.
 
 ### Performance audit (Phase 10.3)
 
@@ -142,6 +158,31 @@ The audio file is the user's to supply. `public/audio/README.md` documents recom
 - **Reduced motion:** the pin + horizontal track are skipped entirely. The section renders as the title card only and the user scrolls past at normal pace (alternative would force horizontal scroll on users who opted out of motion).
 - **Atmosphere interaction:** at this scroll position (~0.85 of total page), the WebGL shader is in its "intimate-dark → moonlit" transition. The translucent gallery panels let the shader through as a color grade — daytime scenes seen through a moonlit lens.
 
+### Moment11 — invitation ritual (form → ceremony)
+
+The reservation form in `Moment11.tsx` is structurally two states:
+
+1. **Form state**: name + email + Send. The reassurance line ("Your message reaches our director directly…") is **gated behind name-field engagement** — not auto-revealed by scroll. The reveal lives in a separate `useEffect` that watches `[nameBlurred, name, sent]` and fires a standalone `gsap.to` when the user has filled in their name and blurred the field. The system reads as if it's acknowledging the user, not advertising itself.
+
+2. **Ceremony state**: on submit, the entire editorial column (headline + sub + form + reassurance) fades out via blur + drift. A `ceremonyBlackoutRef` overlay rises to `opacity: 0.94` (deeper than Moment08's 0.92 — finality), and a centered thank-you reveals in two staggered beats:
+   - **Beat A** (delay 0.85s): serif-italic personal acknowledgment ("Thank you, [name].") at hero scale `clamp(2rem, 5vw, 4.5rem)`, emerging from `blur(8px)`.
+   - **Beat B** (delay 1.5s): small-uppercase-sans confirmation ("We will write within the hour.") in the strapline voice — institutional response against personal address.
+
+The persistent bottom signature ("The Arrival · A Maldives Experience") sits at `z-40` and stays on top of the ceremony blackout. The page's closing line survives the ceremony as the page-level denouement.
+
+Reduced motion: submit hard-sets the ceremony visible without animation.
+
+### MomentWipe — branded transition seams (`components/MomentWipe.tsx`)
+
+Two transition overlays exist for the page's two emotional gear changes:
+
+- `<MomentWipe triggerId="#moment-09" variant="ocean" />` — rises from below at the **Moment08 → Moment09** seam (emerging from the testimonial blackout back into the warm dining world). Deep-ember gradient with a soft transparent leading edge.
+- `<MomentWipe triggerId="#moment-11" variant="curtain" />` — descends from above at the **Moment10 → Moment11** seam (the night closing in around the final invitation). Moonlit-navy gradient with a soft transparent leading edge.
+
+Each wipe scrubs against ScrollTrigger across `start: "top bottom" → end: "top 25%"` of its destination moment — roughly the 75vh window where that moment is sliding up the viewport. The element is `fixed inset-0 z-40`: above moments (z-10), below `GlobalNav` / `AudioToggle` (z-50) so the chrome stays visible during the transition. Reduced motion: `display: none` (hard cut).
+
+**Other moment-to-moment seams stay as cross-fades.** The chapter-anchor settle in `AtmosphereLayer` already gives every transition an atmospheric shift; only these two seams carry enough narrative weight to justify the extra layer. Adding more wipes will read as overdesigned.
+
 ### GSAP — always import from `@/lib/gsap`
 `lib/gsap.ts` is the single place that registers `ScrollTrigger`/`SplitText`/`CustomEase` (browser-guarded) and pre-creates the `"cinematic"` CustomEase (`cubic-bezier(0.16, 1, 0.3, 1)`). Importing GSAP directly from `gsap` will skip plugin registration and break the `"cinematic"` ease used everywhere.
 
@@ -150,6 +191,38 @@ The audio file is the user's to supply. `public/audio/README.md` documents recom
 
 ### `ScrollContext` / `useScroll`
 `lib/context/ScrollContext.tsx` exposes `{ masterTl, setMasterTl, isMobile }`. `isMobile` = `innerWidth < 768 || touch device`. Animations (timelines, particle counts, durations) branch on this — preserve the desktop/mobile split when editing moments.
+
+### Kinetic-typography helper (`lib/kineticWord.ts`)
+
+Six emotional anchor words in the copy get a one-shot "breath" animation on reveal: `arrival`, `lagoon`, `equator`, `invisible`, `coordinates`, `lantern`.
+
+The font (Cormorant Garamond from `next/font/google` at `weight: ["300","400"]`, `style: ["normal","italic"]`) has **no variable axes** — so the effect is synthesized from the levers the font does give us: per-char letter-spacing breath (`0.05em → 0em`), alternating baseline-shift (±3px → 0), opacity micro-flutter (0.82 → 1.0), and a brief italic→roman→italic stutter on every third char (the font has both styles loaded, so this is a real structural shift). Total per-word duration ~0.7s with `expo.out` settle.
+
+Currently wired in three consumers:
+- `FilmHomepage` — `arrival` (titleSplit), `lagoon`+`equator` (a separate `fragmentSplit` added specifically for word lookup), `invisible` (sentenceSplit)
+- `Moment03` — `coordinates` (existing titleSplit)
+- `Moment06` — `lantern` (existing titleSplit)
+
+Pattern for adding a new consumer:
+```tsx
+import { buildKineticWordsFor, KineticWord } from '@/lib/kineticWord';
+
+// Past the reduced-motion gate (don't build under reduced motion):
+const kineticTitle: KineticWord[] = buildKineticWordsFor(
+  splitTitle?.words as Element[] | undefined
+);
+
+// In the timeline, just after the parent word reveal settles:
+tl.call(() => kineticTitle.forEach((kw) => kw.play()), [], 0.34);
+
+// In cleanup, BEFORE the parent split revert (chars are children of words):
+kineticTitle.forEach((kw) => kw.revert());
+splitTitle?.revert();
+```
+
+The `play()` guard is one-shot — repeat calls (from scrub timelines crossing the cue multiple times) collapse to no-ops. The breath should **not** re-fire on scroll-reverse; it's an arrival cue, not a continuous animation.
+
+If the italic-stutter ever reads as a glitch rather than texture on a target word, remove the `chars.forEach((c, i) => { if (i % 3 !== 1) return; … })` block in `kineticWord.ts` and the breath becomes letter-spacing + baseline-shift only.
 
 ### "Moment" scene pattern (`components/moments/Moment*.tsx`)
 Every moment is a `"use client"` component with the same shape:
@@ -160,6 +233,8 @@ Every moment is a `"use client"` component with the same shape:
 - Cleanup must: `tl.kill()`, `splitTitle?.revert()`, `splitBody?.revert()`, and kill any `ScrollTrigger.getAll()` whose `vars.trigger === sectionRef.current`. Skipping this leaks pinned scenes across HMR/route changes.
 
 When adding a new moment, copy the structure of an existing one (e.g. `Moment02.tsx`) and wire it into `ScrollJourney.tsx`'s vertical stack — order in JSX = order in the scroll.
+
+**Moment08 is a deliberate exception** to the standard moment composition. Chapter VII (the testimonial) has no per-section background gradient and no in-scene object composition. Instead it has a dedicated `blackoutRef` overlay that scrubs to `opacity: 0.92`, muting `AtmosphereLayer` to near-black; the quote sits centered at `clamp(2.25rem, 5.5vw, 5.5rem)`; its pin runs `+=300%` desktop / `+=180%` mobile (vs the standard `+=250%`/`+=150%`) to enforce a 0.12-progress silence beat before the words arrive and a 0.30-progress dwell after the source attribution lands. If you're adding a dining tableau to Moment08, it almost certainly belongs in Moment07 — that's where the dining-tableau composition lives.
 
 ### Custom cursor
 `CustomCursor.tsx` sets `body.style.cursor = 'none'` and runs its own RAF lerp loop with a `0.16` multiplier (≈6 frames of lag) writing via `gsap.set({ x, y, force3D: true })`. It is mounted in `RootLayout` so it persists across the whole app — do not duplicate it inside scenes.
