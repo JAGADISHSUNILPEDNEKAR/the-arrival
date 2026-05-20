@@ -189,12 +189,15 @@ const FRAGMENT_PARTICLE = /* glsl */ `
 // velocity is zero at each anchor — creates the "dwell" feel at each moment.
 //
 // Narrative arc:
-//   scrollVH 0–4   → hero, descending from sky toward the island
-//   scrollVH 4–6.5 → Moment02, approach and arrive at the island shore
-//   scrollVH 6.5–9 → Moment03, aerial reveal of the full island (the
-//                    "twenty-eight acres" scale moment)
-//   At Moment03 end the camera is high above the island, positioned over
-//   the palms — ready to descend into shade for Moment04.
+//   scrollVH 0–4    → hero, descending from sky toward the island
+//   scrollVH 4–6.5  → Moment02 (I), approach and arrive at the island shore
+//   scrollVH 6.5–9  → Moment03 (II), aerial reveal of the full island
+//                     (the "twenty-eight acres" scale moment)
+//   scrollVH 9–11.5 → Moment04 (III), descent from aerial onto the jetty,
+//                     then walk down the jetty toward the island — the
+//                     "cross by barefoot, the tides keep time" beat
+//   At Moment04 end the camera is at the island-side end of the jetty,
+//   palms ahead — ready for Moment05's descent into shade.
 //
 // Main island is centered at world position (0, 0, -28). The camera
 // approaches it from positive Z, lands at the shore (Moment02), then rises
@@ -236,8 +239,20 @@ const WAYPOINTS: Waypoint[] = [
   { scrollVH: 8.2, pos: new Vector3(1,    26,   -19), look: new Vector3(0,    0,    -28) },
   // Moment03 hold — slow orbit at peak altitude
   { scrollVH: 8.6, pos: new Vector3(0,    27,   -21), look: new Vector3(0,    0,    -28) },
-  // Moment03 end — descent prep, positioned above the palm shade area
+  // Moment03 end — aerial peak, positioned over the island
   { scrollVH: 9.0, pos: new Vector3(-4,   24,   -23), look: new Vector3(-4,   0,    -28) },
+  // Moment04 enter — beginning the descent from aerial toward the jetty
+  { scrollVH: 9.4, pos: new Vector3(-2,   14,   -21), look: new Vector3(0,    1,    -25) },
+  // Moment04 — descending fast over open water beside the jetty
+  { scrollVH: 9.8, pos: new Vector3(0,    7,    -16), look: new Vector3(0,    1.3,  -22) },
+  // Moment04 — touching down onto the jetty's outer end
+  { scrollVH: 10.2, pos: new Vector3(0.5,  2.8, -14), look: new Vector3(0,    1.4,  -22) },
+  // Moment04 — walking the jetty, tides on either side, looking inland
+  { scrollVH: 10.6, pos: new Vector3(0.3,  1.8, -16), look: new Vector3(-1,   1.5,  -25) },
+  // Moment04 — mid-jetty, palms ahead, pavilion behind them in the haze
+  { scrollVH: 11.0, pos: new Vector3(0,    1.7, -18), look: new Vector3(-1.5, 1.5,  -27) },
+  // Moment04 end — at the island-side end of the jetty, palms framing view
+  { scrollVH: 11.5, pos: new Vector3(-0.5, 1.7, -20), look: new Vector3(-2,   1.5,  -28) },
 ];
 
 const JOURNEY_END_VH = WAYPOINTS[WAYPOINTS.length - 1].scrollVH;
