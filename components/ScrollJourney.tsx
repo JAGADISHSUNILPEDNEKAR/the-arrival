@@ -20,6 +20,7 @@ import GlobalNav from './GlobalNav';
 import AtmosphereLayer from './Atmosphere/AtmosphereLayer';
 import AudioToggle from './AudioToggle';
 import MomentWipe from './MomentWipe';
+import HeroScene from './HeroScene';
 
 const ScrollJourney = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -47,6 +48,7 @@ const ScrollJourney = () => {
   return (
     <main className="scroll-journey relative">
       <AtmosphereLayer />
+      <HeroScene />
       <Preloader />
       <GlobalNav />
       <AudioToggle />
