@@ -551,21 +551,63 @@ export default function JourneyScene() {
         depthWrite: false,
       });
 
-    // === Palm tree — hexagonal trunk + flattened canopy ===
+    // === Palm tree — hexagonal trunk + radial frond canopy ===
+    // Fronds are thin triangles radiating from the trunk top with a slight
+    // downward droop. Each palm gets a randomized rotation so the cluster
+    // doesn't read as 6 identical copies. Reads as a palm silhouette from
+    // any angle (aerial overhead, ground-level under canopy, distant
+    // horizon) where the previous flattened sphere just looked like a ball.
     const makePalm = (
       px: number,
       pz: number,
       height: number,
       color: Vector3
     ): Mesh[] => {
-      const trunkH = height * 0.75;
-      const trunkGeo = new CylinderGeometry(0.10, 0.22, trunkH, 6);
-      trunkGeo.translate(px, trunkH / 2, pz);
-      const canopyGeo = new SphereGeometry(height * 0.20, 6, 4);
-      canopyGeo.scale(1.6, 0.55, 1.6);
-      canopyGeo.translate(px, trunkH + height * 0.05, pz);
       const mat = makeSilhouetteMaterial(color);
-      return [new Mesh(trunkGeo, mat), new Mesh(canopyGeo, mat)];
+
+      // Trunk — taper from base to top
+      const trunkH = height * 0.78;
+      const trunkGeo = new CylinderGeometry(0.10, 0.20, trunkH, 6);
+      trunkGeo.translate(px, trunkH / 2, pz);
+
+      // Fronds — single BufferGeometry with multiple triangle fronds.
+      // Each frond: two narrow base points near the trunk top + one tip
+      // extending outward and drooping below the base plane.
+      const frondCount = 8;
+      const frondLength = height * 0.42;
+      const baseY = trunkH;
+      const rotOffset = (px * 0.31 + pz * 0.19) % (Math.PI * 2);
+      const positions: number[] = [];
+      for (let i = 0; i < frondCount; i++) {
+        const ang = rotOffset + (i / frondCount) * Math.PI * 2;
+        const baseAng1 = ang - 0.16;
+        const baseAng2 = ang + 0.16;
+        const b1x = px + Math.cos(baseAng1) * 0.14;
+        const b1z = pz + Math.sin(baseAng1) * 0.14;
+        const b2x = px + Math.cos(baseAng2) * 0.14;
+        const b2z = pz + Math.sin(baseAng2) * 0.14;
+        const tipX = px + Math.cos(ang) * frondLength;
+        const tipZ = pz + Math.sin(ang) * frondLength;
+        // Tip droops below the base — gravity feel
+        const tipY = baseY - frondLength * 0.32;
+        // Slight upward kink at the base so frond curves down rather than
+        // sloping flat — render front + back face for visibility from
+        // every angle (no backface culling needed).
+        positions.push(
+          b1x, baseY + 0.05, b1z,
+          b2x, baseY + 0.05, b2z,
+          tipX, tipY,        tipZ,
+          // Reverse-wound copy for the back face
+          b2x, baseY + 0.05, b2z,
+          b1x, baseY + 0.05, b1z,
+          tipX, tipY,        tipZ,
+        );
+      }
+      const frondGeo = new BufferGeometry();
+      frondGeo.setAttribute("position", new Float32BufferAttribute(positions, 3));
+      frondGeo.computeVertexNormals();
+
+      return [new Mesh(trunkGeo, mat), new Mesh(frondGeo, mat)];
     };
 
     // === Open pavilion — floor platform + 4 corner columns + roof slab ===
