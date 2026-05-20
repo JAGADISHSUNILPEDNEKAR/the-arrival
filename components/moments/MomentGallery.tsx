@@ -3,7 +3,6 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap } from '@/lib/gsap';
 import { useScroll } from '@/lib/context/ScrollContext';
-import AssetSlot from '@/components/AssetSlot';
 
 interface ContentPanel {
   type: 'content';
@@ -12,8 +11,6 @@ interface ContentPanel {
   title: string;
   sub: string;
   alignment: 'image-right' | 'image-left';
-  alt: string;
-  fallback: React.CSSProperties;
 }
 
 interface TitlePanel {
@@ -31,11 +28,6 @@ const PANELS: Panel[] = [
     title: 'The Morning Swim',
     sub: 'An hour before anyone else.',
     alignment: 'image-right',
-    alt: 'Pre-dawn light over the private lagoon',
-    fallback: {
-      background:
-        'linear-gradient(180deg, rgba(40,70,110,0.55) 0%, rgba(80,130,160,0.55) 50%, rgba(140,180,200,0.55) 100%), repeating-linear-gradient(92deg, transparent 0px, transparent 20px, rgba(255,255,255,0.04) 21px, rgba(255,255,255,0.04) 22px)',
-    },
   },
   {
     type: 'content',
@@ -44,11 +36,6 @@ const PANELS: Panel[] = [
     title: 'The Walk',
     sub: 'From villa to lagoon, barefoot.',
     alignment: 'image-left',
-    alt: 'A path of palm shadows at golden hour',
-    fallback: {
-      background:
-        'linear-gradient(180deg, rgba(180,150,100,0.55) 0%, rgba(220,190,140,0.55) 50%, rgba(170,140,90,0.55) 100%), repeating-linear-gradient(78deg, transparent 0px, transparent 30px, rgba(20,30,15,0.18) 31px, rgba(20,30,15,0.18) 35px)',
-    },
   },
   {
     type: 'content',
@@ -57,11 +44,6 @@ const PANELS: Panel[] = [
     title: 'The Bath',
     sub: 'Stone, sea, and last light.',
     alignment: 'image-right',
-    alt: 'A stone bath at sunset',
-    fallback: {
-      background:
-        'radial-gradient(circle at 35% 45%, rgba(255,200,140,0.4) 0%, transparent 50%), linear-gradient(180deg, rgba(140,80,50,0.5) 0%, rgba(200,130,80,0.55) 100%)',
-    },
   },
   {
     type: 'content',
@@ -70,11 +52,6 @@ const PANELS: Panel[] = [
     title: 'The Bonfire',
     sub: 'When the kitchen closes, embers stay.',
     alignment: 'image-left',
-    alt: 'Beach embers at night',
-    fallback: {
-      background:
-        'radial-gradient(circle at 50% 75%, rgba(255,140,60,0.45) 0%, rgba(180,80,30,0.25) 25%, transparent 55%), linear-gradient(180deg, rgba(10,15,30,0.7) 0%, rgba(20,25,45,0.65) 60%, rgba(15,20,35,0.7) 100%)',
-    },
   },
 ];
 
@@ -210,37 +187,20 @@ const MomentGallery = () => {
         </div>
 
         {/* === Panels 1..4 — Content panels ===========================
-            Layout:
-              • Mobile (<md): image full-width on top half, caption stacked
-                below — both span left-[8%] right-[8%] (84vw).
-              • Desktop (md+): asymmetric — image at one edge with explicit
-                width (clamp 280-720px), caption at the opposite edge,
-                alternating per panel for editorial rhythm. */}
+            Image areas have been removed — JourneyScene's orbital camera
+            shows different sides of the island as the user scrolls through
+            this section. The captions remain, sliding past the camera-
+            driven world below them. Caption position alternates per panel
+            (left/right) for editorial rhythm. */}
         {CONTENT_PANELS.map((panel, i) => {
           const imageRight = panel.alignment === 'image-right';
-          // Mobile: image full-width. Desktop: anchored to one side with explicit width.
-          const imagePos = imageRight
-            ? 'md:left-auto md:right-[10%]'
-            : 'md:right-auto md:left-[10%]';
-          // Mobile: caption full-width below. Desktop: opposite the image.
+          // Caption position: opposite of where the image would have been,
+          // so the panel's gaze direction still alternates left/right.
           const captionPos = imageRight
             ? 'md:bottom-auto md:top-[30%] md:right-auto md:left-[10%]'
             : 'md:bottom-auto md:top-[30%] md:left-auto md:right-[10%] md:text-right';
           return (
             <div key={panel.slug} className="w-screen h-full relative">
-              {/* Image area */}
-              <div
-                className={`absolute top-[10%] md:top-[15%] left-[8%] right-[8%] h-[42vh] md:h-[65vh] md:w-[42vw] md:min-w-[280px] md:max-w-[720px] ${imagePos}`}
-              >
-                <AssetSlot
-                  id={`gallery-${panel.slug}`}
-                  alt={panel.alt}
-                  className="w-full h-full overflow-hidden"
-                >
-                  <div className="w-full h-full" style={panel.fallback} />
-                </AssetSlot>
-              </div>
-
               {/* Caption area */}
               <div
                 ref={(el) => {
