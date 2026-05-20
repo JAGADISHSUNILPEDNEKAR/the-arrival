@@ -3,7 +3,6 @@
 import React, { useEffect, useRef } from "react";
 import {
   BufferGeometry,
-  CatmullRomCurve3,
   Float32BufferAttribute,
   Mesh,
   PerspectiveCamera,
@@ -17,24 +16,27 @@ import {
 import { ScrollTrigger } from "@/lib/gsap";
 
 /**
- * HeroScene — real 3D foreground for the FilmHomepage hero.
+ * JourneyScene — the continuous 3D world the camera traverses across the
+ * page scroll. Replaces the per-moment-procedural-CSS approach: instead of
+ * discrete scenes, there is one ocean, one set of islands, one atmosphere,
+ * and the moments are camera dwells at chosen world positions.
  *
- * Architecturally a sibling of AtmosphereLayer (transparent canvas at z-[1]
- * composited over AtmosphereLayer's sky at z-0). AtmosphereLayer still owns
- * the sky/atmosphere arc; this layer adds the 3D foreground the user moves
- * through during the hero's 400vh pin range:
+ * Architecture:
+ *   • Single Three.js scene, transparent canvas at z-[1], composited over
+ *     AtmosphereLayer's sky gradient (z-0).
+ *   • Camera follows a piecewise scroll-driven path. WAYPOINTS map scroll
+ *     position (in viewport-height units) to camera position + lookAt.
+ *     Smoothstep eases each segment so velocity → 0 at each waypoint,
+ *     creating a natural "dwell" feel at each moment.
+ *   • Currently covers: hero (FilmHomepage, 0–4vh) + Moment02 (4–6.5vh).
+ *     Beyond Moment02 the canvas fades out and AtmosphereLayer takes over
+ *     until subsequent moments are extended into this scene.
  *
- *   • Water surface — large displaced plane with sun-glint shader, blends
- *     toward transparent at distance so AtmosphereLayer bleeds through
- *   • Two distant island silhouettes at different depths
- *   • Atmospheric haze particles that drift vertically with parallax
- *   • PerspectiveCamera that descends along a CatmullRomCurve3 as the user
- *     scrolls through Acts I → IV — the user is *traveling* through the
- *     scene, not watching components fade in
- *
- * Canvas opacity fades to 0 once the hero scroll range is exited, and rAF
- * skips render work while invisible. No post-processing (DoF/bokeh) in this
- * proof — those are nice-to-have layered on once the foundation reads right.
+ * What's NOT here (deferred to follow-up extensions):
+ *   • Per-moment lighting / fog tuning (currently global)
+ *   • DoF / bokeh / EffectComposer post-processing
+ *   • Real texture maps (procedural shaders only)
+ *   • Moments 03-11 (CSS-procedural for now)
  */
 
 const VERTEX_WATER = /* glsl */ `
@@ -43,8 +45,6 @@ const VERTEX_WATER = /* glsl */ `
   varying vec3 vWorldPos;
   varying float vWave;
 
-  // Layered sin waves for surface displacement. Three frequencies = enough
-  // visual complexity without breaking the meditative pace.
   float waveHeight(vec2 p) {
     float h = 0.0;
     h += sin(p.x * 0.18 + uTime * 0.30) * 0.45;
@@ -79,39 +79,26 @@ const FRAGMENT_WATER = /* glsl */ `
 
   void main() {
     vec3 viewDir = normalize(uCameraPos - vWorldPos);
-
-    // Approximate surface normal from wave height — perturbed upward.
     vec3 normal = normalize(vec3(
       sin(vWorldPos.x * 0.6 + uTime * 0.5) * 0.18,
       1.0,
       sin(vWorldPos.z * 0.5 - uTime * 0.4) * 0.18
     ));
-
-    // Fresnel — water becomes more reflective at grazing angles.
     float fresnel = pow(1.0 - max(dot(normal, viewDir), 0.0), 3.0);
 
-    // Sun glint — specular highlight along sun-reflection vector.
     vec3 reflectDir = reflect(-uSunDir, normal);
     float spec = pow(max(dot(reflectDir, viewDir), 0.0), 80.0);
     vec3 sunHighlight = vec3(1.0, 0.92, 0.78) * spec * 1.6;
 
-    // Base color: lerp from shallow (near camera) to deep (further out)
-    // using camera distance as a proxy for "how much water is between you
-    // and that point."
     float distFromCam = length(uCameraPos - vWorldPos);
     float deepMix = smoothstep(10.0, 80.0, distFromCam);
     vec3 baseCol = mix(uShallowColor, uDeepColor, deepMix);
-
-    // Fresnel pushes color toward horizon tint at glancing angles.
     vec3 col = mix(baseCol, uHorizonColor, fresnel * 0.65);
     col += sunHighlight;
 
-    // Wave-crest highlight — bright thin line on rising waves.
     float crest = smoothstep(0.30, 0.55, vWave) * 0.18;
     col += vec3(0.85, 0.88, 0.92) * crest;
 
-    // Distance-based alpha — far water fades to fully transparent so the
-    // AtmosphereLayer sky behind reads through the horizon line.
     float alpha = 1.0 - smoothstep(uFogNear, uFogFar, distFromCam);
     alpha = clamp(alpha, 0.0, 1.0);
 
@@ -139,14 +126,9 @@ const FRAGMENT_ISLAND = /* glsl */ `
 
   void main() {
     float d = length(uCameraPos - vWorldPos);
-    // Atmospheric haze — islands fade toward transparent at distance,
-    // letting the sky behind bleed through and giving spatial depth.
     float alpha = 1.0 - smoothstep(uFogNear * 0.6, uFogFar, d);
-
-    // Slight upward darker tint (silhouette feel).
     float heightFade = smoothstep(0.0, 4.0, vWorldPos.y);
     vec3 col = mix(uIslandColor, uIslandColor * 0.55, heightFade);
-
     gl_FragColor = vec4(col, alpha * 0.92);
   }
 `;
@@ -161,8 +143,6 @@ const VERTEX_PARTICLE = /* glsl */ `
   varying vec3 vWorldPos;
 
   void main() {
-    // Slow vertical drift + subtle horizontal sway. Each particle has its
-    // own seed so the field doesn't move in lockstep.
     vec3 p = position;
     p.y += mod(uTime * 0.10 + aSeed * 50.0, 30.0) - 5.0;
     p.x += sin(uTime * 0.12 + aSeed * 6.28) * 0.6;
@@ -170,7 +150,6 @@ const VERTEX_PARTICLE = /* glsl */ `
     vec4 wp = modelMatrix * vec4(p, 1.0);
     vWorldPos = wp.xyz;
 
-    // Fade in/out within the particle's vertical drift cycle.
     float cycle = mod(uTime * 0.10 + aSeed * 50.0, 30.0);
     vAlpha = smoothstep(0.0, 4.0, cycle) * (1.0 - smoothstep(20.0, 28.0, cycle));
 
@@ -189,14 +168,11 @@ const FRAGMENT_PARTICLE = /* glsl */ `
   varying vec3 vWorldPos;
 
   void main() {
-    // Circular sprite with soft edge.
     vec2 uv = gl_PointCoord - 0.5;
     float d = length(uv);
     if (d > 0.5) discard;
     float soft = 1.0 - smoothstep(0.20, 0.50, d);
 
-    // Distance haze on particles too — keeps them composited with the
-    // atmospheric depth of the rest of the scene.
     float distFromCam = length(uCameraPos - vWorldPos);
     float fogAlpha = 1.0 - smoothstep(uFogNear, uFogFar * 0.85, distFromCam);
 
@@ -204,33 +180,51 @@ const FRAGMENT_PARTICLE = /* glsl */ `
   }
 `;
 
-// === Camera path keyframes — one per hero act + entry/exit anchors ===
-const CAMERA_POSITIONS = [
-  new Vector3(0, 18, 65), // Pre-Act I — entry anchor for smooth curve start
-  new Vector3(0, 16, 58), // Act I — high, vast emptiness
-  new Vector3(0, 11, 44), // Act II — horizon focuses
-  new Vector3(1.5, 7, 30), // Act III — descending toward an island
-  new Vector3(3.5, 4, 18), // Act IV — low approach, slight directional pan
-  new Vector3(5, 2.5, 11), // Exit anchor for smooth curve end
+// === Scroll-to-camera waypoints =============================================
+// Each entry maps a scroll position (in viewport-height units) to a camera
+// position + lookAt target. Smoothstep interpolation between waypoints means
+// velocity is zero at each anchor — creates the "dwell" feel at each moment.
+//
+// scrollVH 0–4   → hero (FilmHomepage pins for 400%)
+// scrollVH 4–6.5 → Moment02 (sanctuary, pins for 250% on desktop)
+// Beyond 6.5 the canvas fades out; subsequent moments revert to
+// AtmosphereLayer-only until they're extended into this scene.
+interface Waypoint {
+  scrollVH: number;
+  pos: Vector3;
+  look: Vector3;
+}
+
+const WAYPOINTS: Waypoint[] = [
+  // Hero — entering, vast emptiness
+  { scrollVH: 0,   pos: new Vector3(0,    18,   65),  look: new Vector3(0,    9,    0) },
+  { scrollVH: 1,   pos: new Vector3(0,    16,   58),  look: new Vector3(0,    6,    0) },
+  // Hero — descending, horizon focuses
+  { scrollVH: 2,   pos: new Vector3(0,    11,   44),  look: new Vector3(0,    2,    0) },
+  // Hero — approaching the closer hero island
+  { scrollVH: 3,   pos: new Vector3(1.5,  7,    30),  look: new Vector3(-1.5, 0.5,  0) },
+  // Hero — Act IV low approach
+  { scrollVH: 4,   pos: new Vector3(3.5,  4,    18),  look: new Vector3(-3,   0,    0) },
+  // Bridge from hero exit toward sanctuary
+  { scrollVH: 4.5, pos: new Vector3(2,    3,    11),  look: new Vector3(-4,   0.4,  -1) },
+  // Moment02 — sanctuary becomes the focal point
+  { scrollVH: 5,   pos: new Vector3(0,    2.2,  5),   look: new Vector3(-5,   0.5,  -3) },
+  // Moment02 mid — closest approach to sanctuary
+  { scrollVH: 5.5, pos: new Vector3(-2,   1.8,  -1),  look: new Vector3(-7,   0.4,  -5) },
+  // Moment02 late — passing sanctuary, heading toward next territory
+  { scrollVH: 6,   pos: new Vector3(-4,   1.6,  -6),  look: new Vector3(-8,   0.3,  -10) },
+  // Moment02 end — exit anchor for smooth curve termination
+  { scrollVH: 6.5, pos: new Vector3(-6,   1.4,  -11), look: new Vector3(-9,   0.2,  -15) },
 ];
 
-const LOOKAT_POSITIONS = [
-  new Vector3(0, 9, 0),
-  new Vector3(0, 6, 0),
-  new Vector3(0, 2, 0),
-  new Vector3(-1.5, 0.5, 0),
-  new Vector3(-3, 0, 0),
-  new Vector3(-5, -0.2, 0),
-];
+const JOURNEY_END_VH = WAYPOINTS[WAYPOINTS.length - 1].scrollVH;
+// Canvas fully visible through JOURNEY_END_VH, then fades over the next 1vh
+// of scroll before becoming hidden (AtmosphereLayer takes over).
+const CANVAS_FADE_DURATION_VH = 1.0;
 
-const cameraCurve = new CatmullRomCurve3(CAMERA_POSITIONS, false, "catmullrom", 0.5);
-const lookAtCurve = new CatmullRomCurve3(LOOKAT_POSITIONS, false, "catmullrom", 0.5);
+const smoothstep01 = (t: number) => t * t * (3 - 2 * t);
 
-// Hero pin is 400% of viewport. The camera moves through the full curve
-// across that scroll range. After that, the scene fades out.
-const HERO_PIN_VH_MULTIPLIER = 4;
-
-export default function HeroScene() {
+export default function JourneyScene() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -246,7 +240,7 @@ export default function HeroScene() {
       renderer = new WebGLRenderer({
         canvas,
         antialias: true,
-        alpha: true, // transparent clear so AtmosphereLayer reads through
+        alpha: true,
         powerPreference: "high-performance",
       });
     } catch {
@@ -264,10 +258,9 @@ export default function HeroScene() {
       0.1,
       300
     );
-    camera.position.copy(CAMERA_POSITIONS[1]);
-    camera.lookAt(LOOKAT_POSITIONS[1]);
+    camera.position.copy(WAYPOINTS[0].pos);
+    camera.lookAt(WAYPOINTS[0].look);
 
-    // === Shared uniforms ===
     const sunDir = new Vector3(0.5, 0.45, -0.7).normalize();
     const sharedUniforms = {
       uTime: { value: 0 },
@@ -281,7 +274,6 @@ export default function HeroScene() {
     // === Water surface ===
     const waterGeo = new PlaneGeometry(400, 400, 96, 96);
     waterGeo.rotateX(-Math.PI / 2);
-
     const waterMat = new ShaderMaterial({
       vertexShader: VERTEX_WATER,
       fragmentShader: FRAGMENT_WATER,
@@ -298,12 +290,10 @@ export default function HeroScene() {
       transparent: true,
       depthWrite: false,
     });
-
     const water = new Mesh(waterGeo, waterMat);
-    water.position.y = 0;
     scene.add(water);
 
-    // === Island silhouettes — procedural low-poly meshes at two depths ===
+    // === Island silhouettes ===
     const makeIsland = (
       width: number,
       height: number,
@@ -313,20 +303,16 @@ export default function HeroScene() {
       color: Vector3
     ) => {
       const positions: number[] = [];
-      // Triangle fan: peak + 8 base points around an ellipse, palm-tree
-      // hint via two thin "trunks" extruding above the silhouette.
       const peakY = height;
       const peak = [x, peakY, z];
-      const baseY = 0;
       const segments = 12;
       const basePoints: number[][] = [];
       for (let i = 0; i < segments; i++) {
         const ang = (i / segments) * Math.PI * 2;
         const rx = Math.cos(ang) * width * 0.5;
         const rz = Math.sin(ang) * depth * 0.5;
-        // Wobble base profile a touch so it doesn't read as pure cone.
         const wobble = Math.sin(ang * 3) * width * 0.05;
-        basePoints.push([x + rx + wobble, baseY, z + rz]);
+        basePoints.push([x + rx + wobble, 0, z + rz]);
       }
       for (let i = 0; i < segments; i++) {
         const a = basePoints[i];
@@ -334,10 +320,7 @@ export default function HeroScene() {
         positions.push(...peak, ...a, ...b);
       }
       const geo = new BufferGeometry();
-      geo.setAttribute(
-        "position",
-        new Float32BufferAttribute(positions, 3)
-      );
+      geo.setAttribute("position", new Float32BufferAttribute(positions, 3));
       geo.computeVertexNormals();
 
       const mat = new ShaderMaterial({
@@ -355,27 +338,17 @@ export default function HeroScene() {
       return new Mesh(geo, mat);
     };
 
-    // Distant island — large, soft horizon presence
-    const islandFar = makeIsland(
-      28,
-      4,
-      18,
-      -4,
-      -2,
-      new Vector3(0.06, 0.10, 0.16)
-    );
+    // Hero distant island — soft horizon presence during Acts I-III
+    const islandFar = makeIsland(28, 4, 18, -4, -2, new Vector3(0.06, 0.10, 0.16));
     scene.add(islandFar);
 
-    // Closer island — sharper silhouette, approached by camera in Act IV
-    const islandNear = makeIsland(
-      16,
-      3,
-      11,
-      -7,
-      8,
-      new Vector3(0.08, 0.12, 0.18)
-    );
+    // Hero closer island — approached in Act IV
+    const islandNear = makeIsland(16, 3, 11, -7, 8, new Vector3(0.08, 0.12, 0.18));
     scene.add(islandNear);
+
+    // Moment02 sanctuary — small intimate silhouette, camera dwells nearby
+    const sanctuary = makeIsland(7, 2.5, 5, -6, -4, new Vector3(0.05, 0.09, 0.14));
+    scene.add(sanctuary);
 
     // === Atmospheric haze particles ===
     const PARTICLE_COUNT = 600;
@@ -383,9 +356,9 @@ export default function HeroScene() {
     const partSizes = new Float32Array(PARTICLE_COUNT);
     const partSeeds = new Float32Array(PARTICLE_COUNT);
     for (let i = 0; i < PARTICLE_COUNT; i++) {
-      partPositions[i * 3 + 0] = (Math.random() - 0.5) * 70;
+      partPositions[i * 3 + 0] = (Math.random() - 0.5) * 80;
       partPositions[i * 3 + 1] = Math.random() * 20 + 0.5;
-      partPositions[i * 3 + 2] = (Math.random() - 0.5) * 70 + 10;
+      partPositions[i * 3 + 2] = (Math.random() - 0.5) * 80 + 0;
       partSizes[i] = 1.4 + Math.random() * 2.6;
       partSeeds[i] = Math.random();
     }
@@ -410,18 +383,42 @@ export default function HeroScene() {
     const particles = new Points(partGeo, partMat);
     scene.add(particles);
 
-    // === Scroll-driven camera ===
-    let cachedHeroEnd =
-      window.innerHeight * HERO_PIN_VH_MULTIPLIER; // approx end of hero pin
-    const refreshHeroEnd = () => {
-      cachedHeroEnd = window.innerHeight * HERO_PIN_VH_MULTIPLIER;
+    // === Scroll-driven camera + canvas opacity ===
+    const tmpPos = new Vector3();
+    const tmpLook = new Vector3();
+
+    const sampleWaypoints = (scrollVH: number) => {
+      const clamped = Math.max(0, scrollVH);
+      // Find segment
+      let lower = WAYPOINTS[0];
+      let upper = WAYPOINTS[WAYPOINTS.length - 1];
+      if (clamped <= WAYPOINTS[0].scrollVH) {
+        tmpPos.copy(WAYPOINTS[0].pos);
+        tmpLook.copy(WAYPOINTS[0].look);
+        return;
+      }
+      if (clamped >= WAYPOINTS[WAYPOINTS.length - 1].scrollVH) {
+        tmpPos.copy(WAYPOINTS[WAYPOINTS.length - 1].pos);
+        tmpLook.copy(WAYPOINTS[WAYPOINTS.length - 1].look);
+        return;
+      }
+      for (let i = 0; i < WAYPOINTS.length - 1; i++) {
+        if (clamped >= WAYPOINTS[i].scrollVH && clamped <= WAYPOINTS[i + 1].scrollVH) {
+          lower = WAYPOINTS[i];
+          upper = WAYPOINTS[i + 1];
+          break;
+        }
+      }
+      const span = Math.max(upper.scrollVH - lower.scrollVH, 0.001);
+      const localT = (clamped - lower.scrollVH) / span;
+      const eased = smoothstep01(localT);
+      tmpPos.lerpVectors(lower.pos, upper.pos, eased);
+      tmpLook.lerpVectors(lower.look, upper.look, eased);
     };
 
     let rafId = 0;
     let visible = !document.hidden;
     const start = performance.now();
-    const tmpLook = new Vector3();
-    const tmpPos = new Vector3();
 
     const onResize = () => {
       const w = window.innerWidth;
@@ -430,7 +427,6 @@ export default function HeroScene() {
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
       sharedUniforms.uPixelRatio.value = renderer.getPixelRatio();
-      refreshHeroEnd();
     };
     const onVisibility = () => {
       visible = !document.hidden;
@@ -438,21 +434,15 @@ export default function HeroScene() {
 
     window.addEventListener("resize", onResize);
     document.addEventListener("visibilitychange", onVisibility);
-    ScrollTrigger.addEventListener("refresh", refreshHeroEnd);
+    ScrollTrigger.addEventListener("refresh", onResize);
 
-    // Fade canvas opacity in lockstep with scroll exiting the hero range.
-    // Below the hero: full opacity. Past the hero: smoothstep to 0 across
-    // the next 100vh so the handoff to AtmosphereLayer is gradual.
-    const updateCanvasOpacity = () => {
-      const past = window.scrollY - cachedHeroEnd;
-      if (past <= 0) {
+    const updateCanvasOpacity = (scrollVH: number) => {
+      if (scrollVH <= JOURNEY_END_VH) {
         canvas.style.opacity = "1";
         return true;
       }
-      const fade = Math.max(
-        0,
-        1 - Math.min(1, past / Math.max(window.innerHeight, 1))
-      );
+      const past = scrollVH - JOURNEY_END_VH;
+      const fade = Math.max(0, 1 - past / CANVAS_FADE_DURATION_VH);
       canvas.style.opacity = String(fade);
       return fade > 0.01;
     };
@@ -461,30 +451,26 @@ export default function HeroScene() {
       rafId = requestAnimationFrame(tick);
       if (!visible) return;
 
-      const stillVisible = updateCanvasOpacity();
-      if (!stillVisible) return; // skip render work when fully transparent
+      const vh = Math.max(window.innerHeight, 1);
+      const scrollVH = window.scrollY / vh;
+
+      const stillVisible = updateCanvasOpacity(scrollVH);
+      if (!stillVisible) return;
 
       const now = performance.now();
       const t = (now - start) / 1000;
       sharedUniforms.uTime.value = reducedMotion ? 4.2 : t;
 
-      // Hero progress 0–1 across the pin range.
-      const raw =
-        cachedHeroEnd > 0
-          ? Math.min(1, Math.max(0, window.scrollY / cachedHeroEnd))
-          : 0;
+      // Reduced motion: park at a poetic mid-position, no camera motion.
+      const camScrollVH = reducedMotion ? 1.4 : scrollVH;
+      sampleWaypoints(camScrollVH);
 
-      // Reduced motion: park camera at a poetic mid-position, no motion.
-      const camT = reducedMotion ? 0.35 : raw;
-      cameraCurve.getPoint(camT, tmpPos);
-      lookAtCurve.getPoint(camT, tmpLook);
       camera.position.copy(tmpPos);
       camera.lookAt(tmpLook);
       sharedUniforms.uCameraPos.value.copy(camera.position);
 
-      // Fog distance modulates with camera height — higher up = more haze,
-      // lower = more clarity. Reinforces the descent.
-      const heightT = Math.min(1, Math.max(0, (camera.position.y - 2) / 16));
+      // Fog distance modulates with camera height — higher = more haze.
+      const heightT = Math.min(1, Math.max(0, (camera.position.y - 1.5) / 16.5));
       sharedUniforms.uFogNear.value = 28 + heightT * 6;
       sharedUniforms.uFogFar.value = 140 + heightT * 30;
 
@@ -496,13 +482,13 @@ export default function HeroScene() {
       cancelAnimationFrame(rafId);
       window.removeEventListener("resize", onResize);
       document.removeEventListener("visibilitychange", onVisibility);
-      ScrollTrigger.removeEventListener("refresh", refreshHeroEnd);
+      ScrollTrigger.removeEventListener("refresh", onResize);
       waterGeo.dispose();
       waterMat.dispose();
-      islandFar.geometry.dispose();
-      (islandFar.material as ShaderMaterial).dispose();
-      islandNear.geometry.dispose();
-      (islandNear.material as ShaderMaterial).dispose();
+      [islandFar, islandNear, sanctuary].forEach((m) => {
+        m.geometry.dispose();
+        (m.material as ShaderMaterial).dispose();
+      });
       partGeo.dispose();
       partMat.dispose();
       renderer.dispose();
