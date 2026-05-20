@@ -19,7 +19,6 @@ import Preloader from './Preloader';
 import GlobalNav from './GlobalNav';
 import AtmosphereLayer from './Atmosphere/AtmosphereLayer';
 import AudioToggle from './AudioToggle';
-import MomentWipe from './MomentWipe';
 import JourneyScene from './JourneyScene';
 
 const ScrollJourney = () => {
@@ -52,8 +51,6 @@ const ScrollJourney = () => {
       <Preloader />
       <GlobalNav />
       <AudioToggle />
-      <MomentWipe triggerId="#moment-09" variant="ocean" />
-      <MomentWipe triggerId="#moment-11" variant="curtain" />
 
       <div ref={containerRef} className="scroll-container relative z-10">
         <div className="moments-wrapper relative w-full h-full">
