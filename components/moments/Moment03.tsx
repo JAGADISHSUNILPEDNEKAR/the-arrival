@@ -53,7 +53,7 @@ const Moment03 = ({}: { index: number }) => {
 
     if (reducedMotion) {
       sectionEl.classList.add('active');
-      gsap.set(sectionEl, { opacity: 1, scale: 1 });
+      gsap.set(sectionEl, { opacity: 1, scale: 1, filter: 'none' });
       gsap.set(indexRef.current, { opacity: 0.35, y: 0 });
       gsap.set(subRef.current, { opacity: 0.8, y: 0 });
       if (splitTitle?.words) {
@@ -82,12 +82,18 @@ const Moment03 = ({}: { index: number }) => {
       },
     });
 
-    // === Beat 1 (0.00 – 0.12) — Section enters ===
+    // === Beat 1 (0.02 – 0.12) — Section enters with camera settle ===
     tl.fromTo(
       sectionEl,
-      { opacity: 0 },
-      { opacity: 1, ease: 'cinematic', duration: 0.5 },
-      0.05
+      { opacity: 0, scale: 1.015, filter: 'blur(1px)' },
+      {
+        opacity: 1,
+        scale: 1,
+        filter: 'blur(0px)',
+        ease: 'cinematic',
+        duration: 0.10,
+      },
+      0.02
     );
 
     // === Beat 2 (0.12 – 0.30) — Index + headline reveal ===
@@ -124,10 +130,10 @@ const Moment03 = ({}: { index: number }) => {
 
     // === HOLD 0.60 – 0.88 — Camera holds aerial in JourneyScene ===
 
-    // === Beat 4 (0.88 – 1.00) — Text exit ===
+    // === Beat 4 (0.88 – 1.00) — Text exit: dissolve upward (approach arc) ===
     tl.to(
       textRef.current,
-      { opacity: 0, y: -80, force3D: true, ease: 'cinematic' },
+      { opacity: 0, y: -60, filter: 'blur(2px)', force3D: true, ease: 'cinematic' },
       0.88
     );
     tl.to(
