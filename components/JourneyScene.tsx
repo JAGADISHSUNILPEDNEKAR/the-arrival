@@ -2,7 +2,9 @@
 
 import React, { useEffect, useRef } from "react";
 import {
+  BoxGeometry,
   BufferGeometry,
+  CylinderGeometry,
   Float32BufferAttribute,
   Mesh,
   PerspectiveCamera,
@@ -10,6 +12,7 @@ import {
   Points,
   Scene,
   ShaderMaterial,
+  SphereGeometry,
   Vector3,
   WebGLRenderer,
 } from "three";
@@ -185,10 +188,15 @@ const FRAGMENT_PARTICLE = /* glsl */ `
 // position + lookAt target. Smoothstep interpolation between waypoints means
 // velocity is zero at each anchor — creates the "dwell" feel at each moment.
 //
-// scrollVH 0–4   → hero (FilmHomepage pins for 400%)
-// scrollVH 4–6.5 → Moment02 (sanctuary, pins for 250% on desktop)
-// Beyond 6.5 the canvas fades out; subsequent moments revert to
-// AtmosphereLayer-only until they're extended into this scene.
+// Narrative arc — arrival at the island:
+//   scrollVH 0–4   → hero, descending from sky toward distant island
+//   scrollVH 4–6.5 → Moment02, approach and arrive at the island shore
+//   At Moment02 end, the camera stops at the jetty looking inland at the
+//   pavilion — the user feels they have arrived. Subsequent moments will
+//   take the journey inland and into the pavilion.
+//
+// Main island is centered at world position (0, 0, -28). The camera
+// approaches it from positive Z, ending at the jetty around z = -15.
 interface Waypoint {
   scrollVH: number;
   pos: Vector3;
@@ -339,17 +347,111 @@ export default function JourneyScene() {
       return new Mesh(geo, mat);
     };
 
-    // Hero distant island — soft horizon presence during Acts I-III
-    const islandFar = makeIsland(28, 4, 18, -4, -2, new Vector3(0.06, 0.10, 0.16));
-    scene.add(islandFar);
+    // Shared material factory for the silhouette layer (island, palms,
+    // pavilion, jetty). Same shader, different base colors per element.
+    const makeSilhouetteMaterial = (color: Vector3) =>
+      new ShaderMaterial({
+        vertexShader: VERTEX_ISLAND,
+        fragmentShader: FRAGMENT_ISLAND,
+        uniforms: {
+          uCameraPos: sharedUniforms.uCameraPos,
+          uIslandColor: { value: color },
+          uFogNear: sharedUniforms.uFogNear,
+          uFogFar: sharedUniforms.uFogFar,
+        },
+        transparent: true,
+        depthWrite: false,
+      });
 
-    // Hero closer island — approached in Act IV
-    const islandNear = makeIsland(16, 3, 11, -7, 8, new Vector3(0.08, 0.12, 0.18));
-    scene.add(islandNear);
+    // === Palm tree — hexagonal trunk + flattened canopy ===
+    const makePalm = (
+      px: number,
+      pz: number,
+      height: number,
+      color: Vector3
+    ): Mesh[] => {
+      const trunkH = height * 0.75;
+      const trunkGeo = new CylinderGeometry(0.10, 0.22, trunkH, 6);
+      trunkGeo.translate(px, trunkH / 2, pz);
+      const canopyGeo = new SphereGeometry(height * 0.20, 6, 4);
+      canopyGeo.scale(1.6, 0.55, 1.6);
+      canopyGeo.translate(px, trunkH + height * 0.05, pz);
+      const mat = makeSilhouetteMaterial(color);
+      return [new Mesh(trunkGeo, mat), new Mesh(canopyGeo, mat)];
+    };
 
-    // Moment02 sanctuary — small intimate silhouette, camera dwells nearby
-    const sanctuary = makeIsland(7, 2.5, 5, -6, -4, new Vector3(0.05, 0.09, 0.14));
-    scene.add(sanctuary);
+    // === Over-water-style pavilion — box base + thin overhanging roof ===
+    const makePavilion = (
+      px: number,
+      pz: number,
+      width: number,
+      height: number,
+      depth: number,
+      color: Vector3
+    ): Mesh[] => {
+      const baseH = height * 0.85;
+      const baseGeo = new BoxGeometry(width, baseH, depth);
+      baseGeo.translate(px, baseH / 2, pz);
+      const roofGeo = new BoxGeometry(width * 1.18, height * 0.06, depth * 1.18);
+      roofGeo.translate(px, baseH + height * 0.03, pz);
+      const mat = makeSilhouetteMaterial(color);
+      return [new Mesh(baseGeo, mat), new Mesh(roofGeo, mat)];
+    };
+
+    // === Jetty — thin elongated plank just above water ===
+    const makeJetty = (
+      px: number,
+      pz: number,
+      length: number,
+      width: number,
+      color: Vector3
+    ): Mesh => {
+      const geo = new BoxGeometry(width, 0.25, length);
+      geo.translate(px, 0.12, pz);
+      return new Mesh(geo, makeSilhouetteMaterial(color));
+    };
+
+    // === Context islands — distant atmospheric silhouettes on the horizon ===
+    const contextLeft = makeIsland(20, 2.5, 12, -28, -55, new Vector3(0.04, 0.07, 0.12));
+    scene.add(contextLeft);
+    const contextRight = makeIsland(15, 2.0, 9, 24, -62, new Vector3(0.04, 0.07, 0.12));
+    scene.add(contextRight);
+
+    // === Main island — the destination ===
+    // Wider, lower profile than a single peak; broad shoreline silhouette.
+    const mainIsland = makeIsland(20, 1.8, 14, 0, -28, new Vector3(0.08, 0.13, 0.18));
+    scene.add(mainIsland);
+
+    // Palms — scattered across the main island
+    const palmColor = new Vector3(0.04, 0.07, 0.10);
+    const palmSpec = [
+      { x: -4,  z: -25, h: 6.8 },
+      { x: 3,   z: -26, h: 7.4 },
+      { x: -2,  z: -30, h: 7.0 },
+      { x: 4,   z: -31, h: 6.3 },
+      { x: -5,  z: -33, h: 6.5 },
+      { x: 1,   z: -34, h: 7.2 },
+    ];
+    const palmMeshes: Mesh[] = [];
+    palmSpec.forEach(({ x, z, h }) => {
+      const parts = makePalm(x, z, h, palmColor);
+      parts.forEach((m) => {
+        scene.add(m);
+        palmMeshes.push(m);
+      });
+    });
+
+    // Pavilion — center of the island. Suggested structure, not detailed.
+    const pavilionMeshes = makePavilion(
+      -1, -28, 5.5, 2.8, 4,
+      new Vector3(0.06, 0.10, 0.13)
+    );
+    pavilionMeshes.forEach((m) => scene.add(m));
+
+    // Jetty — extends from the island near-edge toward the camera's
+    // approach path. Visible cue that "this is where you arrive."
+    const jetty = makeJetty(0, -17, 8, 1.4, new Vector3(0.07, 0.10, 0.14));
+    scene.add(jetty);
 
     // === Atmospheric haze particles ===
     const PARTICLE_COUNT = 600;
@@ -486,9 +588,22 @@ export default function JourneyScene() {
       ScrollTrigger.removeEventListener("refresh", onResize);
       waterGeo.dispose();
       waterMat.dispose();
-      [islandFar, islandNear, sanctuary].forEach((m) => {
+      const silhouetteMeshes: Mesh[] = [
+        contextLeft,
+        contextRight,
+        mainIsland,
+        ...palmMeshes,
+        ...pavilionMeshes,
+        jetty,
+      ];
+      const disposedMaterials = new Set<ShaderMaterial>();
+      silhouetteMeshes.forEach((m) => {
         m.geometry.dispose();
-        (m.material as ShaderMaterial).dispose();
+        const mat = m.material as ShaderMaterial;
+        if (!disposedMaterials.has(mat)) {
+          mat.dispose();
+          disposedMaterials.add(mat);
+        }
       });
       partGeo.dispose();
       partMat.dispose();
