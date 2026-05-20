@@ -54,7 +54,7 @@ const Moment05 = ({}: { index: number }) => {
 
     if (reducedMotion) {
       sectionEl.classList.add('active');
-      gsap.set(sectionEl, { opacity: 1, scale: 1 });
+      gsap.set(sectionEl, { opacity: 1, scale: 1, filter: 'none' });
       gsap.set(indexRef.current, { opacity: 0.35, y: 0 });
       gsap.set(subRef.current, { opacity: 0.8, y: 0 });
       if (splitTitle?.words) {
@@ -79,19 +79,25 @@ const Moment05 = ({}: { index: number }) => {
       },
     });
 
-    // === Beat 1 (0.00 – 0.12) — Section enters as camera steps into shade ===
+    // === Beat 1 (0.02 – 0.12) — Section enters with camera settle ===
     tl.fromTo(
       sectionEl,
-      { opacity: 0 },
-      { opacity: 1, ease: 'cinematic', duration: 0.5 },
-      0.05
+      { opacity: 0, scale: 1.015, filter: 'blur(1px)' },
+      {
+        opacity: 1,
+        scale: 1,
+        filter: 'blur(0px)',
+        ease: 'cinematic',
+        duration: 0.10,
+      },
+      0.02
     );
 
     // === Beat 2 (0.12 – 0.30) — Index + headline reveal ===
     tl.to(
       indexRef.current,
       { opacity: 0.35, y: 0, duration: 0.08, ease: 'cinematic' },
-      0.14
+      0.12
     );
     if (splitTitle?.words) {
       tl.to(
@@ -104,7 +110,7 @@ const Moment05 = ({}: { index: number }) => {
           duration: 0.15,
           ease: 'cinematic',
         },
-        0.18
+        0.15
       );
     }
 
@@ -119,10 +125,10 @@ const Moment05 = ({}: { index: number }) => {
 
     // === HOLD 0.62 – 0.88 — Camera dwells under shade in JourneyScene ===
 
-    // === Beat 4 (0.88 – 1.00) — Text exit ===
+    // === Beat 4 (0.88 – 1.00) — Text exit: drift aside (intimate arc) ===
     tl.to(
       textRef.current,
-      { opacity: 0, y: -80, force3D: true, ease: 'cinematic' },
+      { opacity: 0, x: -40, force3D: true, ease: 'cinematic' },
       0.88
     );
     tl.to(
