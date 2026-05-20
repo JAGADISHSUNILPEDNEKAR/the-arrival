@@ -227,6 +227,15 @@ const FRAGMENT_PARTICLE = /* glsl */ `
 //   scrollVH 16.5–19  → Moment07 (VI), camera moves INTO the open pavilion
 //                       and settles close to a table with a lit lantern at
 //                       its center — the "a table waiting" beat.
+//   scrollVH 19–22    → Moment08 (VII), testimonial blackout (Moment08's
+//                       own overlay at z-10 mutes the world). Camera drifts
+//                       slowly from the lantern close-up to a slight
+//                       pullback that reveals at end-of-chapter as the
+//                       blackout lifts — sets up Moment09's plate view.
+//   scrollVH 22–24.5  → Moment09 (VIII), plate close-up that tilts up to
+//                       reveal the ocean visible past the pavilion's back
+//                       columns — the "eight courses, one ocean" beat.
+//                       Sun is at night by now; no water glint.
 //
 // Main island is centered at world position (0, 0, -28). The camera
 // approaches it from positive Z, lands at the shore (Moment02), then rises
@@ -314,6 +323,20 @@ const WAYPOINTS: Waypoint[] = [
   { scrollVH: 18.5, pos: new Vector3(-1,  1.3,  -27.1),  look: new Vector3(-1, 0.9,  -28) },
   // Moment07 end — intimate close on the lantern, leaning over the table
   { scrollVH: 19.0, pos: new Vector3(-1,  1.2,  -27.3),  look: new Vector3(-1, 0.88, -28) },
+  // Moment08 end — slow drift across the testimonial blackout. The blackout
+  // overlay (in Moment08.tsx, z-10) covers the world for most of this range;
+  // the user only sees this position as the blackout lifts at chapter exit.
+  { scrollVH: 22.0, pos: new Vector3(-1,  1.5,  -26.5),  look: new Vector3(-1, 1.0,  -27.8) },
+  // Moment09 enter — moving over the plate as the blackout lifts
+  { scrollVH: 22.5, pos: new Vector3(-1,  1.35, -26.9),  look: new Vector3(-1, 0.88, -28) },
+  // Moment09 — plate close-up, gaze straight down at it
+  { scrollVH: 23.0, pos: new Vector3(-1,  1.25, -27.1),  look: new Vector3(-1, 0.86, -28) },
+  // Moment09 — beginning to tilt up; ocean about to come into frame
+  { scrollVH: 23.5, pos: new Vector3(-1,  1.5,  -26.8),  look: new Vector3(-1, 0.7,  -30) },
+  // Moment09 — ocean revealed past the pavilion's back columns
+  { scrollVH: 24.0, pos: new Vector3(-1,  1.8,  -26.4),  look: new Vector3(-1, 0.55, -32) },
+  // Moment09 end — dwell on plate-foreground + ocean-background composition
+  { scrollVH: 24.5, pos: new Vector3(-1,  1.95, -26.0),  look: new Vector3(-1, 0.45, -34) },
 ];
 
 const JOURNEY_END_VH = WAYPOINTS[WAYPOINTS.length - 1].scrollVH;
@@ -360,12 +383,14 @@ export default function JourneyScene() {
     camera.position.copy(WAYPOINTS[0].pos);
     camera.lookAt(WAYPOINTS[0].look);
 
-    // Sun direction transitions from day → dusk during the scroll range
-    // approaching the pavilion-at-dusk moment. The water shader's fresnel
-    // and sun-glint respond to this, giving a real lighting shift, not a
-    // CSS overlay tint.
+    // Sun direction transitions in two stages: day → dusk (approaching the
+    // pavilion-at-dusk moment) and dusk → night (during the testimonial
+    // blackout, so the world re-emerges as night for Moments 09+).
+    // The water shader's fresnel and sun-glint respond — at night the sun
+    // is below the horizon, so the visible glint band disappears.
     const SUN_DAY = new Vector3(0.5, 0.45, -0.7).normalize();
     const SUN_DUSK = new Vector3(0.75, 0.12, -0.35).normalize();
+    const SUN_NIGHT = new Vector3(0.3, -0.35, -0.5).normalize();
     const sunDir = SUN_DAY.clone();
     const sharedUniforms = {
       uTime: { value: 0 },
@@ -534,6 +559,18 @@ export default function JourneyScene() {
       return new Mesh(topGeo, makeSilhouetteMaterial(color));
     };
 
+    // === Plate — thin ceramic disc on the table (Moment09 focal point) ===
+    const makePlate = (
+      px: number,
+      py: number,
+      pz: number,
+      color: Vector3
+    ): Mesh => {
+      const geo = new CylinderGeometry(0.36, 0.34, 0.04, 18);
+      geo.translate(px, py, pz);
+      return new Mesh(geo, makeSilhouetteMaterial(color));
+    };
+
     // === Lantern — small emissive sphere on the table ===
     const makeLantern = (px: number, py: number, pz: number): Mesh => {
       const geo = new SphereGeometry(0.13, 10, 10);
@@ -608,9 +645,15 @@ export default function JourneyScene() {
     const table = makeTable(-1, -28.2, 2.2, 0.88, new Vector3(0.08, 0.06, 0.04));
     scene.add(table);
 
-    // Lantern — on the table center. Emissive, flickers; the visual focal
-    // point at the end of Moment07's interior approach.
-    const lantern = makeLantern(-1, 1.05, -28.2);
+    // Plate — sits on the table at the camera-facing place setting. The
+    // lantern is positioned just behind/above it; together they're the
+    // central focus of Moments 07 + 09.
+    const plate = makePlate(-1, 0.93, -27.9, new Vector3(0.22, 0.20, 0.16));
+    scene.add(plate);
+
+    // Lantern — slightly behind the plate. Emissive, flickers; the visual
+    // focal point at the end of Moment07's interior approach.
+    const lantern = makeLantern(-1, 1.05, -28.4);
     scene.add(lantern);
 
     // Jetty — extends from the island near-edge toward the camera's
@@ -742,11 +785,27 @@ export default function JourneyScene() {
       sharedUniforms.uFogNear.value = 28 + heightT * 6;
       sharedUniforms.uFogFar.value = 140 + heightT * 30;
 
-      // Sun direction: day → dusk transition during the lead-up to and
-      // through Moment06. Eased so the change is gradual, not stepped.
-      const sunT = Math.min(1, Math.max(0, (scrollVH - 11) / 5));
-      const sunEased = sunT * sunT * (3 - 2 * sunT);
-      sharedUniforms.uSunDir.value.lerpVectors(SUN_DAY, SUN_DUSK, sunEased);
+      // Sun direction — piecewise transitions across the journey:
+      //   scrollVH < 11   : day
+      //   scrollVH 11–16  : day → dusk
+      //   scrollVH 16–19  : dusk (steady through pavilion-at-dusk + into-pavilion)
+      //   scrollVH 19–22  : dusk → night (during testimonial blackout)
+      //   scrollVH ≥ 22   : night (sun below horizon, no water glint)
+      if (scrollVH < 11) {
+        sharedUniforms.uSunDir.value.copy(SUN_DAY);
+      } else if (scrollVH < 16) {
+        const t = (scrollVH - 11) / 5;
+        const eased = t * t * (3 - 2 * t);
+        sharedUniforms.uSunDir.value.lerpVectors(SUN_DAY, SUN_DUSK, eased);
+      } else if (scrollVH < 19) {
+        sharedUniforms.uSunDir.value.copy(SUN_DUSK);
+      } else if (scrollVH < 22) {
+        const t = (scrollVH - 19) / 3;
+        const eased = t * t * (3 - 2 * t);
+        sharedUniforms.uSunDir.value.lerpVectors(SUN_DUSK, SUN_NIGHT, eased);
+      } else {
+        sharedUniforms.uSunDir.value.copy(SUN_NIGHT);
+      }
 
       renderer.render(scene, camera);
     };
@@ -766,6 +825,7 @@ export default function JourneyScene() {
         ...palmMeshes,
         ...pavilionMeshes,
         table,
+        plate,
         jetty,
       ];
       const disposedMaterials = new Set<ShaderMaterial>();
