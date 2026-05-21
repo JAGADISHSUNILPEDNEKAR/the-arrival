@@ -25,27 +25,35 @@ const ScrollJourney = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      ScrollTrigger.refresh();
-    }, 1000);
-
+    // The initial ScrollTrigger.refresh() runs in SmoothScroll.tsx after Lenis
+    // initialises — Lenis must be in place before ScrollTrigger maps pin
+    // positions. The previous setTimeout + 'load' listener here ran the same
+    // refresh twice more, which is expensive on a page with 12+ pinned
+    // sections (each refresh recomputes every pin). Resize stays — that's a
+    // genuine reactive recompute, not redundant init noise.
     const handleResize = () => {
       ScrollTrigger.refresh();
     };
-
-    window.addEventListener('load', handleResize);
     window.addEventListener('resize', handleResize);
 
     return () => {
-      clearTimeout(timer);
-      window.removeEventListener('load', handleResize);
       window.removeEventListener('resize', handleResize);
       ScrollTrigger.getAll().forEach(t => t.kill());
     };
   }, []);
 
   return (
-    <main className="scroll-journey relative">
+    <main role="main" className="scroll-journey relative">
+      {/* Skip link — visually hidden until keyboard-focused. Jumps past the
+          11-chapter scroll journey straight to the actionable reservation. */}
+      <a
+        href="#moment-11"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[10001] focus:px-4 focus:py-2 focus:rounded focus:bg-black/85 focus:text-white focus:no-underline"
+        style={{ fontFamily: 'var(--font-sans)', fontSize: '0.85rem' }}
+      >
+        Skip to reservation
+      </a>
+
       <AtmosphereLayer />
       <JourneyScene />
       <Preloader />
