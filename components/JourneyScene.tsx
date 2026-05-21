@@ -14,10 +14,11 @@ import {
   Scene,
   ShaderMaterial,
   SphereGeometry,
+  Vector2,
   Vector3,
   WebGLRenderer,
 } from "three";
-import { ScrollTrigger } from "@/lib/gsap";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 /**
  * JourneyScene — the continuous 3D world the camera traverses across the
@@ -78,6 +79,7 @@ const FRAGMENT_WATER = /* glsl */ `
   uniform vec3 uDeepColor;
   uniform vec3 uShallowColor;
   uniform vec3 uHorizonColor;
+  uniform vec2 uIslandCenter;
   uniform float uFogNear;
   uniform float uFogFar;
   varying vec3 vWorldPos;
@@ -107,6 +109,19 @@ const FRAGMENT_WATER = /* glsl */ `
     float distFromCam = length(uCameraPos - vWorldPos);
     float deepMix = smoothstep(10.0, 80.0, distFromCam);
     vec3 baseCol = mix(uShallowColor, uDeepColor, deepMix);
+
+    // Lagoon shallows + island-edge AO. Distance from the main island
+    // center drives two terms: a vivid turquoise mix in the 8–18 unit ring
+    // around the island (tropical-reef halo), and a darkening band right
+    // at the silhouette edge (wet-sand / occlusion shadow). Together they
+    // anchor the island in the water instead of floating on it.
+    float islandDist = length(vWorldPos.xz - uIslandCenter);
+    float shallowRing = 1.0 - smoothstep(8.0, 18.0, islandDist);
+    vec3 lagoonColor = vec3(0.12, 0.28, 0.35);
+    baseCol = mix(baseCol, lagoonColor, shallowRing * 0.45);
+    float aoRing = 1.0 - smoothstep(11.0, 15.0, islandDist);
+    baseCol *= 1.0 - aoRing * 0.30;
+
     vec3 col = mix(baseCol, uHorizonColor, fresnel * 0.65);
     col += sunHighlight;
     col += moonHighlight;
@@ -486,6 +501,7 @@ export default function JourneyScene() {
         uDeepColor: { value: new Vector3(0.025, 0.075, 0.135) },
         uShallowColor: { value: new Vector3(0.085, 0.165, 0.235) },
         uHorizonColor: { value: new Vector3(0.40, 0.55, 0.68) },
+        uIslandCenter: { value: new Vector2(0, -28) },
       },
       transparent: true,
       depthWrite: false,
@@ -558,11 +574,13 @@ export default function JourneyScene() {
         side: DoubleSide,
       });
 
-    // === Palm tree — hexagonal trunk + flattened sphere canopy ===
-    // Solid sphere-canopy reads as a palm silhouette from every angle.
-    // The radial-triangle approach attempted earlier rendered as
-    // single-pixel-wide "spider leg" sticks from most angles, especially
-    // when viewed edge-on. Sphere is angle-invariant.
+    // === Palm tree — hexagonal trunk + layered canopy ===
+    // The canopy is three overlapping flattened spheres at descending sizes,
+    // increasing Y-rotation, and stepped heights. From any viewing angle
+    // (especially ground-level moments 05-06), the silhouette breaks up
+    // into asymmetric frond shapes rather than reading as a single blob.
+    // Sphere primitives stay angle-invariant — the earlier radial-triangle
+    // approach rendered as single-pixel "spider legs" when viewed edge-on.
     const makePalm = (
       px: number,
       pz: number,
@@ -576,12 +594,30 @@ export default function JourneyScene() {
       const trunkGeo = new CylinderGeometry(0.10, 0.20, trunkH, 6);
       trunkGeo.translate(px, trunkH / 2, pz);
 
-      // Canopy — flattened sphere (wider than tall) for palm-crown silhouette
-      const canopyGeo = new SphereGeometry(height * 0.22, 8, 6);
-      canopyGeo.scale(1.65, 0.50, 1.65);
-      canopyGeo.translate(px, trunkH + height * 0.06, pz);
+      const meshes: Mesh[] = [new Mesh(trunkGeo, mat)];
 
-      return [new Mesh(trunkGeo, mat), new Mesh(canopyGeo, mat)];
+      const canopyBase = height * 0.22;
+      const canopyLayers: Array<{
+        rScale: number;
+        flat: number;
+        rotY: number;
+        yOffset: number;
+      }> = [
+        { rScale: 1.00, flat: 0.50, rotY: 0.0, yOffset: 0.04 },
+        { rScale: 0.85, flat: 0.45, rotY: 0.5, yOffset: 0.09 },
+        { rScale: 0.70, flat: 0.40, rotY: 1.0, yOffset: 0.14 },
+      ];
+
+      canopyLayers.forEach(({ rScale, flat, rotY, yOffset }) => {
+        const geo = new SphereGeometry(canopyBase * rScale, 8, 6);
+        // Non-uniform XZ scale so Y-rotation actually shifts the silhouette.
+        geo.scale(1.65, flat, 1.55);
+        geo.rotateY(rotY);
+        geo.translate(px, trunkH + height * yOffset, pz);
+        meshes.push(new Mesh(geo, mat));
+      });
+
+      return meshes;
     };
 
     // === Open pavilion — floor platform + 4 corner columns + roof slab ===
@@ -816,7 +852,6 @@ export default function JourneyScene() {
       tmpLook.lerpVectors(lower.look, upper.look, eased);
     };
 
-    let rafId = 0;
     let visible = !document.hidden;
     const start = performance.now();
 
@@ -847,8 +882,11 @@ export default function JourneyScene() {
       return fade > 0.01;
     };
 
+    // Runs via gsap.ticker so JourneyScene shares the same frame as Lenis
+    // and AtmosphereLayer — one coordinated tick per frame instead of three
+    // independent rAFs. ScrollTrigger.update has already fired by this
+    // point, so window.scrollY is coherent with current pin state.
     const tick = () => {
-      rafId = requestAnimationFrame(tick);
       if (!visible) return;
 
       const vh = Math.max(window.innerHeight, 1);
@@ -870,9 +908,14 @@ export default function JourneyScene() {
       sharedUniforms.uCameraPos.value.copy(camera.position);
 
       // Fog distance modulates with camera height — higher = more haze.
+      // At night (uMoonIntensity → 1) fog tightens 35–40% closer so the
+      // moonlit scenes (Moments 09+) feel enclosed and intimate; visibility
+      // shrinks the way it does in real night conditions. Daytime values
+      // unaffected because uMoonIntensity stays at 0.
       const heightT = Math.min(1, Math.max(0, (camera.position.y - 1.5) / 16.5));
-      sharedUniforms.uFogNear.value = 28 + heightT * 6;
-      sharedUniforms.uFogFar.value = 140 + heightT * 30;
+      const nightFogT = sharedUniforms.uMoonIntensity.value;
+      sharedUniforms.uFogNear.value = (28 + heightT * 6) * (1 - nightFogT * 0.35);
+      sharedUniforms.uFogFar.value = (140 + heightT * 30) * (1 - nightFogT * 0.40);
 
       // Sun direction — piecewise transitions across the journey:
       //   scrollVH < 11   : day
@@ -910,10 +953,10 @@ export default function JourneyScene() {
 
       renderer.render(scene, camera);
     };
-    tick();
+    gsap.ticker.add(tick);
 
     return () => {
-      cancelAnimationFrame(rafId);
+      gsap.ticker.remove(tick);
       window.removeEventListener("resize", onResize);
       document.removeEventListener("visibilitychange", onVisibility);
       ScrollTrigger.removeEventListener("refresh", onResize);

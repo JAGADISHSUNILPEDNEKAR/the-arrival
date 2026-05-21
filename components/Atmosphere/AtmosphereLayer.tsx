@@ -10,7 +10,7 @@ import {
   Vector2,
   WebGLRenderer,
 } from "three";
-import { ScrollTrigger } from "@/lib/gsap";
+import { gsap, ScrollTrigger } from "@/lib/gsap";
 
 const VERTEX = /* glsl */ `
 varying vec2 vUv;
@@ -224,7 +224,6 @@ export default function AtmosphereLayer() {
     const mesh = new Mesh(geometry, material);
     scene.add(mesh);
 
-    let rafId = 0;
     let visible = !document.hidden;
     let lastScrollY = window.scrollY;
     let smoothedVel = 0;
@@ -264,8 +263,12 @@ export default function AtmosphereLayer() {
     document.addEventListener("visibilitychange", onVisibility);
     ScrollTrigger.addEventListener("refresh", refreshMaxScroll);
 
+    // Runs via gsap.ticker so AtmosphereLayer shares the single frame budget
+    // with Lenis (SmoothScroll), ScrollTrigger.update, and any tweens in
+    // flight. gsap.ticker fires *after* ScrollTrigger.update each frame, so
+    // any scroll-derived values read here are already coherent with the
+    // current frame's pin/snap state.
     const tick = () => {
-      rafId = requestAnimationFrame(tick);
       if (!visible) return;
 
       const now = performance.now();
@@ -289,10 +292,10 @@ export default function AtmosphereLayer() {
 
       renderer.render(scene, camera);
     };
-    tick();
+    gsap.ticker.add(tick);
 
     return () => {
-      cancelAnimationFrame(rafId);
+      gsap.ticker.remove(tick);
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("resize", onResize);
       document.removeEventListener("visibilitychange", onVisibility);
