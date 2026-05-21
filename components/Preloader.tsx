@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap } from '@/lib/gsap';
+import { useScroll } from '@/lib/context/ScrollContext';
 
 /**
  * The opening ritual. A fixed full-screen autoplay overlay that sits over
@@ -40,6 +41,7 @@ const Preloader = () => {
   const coordValueRef = useRef<HTMLDivElement>(null);
   const hintRef = useRef<HTMLDivElement>(null);
   const [mounted, setMounted] = useState(true);
+  const { stopScroll, startScroll } = useScroll();
 
   useEffect(() => {
     if (!containerRef.current) return;
@@ -51,6 +53,12 @@ const Preloader = () => {
     const isReturning =
       typeof window !== 'undefined' &&
       sessionStorage.getItem(STORAGE_KEY) === '1';
+
+    // Lock scroll during the ritual so the entry ceremony can't be scrubbed
+    // past. No-op under reduced-motion (Lenis isn't initialised). Resume
+    // happens at ritual completion AND on cleanup — both paths matter
+    // because HMR / Fast Refresh can unmount mid-ritual.
+    stopScroll();
 
     // Returning visitor or reduced-motion: skip the ritual.
     if (reducedMotion || isReturning) {
@@ -65,11 +73,13 @@ const Preloader = () => {
         delay: 0.3,
         onComplete: () => {
           sessionStorage.setItem(STORAGE_KEY, '1');
+          startScroll();
           setMounted(false);
         },
       });
       return () => {
         exit.kill();
+        startScroll();
       };
     }
 
@@ -89,6 +99,7 @@ const Preloader = () => {
     const tl = gsap.timeline({
       onComplete: () => {
         sessionStorage.setItem(STORAGE_KEY, '1');
+        startScroll();
         setMounted(false);
       },
     });
@@ -151,8 +162,9 @@ const Preloader = () => {
 
     return () => {
       tl.kill();
+      startScroll();
     };
-  }, []);
+  }, [stopScroll, startScroll]);
 
   if (!mounted) return null;
 

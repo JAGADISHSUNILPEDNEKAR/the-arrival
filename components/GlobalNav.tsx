@@ -2,9 +2,11 @@
 
 import React, { useEffect, useRef } from 'react';
 import { gsap, ScrollTrigger } from '@/lib/gsap';
+import { useScroll } from '@/lib/context/ScrollContext';
 
 const GlobalNav = () => {
   const navRef = useRef<HTMLElement>(null);
+  const { scrollToElement } = useScroll();
 
   useEffect(() => {
     if (!navRef.current) return;
@@ -35,7 +37,7 @@ const GlobalNav = () => {
   }, []);
 
   const handleReserve = () => {
-    document.getElementById('moment-11')?.scrollIntoView({ behavior: 'smooth' });
+    scrollToElement('#moment-11');
   };
 
   return (

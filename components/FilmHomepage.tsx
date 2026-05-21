@@ -3,9 +3,11 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap, SplitText } from '@/lib/gsap';
 import { buildKineticWordsFor, KineticWord } from '@/lib/kineticWord';
+import { useScroll } from '@/lib/context/ScrollContext';
 
 const FilmHomepage = () => {
     const containerRef = useRef<HTMLDivElement>(null);
+    const { scrollToElement } = useScroll();
 
     // Act I
     const coordRef = useRef<HTMLSpanElement>(null);
@@ -253,7 +255,7 @@ const FilmHomepage = () => {
     }, []);
 
     const handleBegin = () => {
-        document.getElementById('moment-02')?.scrollIntoView({ behavior: 'smooth' });
+        scrollToElement('#moment-02');
     };
 
     return (
