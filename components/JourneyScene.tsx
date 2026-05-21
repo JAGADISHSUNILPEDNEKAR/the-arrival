@@ -51,11 +51,16 @@ const VERTEX_WATER = /* glsl */ `
   varying float vWave;
 
   float waveHeight(vec2 p) {
+    // Amplitudes tuned against architecture heights (jetty 0.245, pavilion
+    // floor 0.40, table 0.92, plate 0.95, lantern 1.05). Previous values
+    // summed to a 1.27-unit peak crest — taller than the table and plate,
+    // so waves visibly submerged every element. New peak ~0.265 leaves
+    // architecture clear and still reads as a moving sea, not a pond.
     float h = 0.0;
-    h += sin(p.x * 0.18 + uTime * 0.30) * 0.45;
-    h += sin(p.y * 0.13 - uTime * 0.22) * 0.40;
-    h += sin((p.x + p.y) * 0.07 + uTime * 0.18) * 0.30;
-    h += sin(p.x * 0.45 - p.y * 0.30 + uTime * 0.55) * 0.12;
+    h += sin(p.x * 0.18 + uTime * 0.30) * 0.10;
+    h += sin(p.y * 0.13 - uTime * 0.22) * 0.08;
+    h += sin((p.x + p.y) * 0.07 + uTime * 0.18) * 0.06;
+    h += sin(p.x * 0.45 - p.y * 0.30 + uTime * 0.55) * 0.025;
     return h;
   }
 
@@ -729,10 +734,13 @@ export default function JourneyScene() {
     scene.add(contextRight);
 
     // === Main island — the destination ===
-    // Taller silhouette (3.5 vs the previous 1.8) so the island reads
-    // from distance instead of being a flat horizontal bump that the
-    // user could only see when very close.
-    const mainIsland = makeIsland(22, 3.5, 16, 0, -28, new Vector3(0.08, 0.13, 0.18));
+    // Peak Y = 5.0 (was 3.5) so the silhouette reads from aerial moment
+    // VH=8 where the camera is 21 units up and 53 units away — a 3.5-tall
+    // cone at that distance was a flat smear that disappeared against the
+    // lagoon. Color also lifted slightly (0.10/0.16/0.20 vs prior
+    // 0.08/0.13/0.18) so the island separates from the deep-water palette
+    // (0.025/0.075/0.135) instead of blending into it under high fog.
+    const mainIsland = makeIsland(22, 5.0, 16, 0, -28, new Vector3(0.10, 0.16, 0.20));
     scene.add(mainIsland);
 
     // Palms — scattered across the main island
