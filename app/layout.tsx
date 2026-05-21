@@ -84,6 +84,34 @@ export default function RootLayout({
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(restaurantSchema) }}
         />
+        <noscript>
+          <div
+            style={{
+              padding: '4rem 2rem',
+              maxWidth: '34rem',
+              margin: '0 auto',
+              fontFamily: 'Georgia, serif',
+              color: '#f5f0e8',
+              fontStyle: 'italic',
+              lineHeight: 1.5,
+            }}
+          >
+            <h1 style={{ fontSize: '2.5rem', marginBottom: '1.25rem' }}>The Arrival</h1>
+            <p style={{ fontSize: '1.1rem', marginBottom: '1.5rem' }}>
+              A private island restaurant in the Maldives. The interactive
+              experience requires JavaScript.
+            </p>
+            <p style={{ fontSize: '0.95rem', opacity: 0.75 }}>
+              Reservation is by correspondence:{' '}
+              <a
+                href="mailto:reservations@the-arrival.example"
+                style={{ color: '#f5f0e8', textDecoration: 'underline' }}
+              >
+                reservations@the-arrival.example
+              </a>
+            </p>
+          </div>
+        </noscript>
         <CustomCursor />
         <Providers>
           <SmoothScroll>

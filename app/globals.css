@@ -64,7 +64,10 @@ html::-webkit-scrollbar {
 .scroll-container {
   width: 100%;
   position: relative;
-  overflow: clip; /* Clean overflow for pinning */
+  /* overflow: hidden (not clip) — clip creates a stricter formatting context
+     that can interact unexpectedly with ScrollTrigger pin positioning on
+     iOS Safari. hidden is the documented ScrollTrigger-friendly choice. */
+  overflow: hidden;
 }
 
 .moment {
@@ -120,6 +123,20 @@ html::-webkit-scrollbar {
   .scroll-hint-chevron {
     animation: none;
   }
+}
+
+/* Keyboard focus — editorial outline that matches the bone-white palette.
+   :focus-visible only fires for keyboard navigation (not mouse-click focus),
+   so the ring stays invisible during normal pointer use. Replaces the
+   JS-only border-color swap on Moment11's form, which left keyboard users
+   with no visible focus state at all. */
+input:focus-visible,
+button:focus-visible,
+textarea:focus-visible,
+[role="button"]:focus-visible {
+  outline: 1px solid rgba(245, 240, 232, 0.55);
+  outline-offset: 4px;
+  border-radius: 1px;
 }
 
 

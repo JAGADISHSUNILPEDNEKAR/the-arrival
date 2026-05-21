@@ -39,3 +39,7 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# stray working files (videos / screenshots dropped at repo root)
+/video*.mp4
+/screenshot*.png
