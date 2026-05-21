@@ -147,6 +147,7 @@ const Moment02 = ({}: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-full overflow-hidden"
       id="moment-02"
+      aria-label="Chapter I — A sanctuary, woven into the shoreline"
     >
       {/* Editorial column — left, matching the hero voice anchor */}
       <div
@@ -161,6 +162,7 @@ const Moment02 = ({}: { index: number }) => {
             fontSize: 'clamp(1.75rem, 2.8vw, 2.5rem)',
             lineHeight: 1,
             color: 'rgba(240,232,210,0.4)',
+            textShadow: '0 2px 16px rgba(6,14,26,0.6)',
           }}
         >
           I.

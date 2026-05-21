@@ -190,11 +190,12 @@ const MomentGallery = () => {
       ref={sectionRef}
       className="moment relative w-screen h-screen h-dvh overflow-hidden"
       id="moment-gallery"
+      aria-label="Four other arrivals beyond the table"
     >
       <div
         ref={trackRef}
         className="absolute top-0 left-0 h-full flex"
-        style={{ width: '500vw', willChange: 'transform' }}
+        style={{ width: '500vw' }}
       >
         {/* === Panel 0 — Title card =================================== */}
         <div className="w-screen h-full relative flex items-center justify-center px-[10%]">
@@ -253,6 +254,7 @@ const MomentGallery = () => {
                     fontSize: 'clamp(2.25rem, 5vw, 4.5rem)',
                     lineHeight: 1,
                     color: 'rgba(245,240,232,0.35)',
+                    textShadow: '0 2px 18px rgba(6,8,16,0.6)',
                   }}
                 >
                   {panel.index}

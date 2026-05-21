@@ -152,6 +152,7 @@ const Moment07 = ({}: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-full overflow-hidden"
       id="moment-07"
+      aria-label="Chapter VI — A table waiting"
     >
       {/* Editorial column — left, matching the hero voice anchor */}
       <div
@@ -166,6 +167,7 @@ const Moment07 = ({}: { index: number }) => {
             fontSize: 'clamp(1.75rem, 2.8vw, 2.5rem)',
             lineHeight: 1,
             color: 'rgba(240,210,160,0.4)',
+            textShadow: '0 2px 16px rgba(20,12,4,0.75)',
           }}
         >
           VI.

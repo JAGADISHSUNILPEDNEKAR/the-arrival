@@ -172,6 +172,7 @@ const Moment06 = ({}: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-full overflow-hidden"
       id="moment-06"
+      aria-label="Chapter V — The pavilion at dusk"
     >
       {/* Editorial column — left, matching the hero voice anchor */}
       <div
@@ -186,6 +187,7 @@ const Moment06 = ({}: { index: number }) => {
             fontSize: 'clamp(1.75rem, 2.8vw, 2.5rem)',
             lineHeight: 1,
             color: 'rgba(245,235,210,0.4)',
+            textShadow: '0 2px 16px rgba(15,18,28,0.7)',
           }}
         >
           V.

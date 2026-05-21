@@ -243,6 +243,7 @@ const Moment11 = ({}: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-full overflow-hidden"
       id="moment-11"
+      aria-label="Reservation — by invitation"
     >
       {/* Moonlit ocean is rendered by JourneyScene at this scroll position
           — no CSS background here. */}

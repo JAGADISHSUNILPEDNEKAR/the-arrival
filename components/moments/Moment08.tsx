@@ -156,6 +156,7 @@ const Moment08 = ({}: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-full overflow-hidden"
       id="moment-08"
+      aria-label="Chapter VII — Press testimonial"
     >
       {/* Blackout — mutes AtmosphereLayer underneath so the quote stands alone */}
       <div
@@ -174,6 +175,7 @@ const Moment08 = ({}: { index: number }) => {
               lineHeight: 1,
               letterSpacing: '0.02em',
               color: 'rgba(240,210,160,0.4)',
+              textShadow: '0 2px 16px rgba(0,0,0,0.85)',
             }}
           >
             VII.

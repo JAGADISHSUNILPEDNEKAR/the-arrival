@@ -156,6 +156,7 @@ const Moment09 = ({}: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-full overflow-hidden"
       id="moment-09"
+      aria-label="Chapter VIII — Eight courses. One ocean"
     >
       {/* Editorial column — left, matching the hero voice anchor */}
       <div
@@ -170,6 +171,7 @@ const Moment09 = ({}: { index: number }) => {
             fontSize: 'clamp(1.75rem, 2.8vw, 2.5rem)',
             lineHeight: 1,
             color: 'rgba(240,210,160,0.4)',
+            textShadow: '0 2px 16px rgba(0,0,0,0.75)',
           }}
         >
           VIII.

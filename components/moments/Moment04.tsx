@@ -150,6 +150,7 @@ const Moment04 = ({}: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-full overflow-hidden"
       id="moment-04"
+      aria-label="Chapter III — Leave the noise behind"
     >
       {/* Editorial column — left, matching the hero voice anchor */}
       <div
@@ -164,6 +165,7 @@ const Moment04 = ({}: { index: number }) => {
             fontSize: 'clamp(1.75rem, 2.8vw, 2.5rem)',
             lineHeight: 1,
             color: 'rgba(240,232,210,0.4)',
+            textShadow: '0 2px 16px rgba(8,16,24,0.65)',
           }}
         >
           III.

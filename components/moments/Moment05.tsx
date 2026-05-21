@@ -151,6 +151,7 @@ const Moment05 = ({}: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-full overflow-hidden"
       id="moment-05"
+      aria-label="Chapter IV — Out of the sun. Into the shade"
     >
       {/* Editorial column — RIGHT-anchored. The shade carries the text,
           framed against the palm silhouette on the left of the view. */}
@@ -166,6 +167,7 @@ const Moment05 = ({}: { index: number }) => {
             fontSize: 'clamp(1.75rem, 2.8vw, 2.5rem)',
             lineHeight: 1,
             color: 'rgba(245,240,232,0.4)',
+            textShadow: '0 2px 16px rgba(10,16,24,0.7)',
           }}
         >
           IV.

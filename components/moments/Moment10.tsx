@@ -142,6 +142,7 @@ const Moment10 = ({}: { index: number }) => {
       ref={sectionRef}
       className="moment relative w-full overflow-hidden"
       id="moment-10"
+      aria-label="Chapter IX — Some tables are remembered longer than others"
     >
       {/* Centered quote — the site's only centered text composition.
           A deliberate pause beat between the gallery and the reservation. */}
@@ -157,6 +158,7 @@ const Moment10 = ({}: { index: number }) => {
             fontSize: 'clamp(1.5rem, 2.5vw, 2.25rem)',
             lineHeight: 1,
             color: 'rgba(220,225,235,0.4)',
+            textShadow: '0 2px 16px rgba(0,0,0,0.7)',
           }}
         >
           IX.
