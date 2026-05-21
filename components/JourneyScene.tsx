@@ -117,15 +117,17 @@ const FRAGMENT_WATER = /* glsl */ `
 
     // Lagoon shallows + island-edge AO. Distance from the main island
     // center drives two terms: a vivid turquoise mix in the 8–18 unit ring
-    // around the island (tropical-reef halo), and a darkening band right
-    // at the silhouette edge (wet-sand / occlusion shadow). Together they
-    // anchor the island in the water instead of floating on it.
+    // around the island (tropical-reef halo), and a darker AO band right
+    // at the silhouette edge (occlusion shadow / deeper-channel suggestion).
+    // The AO band is positioned just outside the beach color zone so the
+    // shore reads as bright sand against a darker water boundary —
+    // creates the visible halo that lets the island read from aerial.
     float islandDist = length(vWorldPos.xz - uIslandCenter);
     float shallowRing = 1.0 - smoothstep(8.0, 18.0, islandDist);
     vec3 lagoonColor = vec3(0.12, 0.28, 0.35);
     baseCol = mix(baseCol, lagoonColor, shallowRing * 0.45);
-    float aoRing = 1.0 - smoothstep(11.0, 15.0, islandDist);
-    baseCol *= 1.0 - aoRing * 0.30;
+    float aoRing = 1.0 - smoothstep(11.0, 16.0, islandDist);
+    baseCol *= 1.0 - aoRing * 0.45;
 
     vec3 col = mix(baseCol, uHorizonColor, fresnel * 0.65);
     col += sunHighlight;
@@ -162,8 +164,25 @@ const FRAGMENT_ISLAND = /* glsl */ `
   void main() {
     float d = length(uCameraPos - vWorldPos);
     float alpha = 1.0 - smoothstep(uFogNear * 0.6, uFogFar, d);
-    float heightFade = smoothstep(0.0, 4.0, vWorldPos.y);
-    vec3 col = mix(uIslandColor, uIslandColor * 0.55, heightFade);
+
+    // Vegetation/shadow fade — slightly darker toward the peak so the
+    // side slope reads as forest in shade. Dampened (0.55 → 0.75) so the
+    // top cap stays bright enough to be visible from aerial Moment03,
+    // where it's the primary contour against the lagoon.
+    float heightFade = smoothstep(0.0, 5.0, vWorldPos.y);
+    vec3 vegCol = mix(uIslandColor, uIslandColor * 0.75, heightFade);
+
+    // Beach band — warm wet-sand tone covering the bottom 3 units of the
+    // cone's lateral surface. From aerial moment VH=8 this projects as a
+    // wide sand ring around the island base; from ground level it's the
+    // shore strip at the water line. Brightness and band width tuned so
+    // the island has visible contrast against the lagoon-tinted water
+    // even when viewed straight down (where cone-fan triangles otherwise
+    // present nearly edge-on and disappear into the palette).
+    vec3 beachColor = vec3(0.45, 0.38, 0.26);
+    float beachT = 1.0 - smoothstep(0.0, 3.0, vWorldPos.y);
+    vec3 col = mix(vegCol, beachColor, beachT * 0.85);
+
     gl_FragColor = vec4(col, alpha * 0.92);
   }
 `;
@@ -515,6 +534,13 @@ export default function JourneyScene() {
     scene.add(water);
 
     // === Island silhouettes ===
+    // Truncated-cone hill — wider at the base, narrower at the top, with
+    // flat caps on both ends. Reads as a solid hill silhouette from every
+    // viewing angle including straight overhead (where the previous radial
+    // cone-fan presented edge-on triangles and disappeared into the lagoon
+    // at aerial Moment03). The top cap fills with vegetation color and
+    // becomes the visible disc from above; the lateral surface carries the
+    // beach band into view as a sand ring around the base.
     const makeIsland = (
       width: number,
       height: number,
@@ -523,25 +549,17 @@ export default function JourneyScene() {
       z: number,
       color: Vector3
     ) => {
-      const positions: number[] = [];
-      const peakY = height;
-      const peak = [x, peakY, z];
-      const segments = 12;
-      const basePoints: number[][] = [];
-      for (let i = 0; i < segments; i++) {
-        const ang = (i / segments) * Math.PI * 2;
-        const rx = Math.cos(ang) * width * 0.5;
-        const rz = Math.sin(ang) * depth * 0.5;
-        const wobble = Math.sin(ang * 3) * width * 0.05;
-        basePoints.push([x + rx + wobble, 0, z + rz]);
-      }
-      for (let i = 0; i < segments; i++) {
-        const a = basePoints[i];
-        const b = basePoints[(i + 1) % segments];
-        positions.push(...peak, ...a, ...b);
-      }
-      const geo = new BufferGeometry();
-      geo.setAttribute("position", new Float32BufferAttribute(positions, 3));
+      // Build as a circular truncated cone, then scale XZ to get the
+      // intended elliptical footprint (width × depth at the base).
+      const baseRadius = Math.max(width, depth) * 0.5;
+      const topRadius = baseRadius * 0.20;
+      const geo = new CylinderGeometry(topRadius, baseRadius, height, 18);
+      // Default Cylinder is centered on origin. Translate so the base is at
+      // y=-0.3 (slightly under the water plane to avoid wave-clip flicker)
+      // and the peak is at y=(height-0.3).
+      geo.translate(0, height / 2 - 0.3, 0);
+      geo.scale(width / (2 * baseRadius), 1, depth / (2 * baseRadius));
+      geo.translate(x, 0, z);
       geo.computeVertexNormals();
 
       const mat = new ShaderMaterial({
@@ -555,6 +573,7 @@ export default function JourneyScene() {
         },
         transparent: true,
         depthWrite: false,
+        side: DoubleSide,
       });
       return new Mesh(geo, mat);
     };
@@ -697,7 +716,7 @@ export default function JourneyScene() {
 
     // === Lantern — small emissive sphere on the table ===
     const makeLantern = (px: number, py: number, pz: number): Mesh => {
-      const geo = new SphereGeometry(0.13, 10, 10);
+      const geo = new SphereGeometry(0.18, 12, 12);
       geo.translate(px, py, pz);
       const mat = new ShaderMaterial({
         vertexShader: VERTEX_ISLAND,
@@ -734,13 +753,14 @@ export default function JourneyScene() {
     scene.add(contextRight);
 
     // === Main island — the destination ===
-    // Peak Y = 5.0 (was 3.5) so the silhouette reads from aerial moment
-    // VH=8 where the camera is 21 units up and 53 units away — a 3.5-tall
-    // cone at that distance was a flat smear that disappeared against the
-    // lagoon. Color also lifted slightly (0.10/0.16/0.20 vs prior
-    // 0.08/0.13/0.18) so the island separates from the deep-water palette
-    // (0.025/0.075/0.135) instead of blending into it under high fog.
-    const mainIsland = makeIsland(22, 5.0, 16, 0, -28, new Vector3(0.10, 0.16, 0.20));
+    // Vegetation tone pushed to a clearly-readable olive (0.40, 0.45, 0.22)
+    // so the flat top cap of the cylinder reads at aerial Moment03 against
+    // the lagoon-tinted water. Earlier (0.20, 0.26, 0.16) computed to a
+    // final composite (0.143, 0.191, 0.127) which was too close to the
+    // surrounding water (0.07, 0.15, 0.20) to register as a distinct
+    // island shape from straight overhead. Context islands keep their
+    // dark atmospheric tone — only the main island brightens.
+    const mainIsland = makeIsland(22, 7.5, 16, 0, -28, new Vector3(0.40, 0.45, 0.22));
     scene.add(mainIsland);
 
     // Palms — scattered across the main island
@@ -771,18 +791,25 @@ export default function JourneyScene() {
 
     // Table — centered inside the pavilion. Slightly off-axis toward the
     // back so camera entering from front gets an approach-to-table beat.
-    const table = makeTable(-1, -28.2, 2.2, 0.88, new Vector3(0.08, 0.06, 0.04));
+    // Color is warm teak (0.18, 0.12, 0.08) so it reads against the
+    // lagoon-tinted water below; the previous (0.08, 0.06, 0.04) was
+    // darker than the water around the island after Phase 3's shallow ring.
+    const table = makeTable(-1, -28.2, 2.2, 0.88, new Vector3(0.18, 0.12, 0.08));
     scene.add(table);
 
-    // Plate — sits on the table at the camera-facing place setting. The
-    // lantern is positioned just behind/above it; together they're the
-    // central focus of Moments 07 + 09.
-    const plate = makePlate(-1, 0.93, -27.9, new Vector3(0.22, 0.20, 0.16));
+    // Plate — sits on the table at the camera-facing place setting. Lifted
+    // to a warmer ceramic tone so it actually catches the lantern's glow
+    // instead of disappearing into the table.
+    const plate = makePlate(-1, 0.93, -27.9, new Vector3(0.42, 0.36, 0.28));
     scene.add(plate);
 
     // Lantern — slightly behind the plate. Emissive, flickers; the visual
-    // focal point at the end of Moment07's interior approach.
-    const lantern = makeLantern(-1, 1.05, -28.4);
+    // focal point at the end of Moment07's interior approach. Raised to
+    // y=1.18 + radius 0.18 (was y=1.05/0.13) so its top half sits clearly
+    // above the table edge — it was being z-occluded by the dark table at
+    // the lower y. renderOrder = 2 forces it after silhouette geometry.
+    const lantern = makeLantern(-1, 1.18, -28.4);
+    lantern.renderOrder = 2;
     scene.add(lantern);
 
     // Jetty — extends from the island near-edge toward the camera's
