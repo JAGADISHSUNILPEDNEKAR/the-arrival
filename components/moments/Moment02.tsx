@@ -122,14 +122,20 @@ const Moment02 = ({}: { index: number }) => {
     // === HOLD 0.60 – 0.88 — Camera dwells on sanctuary in JourneyScene ===
 
     // === Beat 4 (0.88 – 1.00) — Text exit: dissolve upward (approach arc) ===
+    // Explicit duration is load-bearing: the scrub timeline maps scroll
+    // progress 0→1 to timeline time 0→1, so any tween that would extend
+    // past 1.0 is cut off at progress 1.0 with its property still mid-
+    // animation. Default duration (0.5) at position 0.88 ends at 1.38 —
+    // textRef would only reach ~24% of the fade by section unpin, leaving
+    // residual opacity that bleeds into the next moment.
     tl.to(
       textRef.current,
-      { opacity: 0, y: -60, filter: 'blur(2px)', force3D: true, ease: 'cinematic' },
+      { opacity: 0, y: -60, filter: 'blur(2px)', force3D: true, duration: 0.12, ease: 'cinematic' },
       0.88
     );
     tl.to(
       sectionEl,
-      { opacity: 0, ease: 'cinematic' },
+      { opacity: 0, duration: 0.08, ease: 'cinematic' },
       0.92
     );
 

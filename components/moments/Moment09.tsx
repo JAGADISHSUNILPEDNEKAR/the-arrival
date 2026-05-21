@@ -133,12 +133,12 @@ const Moment09 = ({}: { index: number }) => {
     // === Beat 4 (0.88 – 1.00) — Text exit: fade to void (night arc) ===
     tl.to(
       textRef.current,
-      { opacity: 0, scale: 0.985, force3D: true, ease: 'cinematic' },
+      { opacity: 0, scale: 0.985, force3D: true, duration: 0.12, ease: 'cinematic' },
       0.88
     );
     tl.to(
       sectionEl,
-      { opacity: 0, ease: 'cinematic' },
+      { opacity: 0, duration: 0.08, ease: 'cinematic' },
       0.92
     );
 
