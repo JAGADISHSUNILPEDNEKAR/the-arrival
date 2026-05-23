@@ -2,11 +2,13 @@
 
 import React, { useEffect, useRef } from 'react';
 import { gsap, SplitText } from '@/lib/gsap';
+import { useWebGLContent } from '@/components/WebGL/WebGLContentLayer';
 import { buildKineticWordsFor, KineticWord } from '@/lib/kineticWord';
 import { useScroll } from '@/lib/context/ScrollContext';
 
 const FilmHomepage = () => {
     const containerRef = useRef<HTMLDivElement>(null);
+    useWebGLContent({ id: 'film-homepage', src: '/assets/film-homepage/hero-aerial.mp4', poster: '/assets/film-homepage/hero-aerial.poster.jpg', triggerRef: containerRef });
     const { scrollToElement } = useScroll();
 
     // Act I

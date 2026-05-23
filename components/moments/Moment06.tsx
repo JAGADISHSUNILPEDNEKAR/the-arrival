@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef } from 'react';
 import { gsap, ScrollTrigger, SplitText } from '@/lib/gsap';
+import { useWebGLContent } from '@/components/WebGL/WebGLContentLayer';
 import { useScroll } from '@/lib/context/ScrollContext';
 import { buildKineticWordsFor, KineticWord } from '@/lib/kineticWord';
 
@@ -21,6 +22,7 @@ import { buildKineticWordsFor, KineticWord } from '@/lib/kineticWord';
  */
 const Moment06 = ({}: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
+  useWebGLContent({ id: 'moment-06', src: '/assets/moment-06/lantern.mp4', poster: '/assets/moment-06/lantern.poster.jpg', triggerRef: sectionRef });
   const textRef = useRef<HTMLDivElement>(null);
   const indexRef = useRef<HTMLSpanElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);

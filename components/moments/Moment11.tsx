@@ -2,6 +2,7 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { gsap, ScrollTrigger, SplitText } from '@/lib/gsap';
+import { useWebGLContent } from '@/components/WebGL/WebGLContentLayer';
 import { useScroll } from '@/lib/context/ScrollContext';
 
 /**
@@ -21,6 +22,7 @@ import { useScroll } from '@/lib/context/ScrollContext';
  */
 const Moment11 = ({}: { index: number }) => {
   const sectionRef = useRef<HTMLDivElement>(null);
+  useWebGLContent({ id: 'moment-11', src: '/assets/moment-11/moonlit.mp4', poster: '/assets/moment-11/moonlit.poster.jpg', triggerRef: sectionRef });
 
   const headlineRef = useRef<HTMLParagraphElement>(null);
   const subRef = useRef<HTMLParagraphElement>(null);
