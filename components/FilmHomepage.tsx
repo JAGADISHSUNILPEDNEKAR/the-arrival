@@ -4,10 +4,18 @@ import React, { useEffect, useRef } from 'react';
 import { gsap, SplitText } from '@/lib/gsap';
 import { buildKineticWordsFor, KineticWord } from '@/lib/kineticWord';
 import { useScroll } from '@/lib/context/ScrollContext';
+import { useWebGLContent } from '@/components/WebGL/WebGLContentLayer';
 
 const FilmHomepage = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const { scrollToElement } = useScroll();
+
+    useWebGLContent({
+        id: 'chapter-01-arrival',
+        src: '/assets/chapter-01-arrival/photo.webp',
+        poster: '/assets/chapter-01-arrival/photo.poster.jpg',
+        triggerRef: containerRef,
+    });
 
     // Act I
     const coordRef = useRef<HTMLSpanElement>(null);
@@ -255,7 +263,7 @@ const FilmHomepage = () => {
     }, []);
 
     const handleBegin = () => {
-        scrollToElement('#moment-02');
+        scrollToElement('#chapter-02-shore');
     };
 
     return (

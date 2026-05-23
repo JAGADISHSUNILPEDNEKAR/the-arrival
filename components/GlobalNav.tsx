@@ -37,7 +37,7 @@ const GlobalNav = () => {
   }, []);
 
   const handleReserve = () => {
-    scrollToElement('#moment-11');
+    scrollToElement('#chapter-07-invitation');
   };
 
   return (
