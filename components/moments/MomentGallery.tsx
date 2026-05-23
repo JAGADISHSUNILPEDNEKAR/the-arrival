@@ -3,6 +3,7 @@
 import React, { useEffect, useRef } from 'react';
 import { gsap } from '@/lib/gsap';
 import { useScroll } from '@/lib/context/ScrollContext';
+import AssetSlot from '@/components/AssetSlot';
 
 interface ContentPanel {
   type: 'content';
@@ -11,6 +12,7 @@ interface ContentPanel {
   title: string;
   sub: string;
   alignment: 'image-right' | 'image-left';
+  clip?: { mp4: string; poster: string };
 }
 
 interface TitlePanel {
@@ -28,6 +30,10 @@ const PANELS: Panel[] = [
     title: 'The Morning Swim',
     sub: 'An hour before anyone else.',
     alignment: 'image-right',
+    clip: {
+      mp4: '/assets/gallery/morning-swim.mp4',
+      poster: '/assets/gallery/morning-swim.poster.jpg',
+    },
   },
   {
     type: 'content',
@@ -36,6 +42,10 @@ const PANELS: Panel[] = [
     title: 'The Walk',
     sub: 'From villa to lagoon, barefoot.',
     alignment: 'image-left',
+    clip: {
+      mp4: '/assets/gallery/walk.mp4',
+      poster: '/assets/gallery/walk.poster.jpg',
+    },
   },
   {
     type: 'content',
@@ -44,6 +54,8 @@ const PANELS: Panel[] = [
     title: 'The Bath',
     sub: 'Stone, sea, and last light.',
     alignment: 'image-right',
+    // No clip for "bath" in source video — the procedural slate
+    // gradient fallback inside AssetSlot stands in.
   },
   {
     type: 'content',
@@ -52,6 +64,10 @@ const PANELS: Panel[] = [
     title: 'The Bonfire',
     sub: 'When the kitchen closes, embers stay.',
     alignment: 'image-left',
+    clip: {
+      mp4: '/assets/gallery/bonfire.mp4',
+      poster: '/assets/gallery/bonfire.poster.jpg',
+    },
   },
 ];
 
@@ -228,20 +244,45 @@ const MomentGallery = () => {
         </div>
 
         {/* === Panels 1..4 — Content panels ===========================
-            Image areas have been removed — JourneyScene's orbital camera
-            shows different sides of the island as the user scrolls through
-            this section. The captions remain, sliding past the camera-
-            driven world below them. Caption position alternates per panel
-            (left/right) for editorial rhythm. */}
+            Each panel has its image area on the alternating side
+            (image-right / image-left) for editorial rhythm. The image
+            slot renders the encoded clip via HTML <video> — the gallery
+            sits inside its own horizontal-pan world, so it does not
+            register with WebGLContentLayer (which assumes vertical
+            stacking). The WebGL layer fades out during this section
+            and AtmosphereLayer carries the surrounding atmosphere. */}
         {CONTENT_PANELS.map((panel, i) => {
           const imageRight = panel.alignment === 'image-right';
-          // Caption position: opposite of where the image would have been,
-          // so the panel's gaze direction still alternates left/right.
+          const imageSide = imageRight ? 'right-0' : 'left-0';
           const captionPos = imageRight
-            ? 'md:bottom-auto md:top-[30%] md:right-auto md:left-[10%]'
-            : 'md:bottom-auto md:top-[30%] md:left-auto md:right-[10%] md:text-right';
+            ? 'md:bottom-auto md:top-[30%] md:right-auto md:left-[6%]'
+            : 'md:bottom-auto md:top-[30%] md:left-auto md:right-[6%] md:text-right';
           return (
             <div key={panel.slug} className="w-screen h-full relative">
+              {/* Image side — half-width on desktop, full underlay on
+                  mobile. Wrapped so the caption can sit beside it. */}
+              <div
+                className={`absolute top-0 ${imageSide} h-full w-full md:w-1/2 pointer-events-none`}
+              >
+                <AssetSlot
+                  id={`gallery-${panel.slug}`}
+                  alt={`${panel.title} — ${panel.sub}`}
+                  src={panel.clip ? { video: panel.clip.mp4, poster: panel.clip.poster } : undefined}
+                  fit="cover"
+                  className="w-full h-full"
+                >
+                  <div
+                    className="w-full h-full"
+                    style={{
+                      background:
+                        panel.slug === 'bath'
+                          ? 'linear-gradient(160deg, #1a2230 0%, #2a3a4a 45%, #4a5a68 100%)'
+                          : 'linear-gradient(160deg, #0e2038 0%, #1a3045 50%, #2a4055 100%)',
+                    }}
+                  />
+                </AssetSlot>
+              </div>
+
               {/* Caption area — class + index for stable lookup in effect */}
               <div
                 className={`gallery-caption absolute z-10 max-w-[26em] pointer-events-none bottom-[8%] left-[8%] right-[8%] ${captionPos}`}

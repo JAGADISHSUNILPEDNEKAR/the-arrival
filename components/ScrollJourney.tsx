@@ -19,7 +19,7 @@ import Preloader from './Preloader';
 import GlobalNav from './GlobalNav';
 import AtmosphereLayer from './Atmosphere/AtmosphereLayer';
 import AudioToggle from './AudioToggle';
-import JourneyScene from './JourneyScene';
+import WebGLContentLayer from './WebGL/WebGLContentLayer';
 
 const ScrollJourney = () => {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -55,27 +55,28 @@ const ScrollJourney = () => {
       </a>
 
       <AtmosphereLayer />
-      <JourneyScene />
       <Preloader />
       <GlobalNav />
       <AudioToggle />
 
-      <div ref={containerRef} className="scroll-container relative z-10">
-        <div className="moments-wrapper relative w-full h-full">
-          <FilmHomepage />
-          <Moment02 index={1} />
-          <Moment03 index={2} />
-          <Moment04 index={3} />
-          <Moment05 index={4} />
-          <Moment06 index={5} />
-          <Moment07 index={6} />
-          <Moment08 index={7} />
-          <Moment09 index={8} />
-          <MomentGallery />
-          <Moment10 index={9} />
-          <Moment11 index={10} />
+      <WebGLContentLayer>
+        <div ref={containerRef} className="scroll-container relative z-10">
+          <div className="moments-wrapper relative w-full h-full">
+            <FilmHomepage />
+            <Moment02 index={1} />
+            <Moment03 index={2} />
+            <Moment04 index={3} />
+            <Moment05 index={4} />
+            <Moment06 index={5} />
+            <Moment07 index={6} />
+            <Moment08 index={7} />
+            <Moment09 index={8} />
+            <MomentGallery />
+            <Moment10 index={9} />
+            <Moment11 index={10} />
+          </div>
         </div>
-      </div>
+      </WebGLContentLayer>
     </main>
   );
 };
