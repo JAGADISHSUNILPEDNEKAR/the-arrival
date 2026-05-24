@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   AmbientLight,
   Color,
@@ -50,10 +50,56 @@ import { createCameraPath, WAYPOINTS } from "./cameraPath";
  * to go.
  */
 
+type ReservationState = "closed" | "open" | "sending" | "sent";
+
 export default function WorldScene() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const progressLabelRef = useRef<HTMLSpanElement>(null);
   const chapterLabelRef = useRef<HTMLSpanElement>(null);
+  const reserveHintRef = useRef<HTMLDivElement>(null);
+
+  // Reservation lives in React state so the overlay JSX can read it
+  // directly. The useEffect that drives Three.js communicates via two
+  // refs: one mirroring state into the rAF loop (no stale closures), one
+  // signalling that the user clicked the lantern.
+  const [reservation, setReservation] = useState<{
+    state: ReservationState;
+    name: string;
+    email: string;
+  }>({ state: "closed", name: "", email: "" });
+
+  const reservationStateRef = useRef<ReservationState>("closed");
+  useEffect(() => {
+    reservationStateRef.current = reservation.state;
+  }, [reservation.state]);
+
+  const handleOpen = useCallback(() => {
+    setReservation((prev) =>
+      prev.state === "closed" ? { ...prev, state: "open" } : prev
+    );
+  }, []);
+  const handleClose = useCallback(() => {
+    setReservation((prev) =>
+      prev.state === "open" ? { ...prev, state: "closed" } : prev
+    );
+  }, []);
+  const handleSubmit = useCallback((e: React.FormEvent) => {
+    e.preventDefault();
+    setReservation((prev) => {
+      if (prev.state !== "open") return prev;
+      if (!prev.name.trim() || !prev.email.trim() || !prev.email.includes("@")) {
+        return prev;
+      }
+      return { ...prev, state: "sending" };
+    });
+    // After a brief beat the sending state advances to sent — gives the
+    // ceremony its silence between submit and acknowledgement.
+    window.setTimeout(() => {
+      setReservation((prev) =>
+        prev.state === "sending" ? { ...prev, state: "sent" } : prev
+      );
+    }, 1100);
+  }, []);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -214,8 +260,21 @@ export default function WorldScene() {
     const onPointerLeave = () => {
       mouseNdc.set(-2, -2); // out of NDC range — no intersections
     };
+    // Tracks whether the cursor is over the lantern this frame. The
+    // pointerdown handler reads this so a click only opens the reservation
+    // when the user is actually pointing at the lantern.
+    let isHoveringLantern = false;
+    let cachedProgress = 0;
+    const onPointerDown = () => {
+      if (reservationStateRef.current !== "closed") return;
+      // Only open from the chapter 5 zone — clicking the lantern from a
+      // distance early in the journey would feel wrong.
+      if (!isHoveringLantern || cachedProgress < 0.7) return;
+      handleOpen();
+    };
     window.addEventListener("pointermove", onPointerMove, { passive: true });
     window.addEventListener("pointerleave", onPointerLeave, { passive: true });
+    window.addEventListener("pointerdown", onPointerDown, { passive: true });
 
     // ============== Scroll driver ========================================
     // Phase 1 uses raw window.scrollY against the document's max-scroll.
@@ -345,6 +404,7 @@ export default function WorldScene() {
       smoothedProgress += (rawProgress - smoothedProgress) * 0.06;
 
       const progress = reducedMotion ? rawProgress : smoothedProgress;
+      cachedProgress = progress;
       cameraPath.update(progress);
       ocean.tick(reducedMotion ? 0 : t);
       sky.tick(reducedMotion ? 0 : t);
@@ -359,9 +419,23 @@ export default function WorldScene() {
 
         // Lantern hover — single-mesh intersect, recursive=false.
         const lanternHits = raycaster.intersectObject(pavilion.lantern, false);
-        const lanternTarget = lanternHits.length > 0 ? 1 : 0;
-        lanternGlow += (lanternTarget - lanternGlow) * 0.12;
+        isHoveringLantern = lanternHits.length > 0;
+        // After a successful reservation, the lantern locks at full glow —
+        // the named "verb" was the reservation, and the world acknowledges.
+        const sent = reservationStateRef.current === "sent";
+        const lanternTarget = sent ? 1 : isHoveringLantern ? 1 : 0;
+        lanternGlow += (lanternTarget - lanternGlow) * (sent ? 0.04 : 0.12);
         pavilion.setGlow(lanternGlow);
+
+        // Show the small "Reserve" hint only when hovering AND in the
+        // chapter 5 zone AND not yet open/sent.
+        if (reserveHintRef.current) {
+          const showHint =
+            isHoveringLantern &&
+            cachedProgress >= 0.7 &&
+            reservationStateRef.current === "closed";
+          reserveHintRef.current.style.opacity = showHint ? "0.85" : "0";
+        }
 
         // Tide cursor — intersect the ocean plane. If hit, lerp the world
         // XZ toward the hit point and ramp strength up.
@@ -377,9 +451,14 @@ export default function WorldScene() {
         ocean.setMouseWorld(oceanCursorX, oceanCursorZ);
         ocean.setMouseStrength(oceanCursorStrength);
       } else {
-        // No cursor — ramp both effects down.
-        lanternGlow += (0 - lanternGlow) * 0.06;
+        // No cursor — ramp both effects down. (Sent reservations keep the
+        // lantern locked at full glow regardless.)
+        const sent = reservationStateRef.current === "sent";
+        isHoveringLantern = false;
+        const lanternTarget = sent ? 1 : 0;
+        lanternGlow += (lanternTarget - lanternGlow) * 0.06;
         pavilion.setGlow(lanternGlow);
+        if (reserveHintRef.current) reserveHintRef.current.style.opacity = "0";
         oceanCursorStrength += (0 - oceanCursorStrength) * 0.06;
         ocean.setMouseStrength(oceanCursorStrength);
       }
@@ -418,6 +497,7 @@ export default function WorldScene() {
       window.removeEventListener("scroll", refreshMax);
       window.removeEventListener("pointermove", onPointerMove);
       window.removeEventListener("pointerleave", onPointerLeave);
+      window.removeEventListener("pointerdown", onPointerDown);
       document.removeEventListener("visibilitychange", onVisibility);
       sky.dispose();
       ocean.dispose();
@@ -433,7 +513,9 @@ export default function WorldScene() {
       composer.dispose();
       renderer.dispose();
     };
-  }, []);
+    // handleOpen is wrapped in useCallback with [] deps — stable identity
+    // across renders, so this effect still only fires once on mount.
+  }, [handleOpen]);
 
   return (
     <>
@@ -507,6 +589,236 @@ export default function WorldScene() {
           </svg>
         </span>
       </div>
+
+      {/* "Touch the lantern" hint — fades in only when the cursor is on
+          the lantern AND scroll is in the chapter-5 zone. Pure cue, no
+          interactive surface. */}
+      <div
+        ref={reserveHintRef}
+        className="fixed top-1/2 right-10 z-10 pointer-events-none uppercase"
+        style={{
+          opacity: 0,
+          transition: "opacity 600ms ease",
+          fontFamily: "var(--font-sans)",
+          fontSize: "clamp(0.625rem, 0.7vw, 0.75rem)",
+          letterSpacing: "0.5em",
+          color: "rgba(245,240,232,0.85)",
+          transform: "translateY(-50%)",
+        }}
+      >
+        Touch the lantern
+      </div>
+
+      {/* Reservation as a world-moment. When opened, a centred panel rises
+          over the (still rendering) world. The voice is direct correspondence
+          — not a contact form. On submit, a brief silence, then the
+          acknowledgement reveals and the world's lantern locks at full glow. */}
+      {reservation.state !== "closed" && (
+        <div
+          className="fixed inset-0 z-20 flex items-center justify-center"
+          aria-modal
+          role="dialog"
+          aria-label="Reservation by correspondence"
+        >
+          {/* Backdrop — dark but translucent so the world is still felt
+              behind. Click closes when in the open state (not while
+              sending or sent). */}
+          <button
+            type="button"
+            aria-label="Close reservation"
+            onClick={handleClose}
+            disabled={reservation.state !== "open"}
+            className="absolute inset-0 border-0 cursor-default"
+            style={{
+              background:
+                "radial-gradient(ellipse at center, rgba(6,8,16,0.78) 0%, rgba(6,8,16,0.94) 75%)",
+            }}
+          />
+
+          <div className="relative z-10 max-w-[34em] w-full px-8 md:px-12 text-center">
+            {/* OPEN state — form */}
+            {(reservation.state === "open" ||
+              reservation.state === "sending") && (
+              <form
+                onSubmit={handleSubmit}
+                className="flex flex-col gap-8 pointer-events-auto"
+                noValidate
+                style={{
+                  opacity: reservation.state === "sending" ? 0.35 : 1,
+                  transition: "opacity 700ms ease",
+                  pointerEvents: reservation.state === "sending" ? "none" : "auto",
+                }}
+              >
+                <p
+                  className="italic font-light"
+                  style={{
+                    fontFamily: "var(--font-serif)",
+                    fontSize: "clamp(1.5rem, 3.5vw, 2.75rem)",
+                    lineHeight: 1.15,
+                    letterSpacing: "-0.005em",
+                    color: "rgba(255,250,240,0.96)",
+                  }}
+                >
+                  Reservation is by correspondence.
+                </p>
+                <p
+                  className="italic font-light"
+                  style={{
+                    fontFamily: "var(--font-serif)",
+                    fontSize: "clamp(1rem, 1.4vw, 1.3rem)",
+                    lineHeight: 1.5,
+                    color: "rgba(245,240,232,0.7)",
+                  }}
+                >
+                  Leave us your name and a place to reach you.
+                </p>
+
+                <div className="flex flex-col gap-7 mt-2 text-left">
+                  <label className="block">
+                    <span
+                      className="block uppercase mb-3"
+                      style={{
+                        fontFamily: "var(--font-sans)",
+                        fontSize: "clamp(0.625rem, 0.7vw, 0.75rem)",
+                        letterSpacing: "0.45em",
+                        color: "rgba(245,240,232,0.45)",
+                      }}
+                    >
+                      Your name
+                    </span>
+                    <input
+                      type="text"
+                      autoComplete="name"
+                      required
+                      autoFocus
+                      value={reservation.name}
+                      onChange={(e) =>
+                        setReservation((prev) => ({
+                          ...prev,
+                          name: e.target.value,
+                        }))
+                      }
+                      placeholder="—"
+                      className="w-full bg-transparent pb-3 italic font-light focus:outline-none"
+                      style={{
+                        fontFamily: "var(--font-serif)",
+                        fontSize: "clamp(1.1rem, 1.6vw, 1.5rem)",
+                        color: "rgba(255,250,240,0.95)",
+                        borderBottom: "1px solid rgba(245,240,232,0.3)",
+                        transition: "border-color 700ms ease",
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderBottomColor =
+                          "rgba(245,240,232,0.7)";
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderBottomColor =
+                          "rgba(245,240,232,0.3)";
+                      }}
+                    />
+                  </label>
+                  <label className="block">
+                    <span
+                      className="block uppercase mb-3"
+                      style={{
+                        fontFamily: "var(--font-sans)",
+                        fontSize: "clamp(0.625rem, 0.7vw, 0.75rem)",
+                        letterSpacing: "0.45em",
+                        color: "rgba(245,240,232,0.45)",
+                      }}
+                    >
+                      Where to reach you
+                    </span>
+                    <input
+                      type="email"
+                      autoComplete="email"
+                      required
+                      value={reservation.email}
+                      onChange={(e) =>
+                        setReservation((prev) => ({
+                          ...prev,
+                          email: e.target.value,
+                        }))
+                      }
+                      placeholder="—"
+                      className="w-full bg-transparent pb-3 italic font-light focus:outline-none"
+                      style={{
+                        fontFamily: "var(--font-serif)",
+                        fontSize: "clamp(1.1rem, 1.6vw, 1.5rem)",
+                        color: "rgba(255,250,240,0.95)",
+                        borderBottom: "1px solid rgba(245,240,232,0.3)",
+                        transition: "border-color 700ms ease",
+                      }}
+                      onFocus={(e) => {
+                        e.currentTarget.style.borderBottomColor =
+                          "rgba(245,240,232,0.7)";
+                      }}
+                      onBlur={(e) => {
+                        e.currentTarget.style.borderBottomColor =
+                          "rgba(245,240,232,0.3)";
+                      }}
+                    />
+                  </label>
+                </div>
+
+                <button
+                  type="submit"
+                  className="group italic font-light bg-transparent border-0 cursor-pointer p-0 self-center mt-4"
+                  style={{
+                    fontFamily: "var(--font-serif)",
+                    fontSize: "clamp(1.4rem, 2.2vw, 2rem)",
+                    letterSpacing: "-0.005em",
+                    color: "rgba(255,250,240,0.95)",
+                  }}
+                  aria-label="Send your message — light the lantern"
+                >
+                  <span className="relative inline-block">
+                    Light the lantern
+                    <span
+                      aria-hidden
+                      className="absolute left-0 right-0 -bottom-[0.05em] h-[1px] origin-center scale-x-0 group-hover:scale-x-100 transition-transform duration-[1200ms] ease-out"
+                      style={{ background: "rgba(255,250,240,0.65)" }}
+                    />
+                  </span>
+                </button>
+              </form>
+            )}
+
+            {/* SENT state — acknowledgement. Lantern in the world has
+                already locked at full glow; this is the editorial
+                closure. */}
+            {reservation.state === "sent" && (
+              <div className="pointer-events-none">
+                <p
+                  className="italic font-light"
+                  style={{
+                    fontFamily: "var(--font-serif)",
+                    fontSize: "clamp(2rem, 5vw, 4.5rem)",
+                    lineHeight: 1.1,
+                    letterSpacing: "-0.015em",
+                    color: "rgba(255,250,240,0.96)",
+                    textShadow: "0 4px 60px rgba(0,0,0,0.85)",
+                  }}
+                >
+                  Thank you, {reservation.name.trim() || "guest"}.
+                </p>
+                <p
+                  className="mt-10 md:mt-14 uppercase mx-auto max-w-[24em]"
+                  style={{
+                    fontFamily: "var(--font-sans)",
+                    fontSize: "clamp(0.7rem, 0.95vw, 1rem)",
+                    letterSpacing: "0.35em",
+                    lineHeight: 1.7,
+                    color: "rgba(245,240,232,0.7)",
+                  }}
+                >
+                  We will write within the hour.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </>
   );
 }
