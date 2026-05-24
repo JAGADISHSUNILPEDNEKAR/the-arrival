@@ -16,6 +16,7 @@ import { createOcean } from "./scene/ocean";
 import { createAtoll } from "./scene/atoll";
 import { createPalms } from "./scene/palms";
 import { createPavilion } from "./scene/pavilion";
+import { createSceneText } from "./scene/sceneText";
 import { createCameraPath, WAYPOINTS } from "./cameraPath";
 
 /**
@@ -107,6 +108,7 @@ export default function WorldScene() {
       rotationY: -Math.PI * 0.6,
       scale: 1,
     });
+    const sceneText = createSceneText(scene);
 
     // ============== Lighting =============================================
     // Sun in +X+Y+Z octant so chapter 1's camera (which arrives from a
@@ -182,6 +184,10 @@ export default function WorldScene() {
 
       cameraPath.update(reducedMotion ? rawProgress : smoothedProgress);
       ocean.tick(reducedMotion ? 0 : t);
+      sceneText.tick(
+        reducedMotion ? rawProgress : smoothedProgress,
+        camera.position
+      );
 
       // Tiny breathing camera idle drift — barely perceptible, so the frame
       // feels alive even when scroll is paused. Disabled under reduced
@@ -191,14 +197,14 @@ export default function WorldScene() {
         camera.position.y += Math.cos(t * 0.13) * 0.03;
       }
 
-      // Phase-aware HUD labels — placeholder. In Phase 3 these become
-      // in-scene typography rendered via troika-three-text.
+      // HUD counter only — the chapter NAME now lives in the 3D scene via
+      // troika-three-text in sceneText.ts. The counter is a frame-mark
+      // showing scroll position through the 5-chapter journey.
       const chapterIdx = cameraPath.currentChapterIndex();
-      const wp = WAYPOINTS[chapterIdx];
-      if (chapterLabelRef.current && wp) {
+      if (chapterLabelRef.current) {
         const counter = String(chapterIdx + 1).padStart(2, "0");
         const total = String(WAYPOINTS.length).padStart(2, "0");
-        chapterLabelRef.current.textContent = `${counter} — ${total} · ${wp.title}`;
+        chapterLabelRef.current.textContent = `${counter} — ${total}`;
       }
       if (progressLabelRef.current) {
         progressLabelRef.current.textContent = `${Math.round(smoothedProgress * 100)
@@ -221,6 +227,7 @@ export default function WorldScene() {
       atoll.dispose();
       palms.dispose();
       pavilion.dispose();
+      sceneText.dispose();
       // Lights don't need explicit disposal but removing them from the
       // scene is good hygiene against HMR leaks.
       scene.remove(sun);
@@ -252,7 +259,7 @@ export default function WorldScene() {
             color: "rgba(245,240,232,0.65)",
           }}
         >
-          01 — 05 · Approach
+          01 — 05
         </span>
         <span
           ref={progressLabelRef}
