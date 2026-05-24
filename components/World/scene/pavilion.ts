@@ -25,6 +25,12 @@ import {
 
 export interface PavilionHandle {
   group: Group;
+  /** The pavilion's emissive lantern mesh — exposed so the world can
+   *  raycast against it for the chapter-5 hover-to-light interaction. */
+  lantern: Mesh;
+  /** Ramp the lantern's glow intensity. 0 = ambient baseline, 1 = full
+   *  bloom. Drives the emissive intensity uniform on the lantern material. */
+  setGlow: (amount: number) => void;
   dispose: () => void;
 }
 
@@ -103,25 +109,39 @@ export function createPavilion(
   roof.castShadow = true;
   group.add(roof);
 
-  // A faint emissive lantern under the roof — visual anchor for the
-  // "Lantern" chapter. Sphere geometry would be cleaner but a small box
-  // keeps the silhouette graphic.
+  // Emissive lantern under the roof — visual anchor for the "Lantern"
+  // chapter and the world-moment hover target. Baseline emissive is mild;
+  // setGlow ramps it up toward a full bloom that triggers UnrealBloomPass.
   const lanternGeom = new BoxGeometry(0.6, 0.9, 0.6);
+  const LANTERN_BASE_INTENSITY = 1.6;
+  const LANTERN_PEAK_INTENSITY = 5.5;
   const lanternMat = new MeshStandardMaterial({
     color: new Color(0.9, 0.62, 0.32),
     roughness: 0.4,
     metalness: 0.1,
-    emissive: new Color(0.9, 0.55, 0.25),
-    emissiveIntensity: 1.6,
+    emissive: new Color(0.95, 0.58, 0.26),
+    emissiveIntensity: LANTERN_BASE_INTENSITY,
   });
   const lantern = new Mesh(lanternGeom, lanternMat);
   lantern.position.set(0, 5.8, 0);
+  // The hover detection raycaster needs to find this mesh, which lives
+  // inside a Group. A name tag makes it easy to filter the intersection
+  // results without traversing the group manually.
+  lantern.name = "pavilion-lantern";
   group.add(lantern);
 
   scene.add(group);
 
+  const setGlow = (amount: number) => {
+    const t = Math.max(0, Math.min(1, amount));
+    lanternMat.emissiveIntensity =
+      LANTERN_BASE_INTENSITY * (1 - t) + LANTERN_PEAK_INTENSITY * t;
+  };
+
   return {
     group,
+    lantern,
+    setGlow,
     dispose: () => {
       platformGeom.dispose();
       postGeom.dispose();

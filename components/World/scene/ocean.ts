@@ -5,6 +5,7 @@ import {
   PlaneGeometry,
   Scene,
   ShaderMaterial,
+  Vector2,
   Vector3,
 } from "three";
 
@@ -22,6 +23,8 @@ const VERTEX = /* glsl */ `
 uniform float uTime;
 uniform float uWaveAmp;
 uniform float uWaveFreq;
+uniform vec2 uMouseWorld;    // cursor projected onto the ocean plane in world XZ
+uniform float uMouseStrength; // [0..1] — fades the ripple in/out
 varying vec3 vWorldPos;
 varying vec2 vUv;
 varying float vWaveHeight;
@@ -33,8 +36,20 @@ void main() {
   float w1 = sin(pos.x * uWaveFreq + uTime * 0.55) * uWaveAmp;
   float w2 = sin(pos.z * uWaveFreq * 1.3 - uTime * 0.42) * uWaveAmp * 0.85;
   float swell = sin(pos.x * uWaveFreq * 0.18 + pos.z * uWaveFreq * 0.13 + uTime * 0.18) * uWaveAmp * 1.8;
-  pos.y += w1 + w2 + swell;
-  vWaveHeight = (w1 + w2 + swell) / max(uWaveAmp * 3.65, 0.0001);
+
+  // Cursor ripple — concentric outgoing ring centered on the mouse-world
+  // point. Distance falloff so the ring is local; time-driven phase so it
+  // pulses outward. Multiplied by uMouseStrength so it ramps in/out
+  // smoothly when the cursor enters/leaves the ocean plane.
+  float dCursor = distance(pos.xz, uMouseWorld);
+  float ripple = sin(dCursor * 0.16 - uTime * 2.2) * uWaveAmp * 0.55;
+  // Local falloff — Gaussian-ish over ~60 world units around the cursor.
+  ripple *= exp(-dCursor * dCursor / 3200.0);
+  ripple *= uMouseStrength;
+
+  float waveSum = w1 + w2 + swell + ripple;
+  pos.y += waveSum;
+  vWaveHeight = waveSum / max(uWaveAmp * 3.65, 0.0001);
 
   vec4 wp = modelMatrix * vec4(pos, 1.0);
   vWorldPos = wp.xyz;
@@ -114,6 +129,12 @@ void main() {
 export interface OceanHandle {
   mesh: Mesh;
   tick: (t: number) => void;
+  /** Update where on the ocean plane the cursor is projected, in world XZ
+   *  coords. The shader uses this to displace a ripple at that point. */
+  setMouseWorld: (x: number, z: number) => void;
+  /** Set how present the ripple is. 0 = no ripple (cursor not over water),
+   *  1 = full ripple. WorldScene lerps this for smooth fade-in/out. */
+  setMouseStrength: (s: number) => void;
   dispose: () => void;
 }
 
@@ -141,6 +162,8 @@ export function createOcean(scene: Scene): OceanHandle {
     // along this azimuth.
     uSunDir: { value: new Vector3(560, 280, 720).normalize() },
     uHorizonY: { value: 0 },
+    uMouseWorld: { value: new Vector2(99999, 99999) }, // off-screen at startup
+    uMouseStrength: { value: 0 },
   };
 
   const material = new ShaderMaterial({
@@ -159,6 +182,12 @@ export function createOcean(scene: Scene): OceanHandle {
     mesh,
     tick: (t: number) => {
       uniforms.uTime.value = t;
+    },
+    setMouseWorld: (x: number, z: number) => {
+      uniforms.uMouseWorld.value.set(x, z);
+    },
+    setMouseStrength: (s: number) => {
+      uniforms.uMouseStrength.value = Math.max(0, Math.min(1, s));
     },
     dispose: () => {
       geometry.dispose();

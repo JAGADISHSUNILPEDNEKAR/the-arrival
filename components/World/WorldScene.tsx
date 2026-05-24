@@ -8,6 +8,7 @@ import {
   Fog,
   PCFSoftShadowMap,
   PerspectiveCamera,
+  Raycaster,
   Scene,
   Vector2,
   WebGLRenderer,
@@ -190,6 +191,32 @@ export default function WorldScene() {
     // ============== Camera path ==========================================
     const cameraPath = createCameraPath(camera);
 
+    // ============== Cursor raycaster =====================================
+    // One raycaster shared between two interactions:
+    //   - Lantern hover-to-light: hits the pavilion's emissive lantern mesh
+    //     and ramps its emissive intensity. Becomes the named "verb" at
+    //     chapter 5 but is live throughout — hovering the lantern at any
+    //     scroll position glows it.
+    //   - Tide cursor ripples: hits the ocean plane, projects the world XZ
+    //     coordinate of the hit, and feeds it into the ocean shader so a
+    //     ripple displaces at that point. Becomes the named "verb" at
+    //     chapter 3 (Tide).
+    const raycaster = new Raycaster();
+    const mouseNdc = new Vector2(-2, -2); // off-screen at startup
+    let lanternGlow = 0;
+    let oceanCursorX = 0;
+    let oceanCursorZ = 0;
+    let oceanCursorStrength = 0;
+    const onPointerMove = (e: PointerEvent) => {
+      mouseNdc.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouseNdc.y = -((e.clientY / window.innerHeight) * 2 - 1);
+    };
+    const onPointerLeave = () => {
+      mouseNdc.set(-2, -2); // out of NDC range — no intersections
+    };
+    window.addEventListener("pointermove", onPointerMove, { passive: true });
+    window.addEventListener("pointerleave", onPointerLeave, { passive: true });
+
     // ============== Scroll driver ========================================
     // Phase 1 uses raw window.scrollY against the document's max-scroll.
     // The route's spacer below this canvas provides the runway. In a later
@@ -324,6 +351,39 @@ export default function WorldScene() {
       sceneText.tick(progress, camera.position);
       applyNightMood(progress);
 
+      // ============== Cursor interactions =================================
+      // Run the raycaster only when the mouse is within NDC bounds — we
+      // set it off-screen on pointerleave so this skips work cleanly.
+      if (mouseNdc.x > -1.5) {
+        raycaster.setFromCamera(mouseNdc, camera);
+
+        // Lantern hover — single-mesh intersect, recursive=false.
+        const lanternHits = raycaster.intersectObject(pavilion.lantern, false);
+        const lanternTarget = lanternHits.length > 0 ? 1 : 0;
+        lanternGlow += (lanternTarget - lanternGlow) * 0.12;
+        pavilion.setGlow(lanternGlow);
+
+        // Tide cursor — intersect the ocean plane. If hit, lerp the world
+        // XZ toward the hit point and ramp strength up.
+        const oceanHits = raycaster.intersectObject(ocean.mesh, false);
+        if (oceanHits.length > 0) {
+          const p = oceanHits[0].point;
+          oceanCursorX += (p.x - oceanCursorX) * 0.18;
+          oceanCursorZ += (p.z - oceanCursorZ) * 0.18;
+          oceanCursorStrength += (1 - oceanCursorStrength) * 0.08;
+        } else {
+          oceanCursorStrength += (0 - oceanCursorStrength) * 0.06;
+        }
+        ocean.setMouseWorld(oceanCursorX, oceanCursorZ);
+        ocean.setMouseStrength(oceanCursorStrength);
+      } else {
+        // No cursor — ramp both effects down.
+        lanternGlow += (0 - lanternGlow) * 0.06;
+        pavilion.setGlow(lanternGlow);
+        oceanCursorStrength += (0 - oceanCursorStrength) * 0.06;
+        ocean.setMouseStrength(oceanCursorStrength);
+      }
+
       // Tiny breathing camera idle drift — barely perceptible, so the frame
       // feels alive even when scroll is paused. Disabled under reduced
       // motion.
@@ -356,6 +416,8 @@ export default function WorldScene() {
       gsap.ticker.remove(tick);
       window.removeEventListener("resize", onResize);
       window.removeEventListener("scroll", refreshMax);
+      window.removeEventListener("pointermove", onPointerMove);
+      window.removeEventListener("pointerleave", onPointerLeave);
       document.removeEventListener("visibilitychange", onVisibility);
       sky.dispose();
       ocean.dispose();
