@@ -4,10 +4,18 @@ import React, { useEffect, useRef } from 'react';
 import { gsap, SplitText } from '@/lib/gsap';
 import { buildKineticWordsFor, KineticWord } from '@/lib/kineticWord';
 import { useScroll } from '@/lib/context/ScrollContext';
+import { useWebGLContent } from '@/components/WebGL/WebGLContentLayer';
 
 const FilmHomepage = () => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const { scrollToElement } = useScroll();
+    const { scrollToElement, isMobile } = useScroll();
+
+    useWebGLContent({
+        id: 'chapter-01-arrival',
+        src: '/assets/chapter-01-arrival/photo.webp',
+        poster: '/assets/chapter-01-arrival/photo.poster.jpg',
+        triggerRef: containerRef,
+    });
 
     // Act I
     const coordRef = useRef<HTMLSpanElement>(null);
@@ -34,40 +42,34 @@ const FilmHomepage = () => {
             window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
         const ctx = gsap.context(() => {
+            // Title is split into BOTH lines and words: lines drive the reveal
+            // (one opacity fade per visual line, with a slow tracking settle on
+            // the parent) and words exist purely so the kinetic-breath helper
+            // can find the "Arrival" word. The brand signature survives at the
+            // door; nothing else in the site uses kinetic typography.
             const titleSplit = titleRef.current
                 ? new SplitText(titleRef.current, {
                       type: 'lines,words',
-                      linesClass: 'overflow-hidden inline-flex',
+                      linesClass: 'film-line',
                       wordsClass: 'word',
                   })
                 : null;
+            // Sentence is split into lines only — no per-word reveal, no
+            // kinetic breath.
             const sentenceSplit = sentenceRef.current
                 ? new SplitText(sentenceRef.current, {
-                      type: 'lines,words',
-                      linesClass: 'overflow-hidden inline-flex',
-                      wordsClass: 'word',
-                  })
-                : null;
-            // fragmentRef has no reveal-stagger, but we split it for word
-            // lookup so the kinetic helper can target "lagoon" and "equator".
-            const fragmentSplit = fragmentRef.current
-                ? new SplitText(fragmentRef.current, {
-                      type: 'words',
-                      wordsClass: 'word',
+                      type: 'lines',
+                      linesClass: 'film-line',
                   })
                 : null;
 
-            // Kinetic controllers — populated past the reduced-motion gate.
+            // Single kinetic-breath consumer — only "Arrival" on the title.
             let kineticTitle: KineticWord[] = [];
-            let kineticSentence: KineticWord[] = [];
-            let kineticFragment: KineticWord[] = [];
-            const playAll = (group: KineticWord[]) =>
-                group.forEach((kw) => kw.play());
 
-            // Initial states — everything hidden, ready to enter.
-            // Coord is the exception: it starts visible at 0.6 because the
-            // Preloader hands it off in-place — fading it in here would flicker.
-            gsap.set(coordRef.current, { opacity: 0.6, y: 0 });
+            // Initial state. Coord is the exception: pre-positioned at 0.6
+            // because the Preloader hands it off in-place — fading it in here
+            // would flicker.
+            gsap.set(coordRef.current, { opacity: 0.6 });
             gsap.set(
                 [
                     subtitleRef.current,
@@ -75,187 +77,197 @@ const FilmHomepage = () => {
                     invitationRef.current,
                     continueRef.current,
                 ],
-                { opacity: 0, y: 24 }
+                { opacity: 0 }
             );
             gsap.set(horizonRef.current, {
                 scaleX: 0,
                 transformOrigin: 'center center',
                 opacity: 0,
             });
-            if (titleSplit?.words) {
-                gsap.set(titleSplit.words, { y: '110%', filter: 'blur(6px)', opacity: 0 });
+            if (titleSplit?.lines) {
+                gsap.set(titleSplit.lines, { opacity: 0 });
             }
-            if (sentenceSplit?.words) {
-                gsap.set(sentenceSplit.words, {
-                    y: '110%',
-                    filter: 'blur(6px)',
-                    opacity: 0,
-                });
+            if (sentenceSplit?.lines) {
+                gsap.set(sentenceSplit.lines, { opacity: 0 });
             }
-            gsap.set(beginRef.current, { opacity: 0, y: 30 });
+            // Tracking starts wide on the two serif-italic reveals. Soft
+            // focus-pull as they settle into their final letter-spacing.
+            if (titleRef.current) {
+                gsap.set(titleRef.current, { letterSpacing: '0.04em' });
+            }
+            if (sentenceRef.current) {
+                gsap.set(sentenceRef.current, { letterSpacing: '0.03em' });
+            }
+            gsap.set(beginRef.current, { opacity: 0 });
 
-            // Reduced motion: settle Act I + CTA visible, skip timeline + pin entirely.
-            // Coord already initialised at 0.6 above; only set the others here.
+            // Reduced motion: settle Act I + CTA visible, skip timeline + pin.
             if (reducedMotion) {
-                gsap.set([subtitleRef.current, beginRef.current], { opacity: 1, y: 0 });
-                gsap.set(continueRef.current, { opacity: 0.55, y: 0 });
-                if (titleSplit?.words) {
-                    gsap.set(titleSplit.words, { y: '0%', filter: 'none', opacity: 1 });
+                gsap.set([subtitleRef.current, beginRef.current], { opacity: 1 });
+                gsap.set(continueRef.current, { opacity: 0.55 });
+                if (titleSplit?.lines) {
+                    gsap.set(titleSplit.lines, { opacity: 1 });
+                }
+                if (titleRef.current) {
+                    gsap.set(titleRef.current, { letterSpacing: '-0.015em' });
                 }
                 return;
             }
 
-            // Past the gate: build kinetic-typography controllers for the six
-            // anchor words. Skipped under reduced motion above.
+            // Past the gate: build the single kinetic-breath controller. It
+            // only matches the literal word "Arrival" (KINETIC_TARGETS in
+            // lib/kineticWord.ts); the other anchor words ('lagoon', 'equator',
+            // 'invisible') still exist in the target list for symmetry but
+            // none of their parent SplitText words are passed in here.
             kineticTitle = buildKineticWordsFor(
                 titleSplit?.words as Element[] | undefined
-            );
-            kineticSentence = buildKineticWordsFor(
-                sentenceSplit?.words as Element[] | undefined
-            );
-            kineticFragment = buildKineticWordsFor(
-                fragmentSplit?.words as Element[] | undefined
             );
 
             const tl = gsap.timeline({
                 scrollTrigger: {
                     trigger: containerRef.current,
                     start: 'top top',
-                    end: '+=400%', // 4 acts × ~100% scroll each
+                    // Pacing is the slower Lenis + scrub doing most of the
+                    // breathing work, not the pin distance itself. Desktop
+                    // sits at +=470% (was +=500%) — restraint without
+                    // weight. Mobile gets a meaningfully shorter ride so
+                    // touch scrolls don't dominate the journey.
+                    end: isMobile ? '+=320%' : '+=470%',
                     pin: true,
                     pinSpacing: true,
-                    scrub: 1.2,
+                    // Higher scrub on desktop = more settled, less twitchy.
+                    // Mobile pulls down to 1.0 so a touch swipe still tracks
+                    // responsively — otherwise the high scrub reads as lag.
+                    scrub: isMobile ? 1.0 : 1.6,
                     anticipatePin: 1,
                 },
             });
 
-            // === ACT I — Arrival (0.00 – 0.25) ===
-            // Coord is already visible (handed off from Preloader); no fade-in beat.
-            if (titleSplit?.words) {
+            // === ACT I — Arrival (0.00 – 0.28) ============================
+            // Slow line reveal + tracking settle on the title. Single
+            // dominant motion idea: the type comes into focus.
+            if (titleSplit?.lines) {
                 tl.to(
-                    titleSplit.words,
+                    titleSplit.lines,
                     {
-                        y: '0%',
-                        filter: 'blur(0px)',
                         opacity: 1,
                         stagger: 0.04,
-                        duration: 0.10,
-                        ease: 'cinematic',
-                    },
-                    0.05
-                );
-            }
-            // Kinetic breath on "Arrival" — fires once after the title settles.
-            tl.call(() => playAll(kineticTitle), [], 0.18);
-            tl.to(
-                subtitleRef.current,
-                { opacity: 1, y: 0, duration: 0.06, ease: 'cinematic' },
-                0.16
-            );
-            // HOLD 0.20 – 0.25
-
-            // === ACT II — Horizon reveals (0.25 – 0.50) ===
-            // Act I dims to ambient, drifts up, soft blur
-            tl.to(
-                [coordRef.current, titleRef.current, subtitleRef.current],
-                {
-                    y: -80,
-                    opacity: 0.18,
-                    filter: 'blur(3px)',
-                    duration: 0.08,
-                    ease: 'cinematic',
-                },
-                0.27
-            );
-            // Horizon line draws across
-            tl.to(
-                horizonRef.current,
-                { scaleX: 1, opacity: 1, duration: 0.14, ease: 'cinematic' },
-                0.30
-            );
-            // Editorial fragment reveals right-aligned
-            tl.to(
-                fragmentRef.current,
-                { opacity: 0.88, y: 0, duration: 0.08, ease: 'cinematic' },
-                0.40
-            );
-            // Kinetic breath on "lagoon" + "equator" after the fragment settles.
-            tl.call(() => playAll(kineticFragment), [], 0.46);
-            // HOLD 0.46 – 0.50
-
-            // === ACT III — The promise (0.50 – 0.75) ===
-            tl.to(
-                [horizonRef.current, fragmentRef.current],
-                { opacity: 0, duration: 0.05, ease: 'power2.in' },
-                0.50
-            );
-            tl.to(
-                [coordRef.current, titleRef.current, subtitleRef.current],
-                { opacity: 0, duration: 0.05, ease: 'power2.in' },
-                0.50
-            );
-            // Sentence: "An island for those who prefer to be invisible." (9 words)
-            // Tightened to land the final word ("invisible.") at 0.72 — leaving a
-            // 0.04 dwell before Act IV exit fires at 0.76. Previous timing
-            // (start 0.56, stagger 0.025, duration 0.10) put the last word's
-            // reveal at 0.76, colliding with the exit and cutting it off.
-            // New math: last word starts at 0.52 + 8*0.015 = 0.64, completes at 0.72.
-            if (sentenceSplit?.words) {
-                tl.to(
-                    sentenceSplit.words,
-                    {
-                        y: '0%',
-                        filter: 'blur(0px)',
-                        opacity: 1,
-                        stagger: 0.015,
                         duration: 0.08,
                         ease: 'cinematic',
                     },
-                    0.52
+                    0.04
                 );
             }
-            // Kinetic breath on "invisible" after the sentence settles.
-            tl.call(() => playAll(kineticSentence), [], 0.66);
+            tl.to(
+                titleRef.current,
+                { letterSpacing: '-0.015em', duration: 0.16, ease: 'cinematic' },
+                0.04
+            );
+            // The one kinetic-breath signature on the entire site. Fires
+            // once on "Arrival" after the title has settled.
+            tl.call(() => kineticTitle.forEach((kw) => kw.play()), [], 0.18);
+            tl.to(
+                subtitleRef.current,
+                { opacity: 1, duration: 0.10, ease: 'cinematic' },
+                0.20
+            );
+            // Long silence — 0.24 → 0.32. The hero sits.
+
+            // === ACT II — The horizon (0.32 – 0.55) ========================
+            // Act I dims to ambient. Opacity only — no blur, no translate.
+            // The text recedes into the world; it doesn't fly away.
+            tl.to(
+                [coordRef.current, titleRef.current, subtitleRef.current],
+                {
+                    opacity: (i: number) => (i === 0 ? 0.18 : 0.12),
+                    duration: 0.10,
+                    ease: 'cinematic',
+                },
+                0.32
+            );
+            // Horizon line draws across — the dominant motion of Act II.
+            // Slower than before (0.14 → 0.20 duration) so the line feels
+            // drawn, not snapped.
+            tl.to(
+                horizonRef.current,
+                { scaleX: 1, opacity: 1, duration: 0.20, ease: 'cinematic' },
+                0.38
+            );
+            // Editorial fragment reveals right-aligned. Single opacity fade.
+            tl.to(
+                fragmentRef.current,
+                { opacity: 0.88, duration: 0.14, ease: 'cinematic' },
+                0.46
+            );
+            // Long silence — 0.50 → 0.58. The fragment breathes.
+
+            // === ACT III — The promise (0.58 – 0.82) =======================
+            tl.to(
+                [horizonRef.current, fragmentRef.current],
+                { opacity: 0, duration: 0.10, ease: 'cinematic' },
+                0.58
+            );
+            tl.to(
+                [coordRef.current, titleRef.current, subtitleRef.current],
+                { opacity: 0, duration: 0.10, ease: 'cinematic' },
+                0.58
+            );
+            // Sentence reveals as lines, not words. Two beats max (the line
+            // wraps to two visual lines on most viewports), no per-word
+            // stagger. Tracking settles in parallel.
+            if (sentenceSplit?.lines) {
+                tl.to(
+                    sentenceSplit.lines,
+                    {
+                        opacity: 1,
+                        stagger: 0.10,
+                        duration: 0.16,
+                        ease: 'cinematic',
+                    },
+                    0.62
+                );
+            }
+            tl.to(
+                sentenceRef.current,
+                { letterSpacing: '-0.005em', duration: 0.30, ease: 'cinematic' },
+                0.62
+            );
             tl.to(
                 invitationRef.current,
-                { opacity: 0.5, y: 0, duration: 0.06, ease: 'cinematic' },
-                0.68
+                { opacity: 0.5, duration: 0.10, ease: 'cinematic' },
+                0.74
             );
-            // HOLD 0.72 – 0.75
+            // Long silence — 0.78 → 0.84. The sentence sits.
 
-            // === ACT IV — The invitation (0.75 – 1.00) ===
+            // === ACT IV — The invitation (0.84 – 1.00) =====================
             tl.to(
                 [sentenceRef.current, invitationRef.current],
-                { opacity: 0, y: -40, duration: 0.05, ease: 'power2.in' },
-                0.76
+                { opacity: 0, duration: 0.08, ease: 'cinematic' },
+                0.84
             );
             tl.to(
                 continueRef.current,
-                { opacity: 0.55, y: 0, duration: 0.06, ease: 'cinematic' },
-                0.82
+                { opacity: 0.55, duration: 0.10, ease: 'cinematic' },
+                0.88
             );
             tl.to(
                 beginRef.current,
-                { opacity: 1, y: 0, duration: 0.10, ease: 'cinematic' },
-                0.86
+                { opacity: 1, duration: 0.14, ease: 'cinematic' },
+                0.92
             );
-            // HOLD 0.96 – 1.00 then unpin into Moment02
+            // HOLD 0.98 → 1.00 then unpin into ChapterShore
 
             return () => {
                 kineticTitle.forEach((kw) => kw.revert());
-                kineticSentence.forEach((kw) => kw.revert());
-                kineticFragment.forEach((kw) => kw.revert());
                 titleSplit?.revert();
                 sentenceSplit?.revert();
-                fragmentSplit?.revert();
             };
         }, containerRef);
 
         return () => ctx.revert();
-    }, []);
+    }, [isMobile]);
 
     const handleBegin = () => {
-        scrollToElement('#moment-02');
+        scrollToElement('#chapter-02-shore');
     };
 
     return (
