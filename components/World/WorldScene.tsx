@@ -3,13 +3,19 @@
 import { useEffect, useRef } from "react";
 import {
   AmbientLight,
+  Color,
   DirectionalLight,
   Fog,
   PCFSoftShadowMap,
   PerspectiveCamera,
   Scene,
+  Vector2,
   WebGLRenderer,
 } from "three";
+import { EffectComposer } from "three/examples/jsm/postprocessing/EffectComposer.js";
+import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
+import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
+import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { gsap } from "@/lib/gsap";
 
 import { createSky } from "./scene/sky";
@@ -75,6 +81,18 @@ export default function WorldScene() {
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = PCFSoftShadowMap;
 
+    // ============== Post-processing chain ================================
+    // RenderPass → UnrealBloomPass → OutputPass. Bloom lifts the sun
+    // glitter, horizon halo, and the pavilion lantern into a soft glow
+    // that reads as cinematic film stock. OutputPass handles tone mapping
+    // and color space conversion (the standard final pass).
+    const composer = new EffectComposer(renderer);
+    composer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    composer.setSize(window.innerWidth, window.innerHeight);
+
+    // (RenderPass + UnrealBloomPass + OutputPass added once the scene
+    // and camera are constructed below.)
+
     const scene = new Scene();
     // Distance fog — the body of the atmosphere does its emotional work in
     // the shaders, but a small linear fog pulls far geometry toward the
@@ -88,6 +106,23 @@ export default function WorldScene() {
       0.5,
       2000
     );
+
+    // Wire the post-processing chain now that scene + camera exist.
+    composer.addPass(new RenderPass(scene, camera));
+    // UnrealBloom: threshold = brightness above which bloom kicks in;
+    // strength = overall bloom intensity; radius = soft falloff.
+    // Threshold 0.85 keeps everyday lit terrain out of the bloom —
+    // only highlights (sun glitter, horizon halo, emissive lantern)
+    // contribute. Strength 0.55 is restrained — bloom should feel like
+    // anamorphic flare, not VHS smear.
+    const bloomPass = new UnrealBloomPass(
+      new Vector2(window.innerWidth, window.innerHeight),
+      0.55, // strength
+      0.7,  // radius
+      0.85  // threshold
+    );
+    composer.addPass(bloomPass);
+    composer.addPass(new OutputPass());
 
     // ============== Scene composition ====================================
     const sky = createSky(scene);
@@ -174,6 +209,7 @@ export default function WorldScene() {
       camera.aspect = window.innerWidth / window.innerHeight;
       camera.updateProjectionMatrix();
       renderer.setSize(window.innerWidth, window.innerHeight, false);
+      composer.setSize(window.innerWidth, window.innerHeight);
       refreshMax();
     };
 
@@ -186,6 +222,77 @@ export default function WorldScene() {
       visible = !document.hidden;
     };
     document.addEventListener("visibilitychange", onVisibility);
+
+    // ============== Night-mood crossfade ================================
+    // Chapter 5 (Lantern) shifts the whole world toward moonlit cool. The
+    // crossfade is driven by smoothstep(0.78, 0.95, progress) — it starts
+    // gently before chapter 5 arrives and completes by the time the user
+    // is fully there. Each affected color/intensity has a "day" baseline
+    // and a "night" target.
+    const SUN_DAY_COLOR = new Color(0xffd7a8);
+    const SUN_NIGHT_COLOR = new Color(0x6d7a90);
+    const AMBIENT_DAY_COLOR = new Color(0x7d92ab);
+    const AMBIENT_NIGHT_COLOR = new Color(0x4d5d75);
+    const SKY_TOP_DAY = new Color(0.045, 0.075, 0.105);
+    const SKY_TOP_NIGHT = new Color(0.012, 0.020, 0.038);
+    const SKY_HORIZON_DAY = new Color(0.34, 0.22, 0.14);
+    const SKY_HORIZON_NIGHT = new Color(0.075, 0.085, 0.120);
+    const SKY_BOTTOM_DAY = new Color(0.022, 0.038, 0.055);
+    const SKY_BOTTOM_NIGHT = new Color(0.008, 0.015, 0.028);
+    const OCEAN_DEEP_DAY = new Color(0.040, 0.105, 0.135);
+    const OCEAN_DEEP_NIGHT = new Color(0.020, 0.038, 0.068);
+    const OCEAN_SUN_DAY = new Color(0.95, 0.62, 0.32);
+    const OCEAN_SUN_NIGHT = new Color(0.55, 0.62, 0.78);
+    const SUN_DAY_INTENSITY = 1.7;
+    const SUN_NIGHT_INTENSITY = 0.45;
+    const AMBIENT_DAY_INTENSITY = 0.6;
+    const AMBIENT_NIGHT_INTENSITY = 0.42;
+
+    const tmpColor = new Color();
+
+    const applyNightMood = (progress: number) => {
+      // smoothstep(0.78, 0.95) — pre-night warmth dim begins at 0.78,
+      // full moonlit by 0.95.
+      const tRaw = Math.max(0, Math.min(1, (progress - 0.78) / (0.95 - 0.78)));
+      const night = tRaw * tRaw * (3 - 2 * tRaw);
+
+      sun.color.copy(tmpColor.copy(SUN_DAY_COLOR).lerp(SUN_NIGHT_COLOR, night));
+      sun.intensity = SUN_DAY_INTENSITY * (1 - night) + SUN_NIGHT_INTENSITY * night;
+      ambient.color.copy(
+        tmpColor.copy(AMBIENT_DAY_COLOR).lerp(AMBIENT_NIGHT_COLOR, night)
+      );
+      ambient.intensity =
+        AMBIENT_DAY_INTENSITY * (1 - night) + AMBIENT_NIGHT_INTENSITY * night;
+
+      // Sky uniforms — directly mutate the Color references that the
+      // ShaderMaterial holds. Lerp values are written back to the same
+      // Color objects to avoid re-uploading uniform structure each frame.
+      // The `unknown` cast is because Mesh.material is Material | Material[]
+      // — we know these meshes have a single ShaderMaterial.
+      const skyMat = sky.mesh.material as unknown as {
+        uniforms: Record<string, { value: Color }>;
+      };
+      skyMat.uniforms.uTopColor.value.copy(
+        tmpColor.copy(SKY_TOP_DAY).lerp(SKY_TOP_NIGHT, night)
+      );
+      skyMat.uniforms.uHorizonColor.value.copy(
+        tmpColor.copy(SKY_HORIZON_DAY).lerp(SKY_HORIZON_NIGHT, night)
+      );
+      skyMat.uniforms.uBottomColor.value.copy(
+        tmpColor.copy(SKY_BOTTOM_DAY).lerp(SKY_BOTTOM_NIGHT, night)
+      );
+
+      // Ocean uniforms — same pattern.
+      const oceanMat = ocean.mesh.material as unknown as {
+        uniforms: Record<string, { value: Color }>;
+      };
+      oceanMat.uniforms.uDeepColor.value.copy(
+        tmpColor.copy(OCEAN_DEEP_DAY).lerp(OCEAN_DEEP_NIGHT, night)
+      );
+      oceanMat.uniforms.uSunColor.value.copy(
+        tmpColor.copy(OCEAN_SUN_DAY).lerp(OCEAN_SUN_NIGHT, night)
+      );
+    };
 
     // ============== Render loop ==========================================
     const start = performance.now();
@@ -202,12 +309,11 @@ export default function WorldScene() {
         cachedMaxScroll > 0 ? window.scrollY / cachedMaxScroll : 0;
       smoothedProgress += (rawProgress - smoothedProgress) * 0.06;
 
-      cameraPath.update(reducedMotion ? rawProgress : smoothedProgress);
+      const progress = reducedMotion ? rawProgress : smoothedProgress;
+      cameraPath.update(progress);
       ocean.tick(reducedMotion ? 0 : t);
-      sceneText.tick(
-        reducedMotion ? rawProgress : smoothedProgress,
-        camera.position
-      );
+      sceneText.tick(progress, camera.position);
+      applyNightMood(progress);
 
       // Tiny breathing camera idle drift — barely perceptible, so the frame
       // feels alive even when scroll is paused. Disabled under reduced
@@ -232,7 +338,7 @@ export default function WorldScene() {
           .padStart(3, "0")}%`;
       }
 
-      renderer.render(scene, camera);
+      composer.render();
     };
     gsap.ticker.add(tick);
 
@@ -253,6 +359,7 @@ export default function WorldScene() {
       scene.remove(sun);
       scene.remove(sun.target);
       scene.remove(ambient);
+      composer.dispose();
       renderer.dispose();
     };
   }, []);
