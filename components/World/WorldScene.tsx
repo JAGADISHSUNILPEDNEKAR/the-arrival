@@ -17,6 +17,7 @@ import { OutputPass } from "three/examples/jsm/postprocessing/OutputPass.js";
 import { RenderPass } from "three/examples/jsm/postprocessing/RenderPass.js";
 import { UnrealBloomPass } from "three/examples/jsm/postprocessing/UnrealBloomPass.js";
 import { gsap } from "@/lib/gsap";
+import { createCinematicPass } from "./cinematicPass";
 
 import { createSky } from "./scene/sky";
 import { createOcean } from "./scene/ocean";
@@ -122,6 +123,10 @@ export default function WorldScene() {
       0.85  // threshold
     );
     composer.addPass(bloomPass);
+    // Cinematic pass: chromatic aberration + vignette. Runs after bloom so
+    // the bloom's bright halos get the fringe at the edges too — sells the
+    // anamorphic captured-frame feel.
+    composer.addPass(createCinematicPass());
     composer.addPass(new OutputPass());
 
     // ============== Scene composition ====================================
@@ -264,6 +269,9 @@ export default function WorldScene() {
       ambient.intensity =
         AMBIENT_DAY_INTENSITY * (1 - night) + AMBIENT_NIGHT_INTENSITY * night;
 
+      // Drive the sky shader's star field — only visible as uNight > 0.
+      sky.setNight(night);
+
       // Sky uniforms — directly mutate the Color references that the
       // ShaderMaterial holds. Lerp values are written back to the same
       // Color objects to avoid re-uploading uniform structure each frame.
@@ -312,6 +320,7 @@ export default function WorldScene() {
       const progress = reducedMotion ? rawProgress : smoothedProgress;
       cameraPath.update(progress);
       ocean.tick(reducedMotion ? 0 : t);
+      sky.tick(reducedMotion ? 0 : t);
       sceneText.tick(progress, camera.position);
       applyNightMood(progress);
 

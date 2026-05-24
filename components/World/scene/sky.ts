@@ -27,11 +27,13 @@ void main() {
 const FRAGMENT = /* glsl */ `
 precision mediump float;
 varying vec3 vWorldPos;
-uniform vec3 uTopColor;     // zenith
-uniform vec3 uHorizonColor; // dusk warmth at the line
-uniform vec3 uBottomColor;  // below horizon — cool depth (when camera tilts down)
-uniform float uHorizonY;    // world-y position of the horizon line
-uniform float uHorizonSoft; // softness band around the horizon
+uniform vec3 uTopColor;
+uniform vec3 uHorizonColor;
+uniform vec3 uBottomColor;
+uniform float uHorizonY;
+uniform float uHorizonSoft;
+uniform float uNight;       // 0 = dusk, 1 = full night (drives star intensity)
+uniform float uTime;        // for twinkle
 
 float hash(vec2 p) {
   p = fract(p * vec2(443.897, 441.423));
@@ -39,8 +41,23 @@ float hash(vec2 p) {
   return fract(p.x * p.y);
 }
 
+// Star field — high-frequency hash thresholded to leave only the brightest
+// 0.3% of cells as stars. A second hash drives per-star twinkle phase.
+// Cell size ~12 world units in dome-projected coords, so the field reads
+// as scattered points rather than a grid.
+float starField(vec3 dir, float t) {
+  // Project onto a coarse sphere lookup: lat / lon coordinates from dir.
+  vec2 sph = vec2(atan(dir.z, dir.x), asin(clamp(dir.y, -1.0, 1.0)));
+  vec2 cell = sph * vec2(80.0, 80.0);
+  vec2 ci = floor(cell);
+  float h = hash(ci);
+  // 0.997 → ~0.3% of cells. Tweak to crowd or sparse the field.
+  float star = step(0.997, h);
+  float twinkle = 0.55 + 0.45 * sin(t * 1.4 + hash(ci + 17.0) * 25.0);
+  return star * twinkle;
+}
+
 void main() {
-  // Normalise the y of the fragment in world space against the horizon.
   float yNorm = (vWorldPos.y - uHorizonY) / max(uHorizonSoft, 0.001);
 
   // Above horizon — smoothstep from horizon into zenith.
@@ -52,10 +69,20 @@ void main() {
   float band = smoothstep(-0.04, 0.04, yNorm);
   vec3 col = mix(below, above, band);
 
-  // Atmospheric halo at the horizon — reads as scatter without committing
-  // to a sun disc.
+  // Atmospheric halo at the horizon — fades out as night arrives so the
+  // warm scatter disappears with the sun.
   float halo = exp(-pow(yNorm * 4.5, 2.0));
-  col += vec3(0.45, 0.34, 0.22) * halo * 0.32;
+  col += vec3(0.45, 0.34, 0.22) * halo * 0.32 * (1.0 - uNight);
+
+  // Stars — only above the horizon, only as night ramps up. Intensity is
+  // proportional to skyT so stars are brightest at zenith, fade toward
+  // the horizon (matching atmospheric extinction).
+  if (yNorm > 0.0) {
+    vec3 dir = normalize(vWorldPos);
+    float star = starField(dir, uTime);
+    float fadeUp = smoothstep(0.0, 0.6, yNorm);
+    col += vec3(0.85, 0.90, 1.0) * star * fadeUp * uNight * 0.9;
+  }
 
   // Light film grain so the dome doesn't read as flat gradient stock.
   float g = (hash(gl_FragCoord.xy * 0.5) - 0.5) * 0.018;
@@ -67,6 +94,8 @@ void main() {
 
 export interface SkyHandle {
   mesh: Mesh;
+  setNight: (amount: number) => void;
+  tick: (t: number) => void;
   dispose: () => void;
 }
 
@@ -84,6 +113,8 @@ export function createSky(scene: Scene): SkyHandle {
       uBottomColor: { value: new Color(0.022, 0.038, 0.055) },
       uHorizonY: { value: 0 },
       uHorizonSoft: { value: 80 },
+      uNight: { value: 0 },
+      uTime: { value: 0 },
     },
     side: BackSide,
     depthWrite: false,
@@ -95,6 +126,12 @@ export function createSky(scene: Scene): SkyHandle {
 
   return {
     mesh,
+    setNight: (amount: number) => {
+      material.uniforms.uNight.value = amount;
+    },
+    tick: (t: number) => {
+      material.uniforms.uTime.value = t;
+    },
     dispose: () => {
       geometry.dispose();
       material.dispose();
