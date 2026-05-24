@@ -5,6 +5,7 @@ import {
   AmbientLight,
   DirectionalLight,
   Fog,
+  PCFSoftShadowMap,
   PerspectiveCamera,
   Scene,
   WebGLRenderer,
@@ -69,6 +70,10 @@ export default function WorldScene() {
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.setSize(window.innerWidth, window.innerHeight, false);
     renderer.setClearColor(0x060e1a, 1);
+    // Shadow casting is the cheapest big-impact depth cue. PCFSoft gives
+    // a perceptually-soft penumbra at modest GPU cost.
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = PCFSoftShadowMap;
 
     const scene = new Scene();
     // Distance fog — the body of the atmosphere does its emotional work in
@@ -118,6 +123,21 @@ export default function WorldScene() {
     const sun = new DirectionalLight(0xffd7a8, 1.7);
     sun.position.set(560, 280, 720);
     sun.target.position.set(0, 0, 0);
+    // Shadow camera frustum sized to cover the atoll + a margin so palm
+    // and pavilion shadows reach the lagoon floor and outer reef. Bigger
+    // frustum = softer shadow per texel; the 2048 map is the trade-off.
+    sun.castShadow = true;
+    sun.shadow.mapSize.set(2048, 2048);
+    sun.shadow.camera.left = -500;
+    sun.shadow.camera.right = 500;
+    sun.shadow.camera.top = 500;
+    sun.shadow.camera.bottom = -500;
+    sun.shadow.camera.near = 100;
+    sun.shadow.camera.far = 2000;
+    // Bias to fight self-shadowing acne on the procedurally-displaced atoll
+    // (its faces vary in angle, so a constant bias is the simplest fix).
+    sun.shadow.bias = -0.0008;
+    sun.shadow.normalBias = 0.05;
     scene.add(sun);
     scene.add(sun.target);
 

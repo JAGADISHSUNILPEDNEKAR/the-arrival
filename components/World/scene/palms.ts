@@ -88,6 +88,8 @@ export function createPalms(
   const crowns = new InstancedMesh(crownGeom, crownMat, count);
   trunks.castShadow = true;
   crowns.castShadow = true;
+  trunks.receiveShadow = true;
+  crowns.receiveShadow = true;
 
   const rand = mulberry32(0x517a1d);
   const dummy = new Object3D();
