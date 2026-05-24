@@ -89,7 +89,11 @@ export function createAtoll(
   const ringWidth = opts.ringWidth ?? 90;
   const lagoonDepth = opts.lagoonDepth ?? -6;
   const segments = opts.segments ?? 220;
-  const sandColor = opts.sandColor ?? new Color(0.42, 0.34, 0.24);
+  // Lush-tropical green-sand. The atoll reads as a vegetated island
+  // with sandy edges rather than a bare sand atoll. Real Maldives
+  // resort islands look mostly green from above — palm canopy + ground
+  // cover dominate, sand is only at the shoreline.
+  const sandColor = opts.sandColor ?? new Color(0.22, 0.30, 0.16);
 
   // Plane covers the entire atoll plus its drop-off shelf.
   const planeSize = (ringRadius + ringWidth) * 2 + 80;

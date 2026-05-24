@@ -38,6 +38,7 @@ import { createCoral } from "./scene/coral";
 import { createSeaplane } from "./scene/seaplane";
 import { createSpeedboat } from "./scene/speedboat";
 import { createFigures } from "./scene/figures";
+import { createVegetation } from "./scene/vegetation";
 import { createCameraPath, WAYPOINTS } from "./cameraPath";
 
 /**
@@ -198,17 +199,19 @@ export default function WorldScene() {
       lagoonDepth: -6,
       segments: 220,
     });
-    // Denser palm grove than Phase 2 — 36 → 64. Slightly tighter to the
-    // ring so the silhouette reads as a continuous treeline broken only
-    // by the inlet. Per-palm scale/lean variation already gives the
-    // grove an organic, non-uniform feel.
+    // Dense palm canopy — 64 → 110. Combined with the new vegetation
+    // ground cover, the atoll's silhouette now reads as a continuous
+    // tropical island rather than sparse palms on sand.
     const palms = createPalms(scene, {
-      count: 64,
+      count: 110,
       ringRadius: 235,
-      ringJitter: 28,
+      ringJitter: 34,
       inletAngle: 0.8,
-      inletWidth: 0.6,
+      inletWidth: 0.55,
     });
+    // Low foliage covering the atoll ring — shrubs + ground cover.
+    // Single biggest lever for "lush green island" reading.
+    const vegetation = createVegetation(scene);
     const distantIslands = createDistantIslands(scene);
     const jetty = createJetty(scene);
     const boat = createBoat(scene);
@@ -562,6 +565,7 @@ export default function WorldScene() {
       seaplane.dispose();
       speedboat.dispose();
       figures.dispose();
+      vegetation.dispose();
       // Lights don't need explicit disposal but removing them from the
       // scene is good hygiene against HMR leaks.
       scene.remove(sun);
