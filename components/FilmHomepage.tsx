@@ -8,7 +8,7 @@ import { useWebGLContent } from '@/components/WebGL/WebGLContentLayer';
 
 const FilmHomepage = () => {
     const containerRef = useRef<HTMLDivElement>(null);
-    const { scrollToElement } = useScroll();
+    const { scrollToElement, isMobile } = useScroll();
 
     useWebGLContent({
         id: 'chapter-01-arrival',
@@ -108,7 +108,7 @@ const FilmHomepage = () => {
                     gsap.set(titleSplit.lines, { opacity: 1 });
                 }
                 if (titleRef.current) {
-                    gsap.set(titleRef.current, { letterSpacing: '-0.025em' });
+                    gsap.set(titleRef.current, { letterSpacing: '-0.015em' });
                 }
                 return;
             }
@@ -126,10 +126,18 @@ const FilmHomepage = () => {
                 scrollTrigger: {
                     trigger: containerRef.current,
                     start: 'top top',
-                    end: '+=500%', // 4 acts with real silence between
+                    // Pacing is the slower Lenis + scrub doing most of the
+                    // breathing work, not the pin distance itself. Desktop
+                    // sits at +=470% (was +=500%) — restraint without
+                    // weight. Mobile gets a meaningfully shorter ride so
+                    // touch scrolls don't dominate the journey.
+                    end: isMobile ? '+=320%' : '+=470%',
                     pin: true,
                     pinSpacing: true,
-                    scrub: 1.6, // higher scrub = more settled, less twitchy
+                    // Higher scrub on desktop = more settled, less twitchy.
+                    // Mobile pulls down to 1.0 so a touch swipe still tracks
+                    // responsively — otherwise the high scrub reads as lag.
+                    scrub: isMobile ? 1.0 : 1.6,
                     anticipatePin: 1,
                 },
             });
@@ -151,7 +159,7 @@ const FilmHomepage = () => {
             }
             tl.to(
                 titleRef.current,
-                { letterSpacing: '-0.025em', duration: 0.16, ease: 'cinematic' },
+                { letterSpacing: '-0.015em', duration: 0.16, ease: 'cinematic' },
                 0.04
             );
             // The one kinetic-breath signature on the entire site. Fires
@@ -220,7 +228,7 @@ const FilmHomepage = () => {
             }
             tl.to(
                 sentenceRef.current,
-                { letterSpacing: '-0.01em', duration: 0.30, ease: 'cinematic' },
+                { letterSpacing: '-0.005em', duration: 0.30, ease: 'cinematic' },
                 0.62
             );
             tl.to(
@@ -256,7 +264,7 @@ const FilmHomepage = () => {
         }, containerRef);
 
         return () => ctx.revert();
-    }, []);
+    }, [isMobile]);
 
     const handleBegin = () => {
         scrollToElement('#chapter-02-shore');

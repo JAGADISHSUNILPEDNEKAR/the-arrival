@@ -171,18 +171,18 @@ void main() {
   vec4 col = mix(colB, colA, edge);
 
   // === Cinematic film-stock grading ==========================================
-  // The Maldives photography reads as bright stock by default. We pull it
-  // into the same restrained palette as the atmosphere shader: gentle
-  // desaturation toward luminance, shadow lift, a subtle teal-green cast on
-  // midtones, and a soft warm bloom on highlights. Total grade ~12% so the
-  // photograph still feels like a photograph, just one that's been printed.
+  // The Maldives photography is pulled into the same mineral palette as the
+  // atmosphere shader. Heavier desaturation than the first pass (14% → 18%),
+  // and the midtone cast now pulls cyan OUT (negative blue push) so nothing
+  // reads tropical-fresh — only humid-mineral. Shadow lift biased slightly
+  // cooler. Highlight bloom kept warm to preserve golden-hour memory.
   float lum = dot(col.rgb, vec3(0.299, 0.587, 0.114));
-  col.rgb = mix(col.rgb, vec3(lum), 0.14);                // desaturate 14%
-  col.rgb = mix(vec3(0.03, 0.035, 0.045), col.rgb, 0.96); // shadow lift
+  col.rgb = mix(col.rgb, vec3(lum), 0.18);                // desaturate 18%
+  col.rgb = mix(vec3(0.028, 0.032, 0.040), col.rgb, 0.96); // shadow lift (cooler)
   float midMask = smoothstep(0.18, 0.55, lum) * (1.0 - smoothstep(0.55, 0.92, lum));
-  col.rgb += vec3(-0.012, 0.018, 0.005) * midMask;        // teal-green midtones
+  col.rgb += vec3(-0.010, 0.010, -0.006) * midMask;       // mineral midtones (cyan removed)
   float hiMask = smoothstep(0.78, 0.98, lum);
-  col.rgb += vec3(0.030, 0.022, 0.012) * hiMask;          // warm highlight bloom
+  col.rgb += vec3(0.024, 0.018, 0.010) * hiMask;          // warm highlight bloom
 
   // === Deeper cinematic vignette =============================================
   // The corner falloff was 0.62; pull it to 0.46 so editorial type set

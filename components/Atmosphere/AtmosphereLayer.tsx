@@ -36,19 +36,20 @@ float hash(vec2 p) {
   return fract(p.x * p.y);
 }
 
-// Cinematic film-stock palette: the day-arc is preserved (arrival → lagoon →
-// golden → intimate → moonlit) but every stop is desaturated and the midday
-// "lagoon" point is pushed toward muted organic green instead of tropical
-// turquoise. The intent is a Roger Deakins / Villeneuve grade, not a postcard.
-//   0.0 night arrival  -> 0.2 cool dawn  -> 0.4 muted lagoon-green
-//   0.6 restrained gold -> 0.8 intimate close -> 1.0 muted moonlit
+// Mineral film-stock palette. The day-arc still maps arrival → lagoon →
+// golden → intimate → moonlit, but the lagoon stop is now wet-stone green
+// rather than tropical turquoise — cyan is pulled out of every midtone so
+// nothing reads "fresh." Every stop sits closer to grey-mineral so the
+// haze (not color) carries the emotion.
+//   0.0 night arrival  -> 0.2 grey-slate dawn  -> 0.4 mineral lagoon
+//   0.6 restrained gold -> 0.8 intimate close -> 1.0 cool moonlit
 vec3 paletteSky(float t) {
   vec3 c0 = vec3(0.024, 0.055, 0.102); // night arrival — deep navy
-  vec3 c1 = vec3(0.110, 0.180, 0.200); // cool dawn — slate teal
-  vec3 c2 = vec3(0.180, 0.360, 0.310); // muted organic green (was bright lagoon)
-  vec3 c3 = vec3(0.380, 0.300, 0.220); // restrained gold — pulled saturation
-  vec3 c4 = vec3(0.080, 0.055, 0.040); // intimate close — deeper warm dark
-  vec3 c5 = vec3(0.090, 0.130, 0.160); // moonlit — muted slate
+  vec3 c1 = vec3(0.080, 0.130, 0.140); // grey-slate dawn (less cyan)
+  vec3 c2 = vec3(0.150, 0.250, 0.220); // mineral lagoon (wet stone)
+  vec3 c3 = vec3(0.340, 0.270, 0.205); // restrained gold
+  vec3 c4 = vec3(0.080, 0.055, 0.040); // intimate close — warm dark
+  vec3 c5 = vec3(0.075, 0.105, 0.130); // moonlit — cool grey
   if (t < 0.2) return mix(c0, c1, t / 0.2);
   if (t < 0.4) return mix(c1, c2, (t - 0.2) / 0.2);
   if (t < 0.6) return mix(c2, c3, (t - 0.4) / 0.2);
@@ -57,11 +58,11 @@ vec3 paletteSky(float t) {
 }
 vec3 paletteOcean(float t) {
   vec3 c0 = vec3(0.012, 0.027, 0.055); // night ocean — kept
-  vec3 c1 = vec3(0.045, 0.095, 0.115); // cool dawn ocean — deep teal
-  vec3 c2 = vec3(0.090, 0.220, 0.180); // muted lagoon-green
-  vec3 c3 = vec3(0.220, 0.180, 0.140); // restrained golden ocean
+  vec3 c1 = vec3(0.035, 0.070, 0.080); // grey-slate dawn ocean
+  vec3 c2 = vec3(0.075, 0.155, 0.130); // mineral lagoon ocean
+  vec3 c3 = vec3(0.195, 0.165, 0.130); // restrained golden ocean
   vec3 c4 = vec3(0.045, 0.030, 0.020); // intimate close — deeper
-  vec3 c5 = vec3(0.040, 0.060, 0.085); // moonlit ocean — muted
+  vec3 c5 = vec3(0.035, 0.045, 0.065); // moonlit ocean — cool
   if (t < 0.2) return mix(c0, c1, t / 0.2);
   if (t < 0.4) return mix(c1, c2, (t - 0.2) / 0.2);
   if (t < 0.6) return mix(c2, c3, (t - 0.4) / 0.2);
@@ -69,12 +70,12 @@ vec3 paletteOcean(float t) {
   return mix(c4, c5, (t - 0.8) / 0.2);
 }
 vec3 paletteGlow(float t) {
-  vec3 c0 = vec3(0.040, 0.055, 0.080); // pale night glow
-  vec3 c1 = vec3(0.350, 0.290, 0.220); // muted pre-dawn warmth
-  vec3 c2 = vec3(0.480, 0.470, 0.340); // pale ivory haze (was bright midday warm)
-  vec3 c3 = vec3(0.620, 0.420, 0.300); // restrained sunset
-  vec3 c4 = vec3(0.380, 0.230, 0.150); // restrained ember
-  vec3 c5 = vec3(0.180, 0.220, 0.280); // moonlit cool
+  vec3 c0 = vec3(0.035, 0.045, 0.060); // pale night glow
+  vec3 c1 = vec3(0.320, 0.265, 0.205); // pre-dawn warmth (pulled)
+  vec3 c2 = vec3(0.430, 0.415, 0.330); // cool ivory haze (was warmer)
+  vec3 c3 = vec3(0.560, 0.395, 0.290); // restrained sunset (pulled)
+  vec3 c4 = vec3(0.360, 0.220, 0.145); // restrained ember
+  vec3 c5 = vec3(0.155, 0.180, 0.220); // moonlit cool
   if (t < 0.2) return mix(c0, c1, t / 0.2);
   if (t < 0.4) return mix(c1, c2, (t - 0.2) / 0.2);
   if (t < 0.6) return mix(c2, c3, (t - 0.4) / 0.2);
@@ -145,10 +146,12 @@ void main() {
   // momentum. Amount peaks at ~6% so the underlying scene is never veiled.
   vec2 hazeUv = uv * vec2(2.4, 1.6) + vec2(uTime * 0.012, uTime * 0.008 + vel * 1.8);
   float hazeBody = vnoise(hazeUv) * 0.65 + vnoise(hazeUv * 2.3 + 17.0) * 0.35;
-  float hazeBand = smoothstep(0.30, 0.95, uv.y);
-  // Glow-tinted haze, lifted toward ivory for atmospheric perspective.
-  vec3 hazeTint = mix(paletteGlow(p), vec3(0.85, 0.84, 0.78), 0.55);
-  float hazeAmt = hazeBody * hazeBand * 0.075;
+  float hazeBand = smoothstep(0.28, 0.95, uv.y);
+  // Glow-tinted haze, lifted toward a cool grey-ivory (was warm ivory) so
+  // the air reads as humid rather than golden. Amount nudged up slightly
+  // (0.075 → 0.085) — the haze does more emotional work in this revision.
+  vec3 hazeTint = mix(paletteGlow(p), vec3(0.78, 0.78, 0.76), 0.55);
+  float hazeAmt = hazeBody * hazeBand * 0.085;
   col = mix(col, hazeTint, hazeAmt);
 
   // Stars at the dark ends of the arc (arrival + moonlit).

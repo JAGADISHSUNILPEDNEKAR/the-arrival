@@ -67,7 +67,7 @@ export default function ChapterTable({}: { index: number }) {
         gsap.set(splitTitle.lines, { opacity: 1 });
       }
       if (titleRef.current) {
-        gsap.set(titleRef.current, { letterSpacing: "-0.01em" });
+        gsap.set(titleRef.current, { letterSpacing: "-0.005em" });
       }
       return () => splitTitle?.revert();
     }
@@ -127,7 +127,7 @@ export default function ChapterTable({}: { index: number }) {
     }
     tl.to(
       titleRef.current,
-      { letterSpacing: "-0.01em", duration: 0.80, ease: "cinematic" },
+      { letterSpacing: "-0.005em", duration: 0.80, ease: "cinematic" },
       0.46
     );
 
@@ -196,7 +196,7 @@ export default function ChapterTable({}: { index: number }) {
             fontFamily: "var(--font-serif)",
             fontSize: "clamp(2.25rem, 5.5vw, 5.5rem)",
             lineHeight: 1.1,
-            letterSpacing: "-0.01em",
+            letterSpacing: "-0.005em",
             color: "rgba(255,250,240,0.98)",
             textShadow: "0 4px 60px rgba(6,8,16,0.7)",
           }}

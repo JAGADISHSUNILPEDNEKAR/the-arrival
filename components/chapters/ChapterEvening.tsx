@@ -57,7 +57,7 @@ export default function ChapterEvening({}: { index: number }) {
         gsap.set(splitTitle.lines, { opacity: 1 });
       }
       if (titleRef.current) {
-        gsap.set(titleRef.current, { letterSpacing: "-0.01em" });
+        gsap.set(titleRef.current, { letterSpacing: "-0.005em" });
       }
       return () => splitTitle?.revert();
     }
@@ -100,7 +100,7 @@ export default function ChapterEvening({}: { index: number }) {
     }
     tl.to(
       titleRef.current,
-      { letterSpacing: "-0.01em", duration: 0.55, ease: "cinematic" },
+      { letterSpacing: "-0.005em", duration: 0.55, ease: "cinematic" },
       0.28
     );
     tl.to(
@@ -152,9 +152,9 @@ export default function ChapterEvening({}: { index: number }) {
           className="italic font-light mb-6 md:mb-8"
           style={{
             fontFamily: "var(--font-serif)",
-            fontSize: "clamp(2rem, 4vw, 3.75rem)",
+            fontSize: "clamp(2.25rem, 4vw, 3.75rem)",
             lineHeight: 1.05,
-            letterSpacing: "-0.01em",
+            letterSpacing: "-0.005em",
             color: "rgba(255,250,240,0.97)",
             textShadow: "0 4px 50px rgba(6,14,26,0.65)",
           }}

@@ -62,7 +62,7 @@ export default function ChapterShore({}: { index: number }) {
         gsap.set(splitTitle.lines, { opacity: 1 });
       }
       if (titleRef.current) {
-        gsap.set(titleRef.current, { letterSpacing: "-0.01em" });
+        gsap.set(titleRef.current, { letterSpacing: "-0.005em" });
       }
       return () => splitTitle?.revert();
     }
@@ -110,7 +110,7 @@ export default function ChapterShore({}: { index: number }) {
     }
     tl.to(
       titleRef.current,
-      { letterSpacing: "-0.01em", duration: 0.55, ease: "cinematic" },
+      { letterSpacing: "-0.005em", duration: 0.55, ease: "cinematic" },
       0.28
     );
     // Sub line — opacity only, lands after the headline has settled.
@@ -146,16 +146,17 @@ export default function ChapterShore({}: { index: number }) {
       id="chapter-02-shore"
       aria-label="Chapter II — The Shore"
     >
-      {/* Soft dark radial scrim anchored behind the top-left editorial
-          column. The WebGL vignette darkens corners but doesn't reach
-          this position; without a scrim, the white serif loses against
-          the bright turquoise water below. */}
+      {/* Whisper-light radial scrim under the top-left editorial column.
+          The WebGL grade + deeper vignette + atmospheric haze do most of
+          the readability work now; this is photographic falloff at 0.20
+          opacity, not a mask. If it ever reads as a darkened patch under
+          the type, remove it — Pavilion already runs without one. */}
       <div
         aria-hidden
         className="absolute inset-0 z-[5] pointer-events-none"
         style={{
           background:
-            'radial-gradient(ellipse 65% 55% at 22% 30%, rgba(6,8,16,0.55), transparent 70%)',
+            'radial-gradient(ellipse 65% 55% at 22% 30%, rgba(6,8,16,0.20), transparent 75%)',
         }}
       />
 
@@ -181,9 +182,9 @@ export default function ChapterShore({}: { index: number }) {
           className="italic font-light mb-6 md:mb-8"
           style={{
             fontFamily: "var(--font-serif)",
-            fontSize: "clamp(2rem, 4vw, 3.75rem)",
+            fontSize: "clamp(2.25rem, 4vw, 3.75rem)",
             lineHeight: 1.05,
-            letterSpacing: "-0.01em",
+            letterSpacing: "-0.005em",
             color: "rgba(255,250,240,0.97)",
             textShadow: "0 4px 50px rgba(6,14,26,0.65)",
           }}

@@ -87,7 +87,7 @@ export default function ChapterInvitation({}: { index: number }) {
         gsap.set(splitHeadline.lines, { opacity: 1 });
       }
       if (headlineEl) {
-        gsap.set(headlineEl, { letterSpacing: "-0.01em" });
+        gsap.set(headlineEl, { letterSpacing: "-0.005em" });
       }
       gsap.set(subRef.current, { opacity: 0.7 });
       gsap.set(formRef.current, { opacity: 1 });
@@ -131,7 +131,7 @@ export default function ChapterInvitation({}: { index: number }) {
     if (headlineEl) {
       tl.to(
         headlineEl,
-        { letterSpacing: "-0.01em", duration: 0.70, ease: "cinematic" },
+        { letterSpacing: "-0.005em", duration: 0.70, ease: "cinematic" },
         0.28
       );
     }
@@ -257,9 +257,9 @@ export default function ChapterInvitation({}: { index: number }) {
           className="italic font-light"
           style={{
             fontFamily: "var(--font-serif)",
-            fontSize: "clamp(1.75rem, 4.5vw, 4rem)",
+            fontSize: "clamp(2rem, 4.5vw, 4rem)",
             lineHeight: 1.05,
-            letterSpacing: "-0.01em",
+            letterSpacing: "-0.005em",
             color: "rgba(255,250,240,0.94)",
             textShadow: "0 4px 50px rgba(6,8,16,0.55)",
           }}
@@ -354,7 +354,7 @@ export default function ChapterInvitation({}: { index: number }) {
               style={{
                 fontFamily: "var(--font-serif)",
                 fontSize: "clamp(1.5rem, 2.5vw, 2.25rem)",
-                letterSpacing: "-0.01em",
+                letterSpacing: "-0.005em",
                 color: "rgba(255,250,240,0.95)",
               }}
               aria-label="Send your message to the concierge"
