@@ -37,47 +37,62 @@ export interface CameraWaypoint {
 // atoll.ts ringRadius default). Sun direction is roughly +X/+Z. So
 // the camera arcs from a NW-ish aerial down to a south-of-ring position
 // facing the sun, then settles at table level on the inner ring.
-// Five waypoints, each a distinct cinematographic composition. The sun
-// lives in the +X +Y +Z octant so chapters 1-3 (camera arriving from a
-// similar quadrant) see the atoll's camera-facing side lit; chapters 4-5
-// face out to sea toward that warm horizon.
+// POV arrival sequence — the camera reads as "you are being brought
+// here by speedboat," not "drone inspecting geometry." Every waypoint
+// stays at or near water level (y < 30) until you actually arrive at
+// the pavilion. The atoll reveals itself over the course of the
+// journey rather than being shown to you upfront.
+//
+// Five beats:
+//   01 Approach — far over open ocean, atoll visible as a silhouette
+//      on the horizon, partly hidden by haze and palm crowns
+//   02 Lagoon  — closer; entering through the channel between two
+//      arms of the ring, palms in peripheral vision
+//   03 Tide    — low over the lagoon water, atoll wrapping around
+//      the camera, jetty + boat in the foreground ahead
+//   04 Table   — arrival at the pavilion, looking across the dining
+//      table toward the open lagoon
+//   05 Lantern — same position as Table, gaze rotated to face the
+//      open horizon for the night moment
 export const WAYPOINTS: CameraWaypoint[] = [
   {
     chapter: 1,
     title: "Approach",
-    // High aerial NE — atoll fills ~55% of frame, lit from above-right.
-    position: new Vector3(280, 320, 380),
-    lookAt: new Vector3(-10, -8, -10),
+    // Low altitude (y=22) over open ocean, well outside the atoll,
+    // looking toward the silhouette. Distant islands frame the view.
+    position: new Vector3(560, 22, 720),
+    lookAt: new Vector3(-40, 14, -20),
   },
   {
     chapter: 2,
     title: "Lagoon",
-    // Mid-altitude descending — atoll ring rising around camera frame.
-    position: new Vector3(140, 165, 240),
-    lookAt: new Vector3(-10, -2, -10),
+    // Approaching the inlet — atoll arms visible on either side of
+    // the frame, the channel ahead. Still low.
+    position: new Vector3(280, 18, 400),
+    lookAt: new Vector3(-30, 12, 30),
   },
   {
     chapter: 3,
     title: "Tide",
-    // Low water-skim — waves dominate lower half, atoll ring on horizon.
-    position: new Vector3(60, 14, 180),
-    lookAt: new Vector3(-40, 18, -60),
+    // Inside the lagoon, low over the water. Pavilion + jetty ahead
+    // in the +X direction. The camera is now approaching home.
+    position: new Vector3(80, 14, 100),
+    lookAt: new Vector3(225, 18, 200),
   },
   {
     chapter: 4,
     title: "Table",
-    // Standing on the inner edge of the ring near the pavilion position,
-    // looking across the lagoon toward the warm horizon and the far ring.
-    position: new Vector3(230, 22, 210),
-    lookAt: new Vector3(-260, 14, -240),
+    // Arrival at the pavilion — camera at table height looking down
+    // along the dining table toward the open lagoon beyond.
+    position: new Vector3(228, 22, 207),
+    lookAt: new Vector3(-180, 16, -180),
   },
   {
     chapter: 5,
     title: "Lantern",
-    // Same standing position as Table; gaze rotates slightly out to sea
-    // so the camera ends facing the open horizon (the Lantern moment is
-    // the page's closing breath out to sea).
-    position: new Vector3(230, 22, 210),
+    // Same standing position as Table; gaze rotates slightly so the
+    // camera faces the open horizon for the night-mood close.
+    position: new Vector3(228, 22, 207),
     lookAt: new Vector3(-340, 18, 80),
   },
 ];

@@ -35,6 +35,9 @@ import { createLanterns } from "./scene/lanterns";
 import { createFirePit } from "./scene/firePit";
 import { createBirds } from "./scene/birds";
 import { createCoral } from "./scene/coral";
+import { createSeaplane } from "./scene/seaplane";
+import { createSpeedboat } from "./scene/speedboat";
+import { createFigures } from "./scene/figures";
 import { createCameraPath, WAYPOINTS } from "./cameraPath";
 
 /**
@@ -218,6 +221,13 @@ export default function WorldScene() {
     const firePit = createFirePit(scene);
     const birds = createBirds(scene);
     const coral = createCoral(scene);
+    // Life cues — the seaplane descending across the sky during arrival,
+    // a speedboat with wake crossing the lagoon mid-journey, and human
+    // figures (jetty walkers + paddleboarders + snorkelers) giving the
+    // world social presence.
+    const seaplane = createSeaplane(scene);
+    const speedboat = createSpeedboat(scene);
+    const figures = createFigures(scene);
     const pavilion = createPavilion(scene, {
       // Sits on the inner ring of the atoll at the Table waypoint anchor,
       // facing across the lagoon toward the warm horizon (the sunset).
@@ -440,6 +450,9 @@ export default function WorldScene() {
       boat.tick(animT);
       firePit.tick(animT);
       birds.tick(animT);
+      figures.tick(animT);
+      seaplane.update(progress);
+      speedboat.update(progress);
       sceneText.tick(progress, camera.position);
       applyNightMood(progress);
 
@@ -546,6 +559,9 @@ export default function WorldScene() {
       firePit.dispose();
       birds.dispose();
       coral.dispose();
+      seaplane.dispose();
+      speedboat.dispose();
+      figures.dispose();
       // Lights don't need explicit disposal but removing them from the
       // scene is good hygiene against HMR leaks.
       scene.remove(sun);

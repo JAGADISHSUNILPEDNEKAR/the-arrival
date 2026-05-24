@@ -137,18 +137,30 @@ export function createDistantIslands(scene: Scene): DistantIslandsHandle {
     metalness: 0,
   });
 
-  // Six distant islands placed roughly on a circle 900–1400 world units
-  // from origin. Each gets a different radius, height, and noise seed for
-  // visual variation. Positions are biased so a few sit near the horizon
-  // line in the chapter 4 (Table) camera's gaze direction.
+  // Asymmetric placement — NOT a ring around the main atoll. Real
+  // archipelagos look "discovered," not procedurally distributed. One
+  // island sits close to the main atoll (visible during the lagoon
+  // approach), one is half-hidden behind another in the haze, the
+  // group clusters on the camera-arrival side instead of surrounding.
+  // Sizes vary by ~3× so foreground islands read as larger and
+  // background ones recede atmospherically into the fog.
   const placements: Array<DistantIslandPlacement & { seed: number }> = [
-    { cx: -1200, cz: -1100, ringRadius: 60, ringHeight: 7, planeSize: 200, seed: 0.31 },
-    { cx: -900, cz: -1350, ringRadius: 48, ringHeight: 6, planeSize: 170, seed: 1.47 },
-    { cx: -1450, cz: -200, ringRadius: 75, ringHeight: 9, planeSize: 250, seed: 2.83 },
-    { cx: -700, cz: -1500, ringRadius: 38, ringHeight: 5, planeSize: 140, seed: 3.91 },
-    { cx: -1500, cz: -750, ringRadius: 55, ringHeight: 6.5, planeSize: 190, seed: 4.65 },
-    { cx: 1100, cz: -1200, ringRadius: 42, ringHeight: 5.5, planeSize: 160, seed: 5.27 },
-    { cx: 800, cz: -1500, ringRadius: 34, ringHeight: 4.5, planeSize: 140, seed: 6.13 },
+    // CLOSE — within ~700 units of the main atoll, visible during
+    // chapter 1's arrival as the camera flies past.
+    { cx: 720, cz: 460, ringRadius: 95, ringHeight: 11, planeSize: 320, seed: 0.31 },
+    // OCCLUDED — partially behind the close one, slightly bigger.
+    { cx: 880, cz: 540, ringRadius: 120, ringHeight: 14, planeSize: 380, seed: 1.47 },
+    // Distant cluster on the arrival side — three islands grouped,
+    // varying scales for parallax depth.
+    { cx: 1400, cz: 280, ringRadius: 55, ringHeight: 6.5, planeSize: 200, seed: 2.83 },
+    { cx: 1280, cz: -90, ringRadius: 40, ringHeight: 5, planeSize: 150, seed: 3.91 },
+    { cx: 1520, cz: 600, ringRadius: 75, ringHeight: 8, planeSize: 240, seed: 4.65 },
+    // Far horizon on the opposite (departure) side — small, deep haze.
+    { cx: -1450, cz: -340, ringRadius: 35, ringHeight: 4.5, planeSize: 140, seed: 5.27 },
+    { cx: -1200, cz: 880, ringRadius: 42, ringHeight: 5.5, planeSize: 165, seed: 6.13 },
+    // One mid-distance island on the lookAt side from chapter 4 (Table),
+    // so the dining view has something in the horizon to read against.
+    { cx: -880, cz: -680, ringRadius: 58, ringHeight: 7, planeSize: 200, seed: 7.05 },
   ];
 
   const meshes: Mesh[] = [];
