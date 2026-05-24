@@ -1,36 +1,37 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { ScrollTrigger } from '@/lib/gsap';
 
 import FilmHomepage from './FilmHomepage';
-import Moment02 from './moments/Moment02';
-import Moment03 from './moments/Moment03';
-import Moment04 from './moments/Moment04';
-import Moment05 from './moments/Moment05';
-import Moment06 from './moments/Moment06';
-import Moment07 from './moments/Moment07';
-import Moment08 from './moments/Moment08';
-import Moment09 from './moments/Moment09';
-import MomentGallery from './moments/MomentGallery';
-import Moment10 from './moments/Moment10';
-import Moment11 from './moments/Moment11';
+import ChapterShore from './chapters/ChapterShore';
+import ChapterPath from './chapters/ChapterPath';
+import ChapterPavilion from './chapters/ChapterPavilion';
+import ChapterTable from './chapters/ChapterTable';
+import ChapterEvening from './chapters/ChapterEvening';
+import ChapterInvitation from './chapters/ChapterInvitation';
 import Preloader from './Preloader';
 import GlobalNav from './GlobalNav';
-import AtmosphereLayer from './Atmosphere/AtmosphereLayer';
 import AudioToggle from './AudioToggle';
-import JourneyScene from './JourneyScene';
+import WebGLContentLayer from './WebGL/WebGLContentLayer';
+
+// AtmosphereLayer pulls in three.js (~131 KB gz) and its own GLSL shader.
+// It's purely client-side decoration (no SSR value — the canvas only paints
+// after WebGL initialises), so we defer the import. The Preloader veil at
+// z-[10000] opacity 0.88 sits on top of frame zero and masks the brief
+// moment before the shader paints. By the time the veil lifts (~3s into
+// the entry ritual), the atmosphere is fully alive underneath.
+const AtmosphereLayer = dynamic(() => import('./Atmosphere/AtmosphereLayer'), {
+  ssr: false,
+});
 
 const ScrollJourney = () => {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    // The initial ScrollTrigger.refresh() runs in SmoothScroll.tsx after Lenis
-    // initialises — Lenis must be in place before ScrollTrigger maps pin
-    // positions. The previous setTimeout + 'load' listener here ran the same
-    // refresh twice more, which is expensive on a page with 12+ pinned
-    // sections (each refresh recomputes every pin). Resize stays — that's a
-    // genuine reactive recompute, not redundant init noise.
+    // The initial ScrollTrigger.refresh() runs in SmoothScroll.tsx after
+    // Lenis initialises. Resize stays — that's a genuine reactive recompute.
     const handleResize = () => {
       ScrollTrigger.refresh();
     };
@@ -38,16 +39,14 @@ const ScrollJourney = () => {
 
     return () => {
       window.removeEventListener('resize', handleResize);
-      ScrollTrigger.getAll().forEach(t => t.kill());
+      ScrollTrigger.getAll().forEach((t) => t.kill());
     };
   }, []);
 
   return (
     <main role="main" className="scroll-journey relative">
-      {/* Skip link — visually hidden until keyboard-focused. Jumps past the
-          11-chapter scroll journey straight to the actionable reservation. */}
       <a
-        href="#moment-11"
+        href="#chapter-07-invitation"
         className="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[10001] focus:px-4 focus:py-2 focus:rounded focus:bg-black/85 focus:text-white focus:no-underline"
         style={{ fontFamily: 'var(--font-sans)', fontSize: '0.85rem' }}
       >
@@ -55,27 +54,23 @@ const ScrollJourney = () => {
       </a>
 
       <AtmosphereLayer />
-      <JourneyScene />
       <Preloader />
       <GlobalNav />
       <AudioToggle />
 
-      <div ref={containerRef} className="scroll-container relative z-10">
-        <div className="moments-wrapper relative w-full h-full">
-          <FilmHomepage />
-          <Moment02 index={1} />
-          <Moment03 index={2} />
-          <Moment04 index={3} />
-          <Moment05 index={4} />
-          <Moment06 index={5} />
-          <Moment07 index={6} />
-          <Moment08 index={7} />
-          <Moment09 index={8} />
-          <MomentGallery />
-          <Moment10 index={9} />
-          <Moment11 index={10} />
+      <WebGLContentLayer>
+        <div ref={containerRef} className="scroll-container relative z-10">
+          <div className="moments-wrapper relative w-full h-full">
+            <FilmHomepage />
+            <ChapterShore index={1} />
+            <ChapterPath index={2} />
+            <ChapterPavilion index={3} />
+            <ChapterTable index={4} />
+            <ChapterEvening index={5} />
+            <ChapterInvitation index={6} />
+          </div>
         </div>
-      </div>
+      </WebGLContentLayer>
     </main>
   );
 };

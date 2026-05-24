@@ -47,27 +47,32 @@ export default function CustomCursor() {
 
     const applyState = () => {
       if (hoveringCta) {
+        // CTA hover: 1.8 (was 2.4) — restraint over magnification. The
+        // ring still grows enough to register the hover signal, but
+        // doesn't shout. Slightly longer settle for a more cinematic
+        // arrival.
         gsap.to(cursor, {
-          scale: 2.4,
+          scale: 1.8,
           opacity: 0.9,
-          duration: 0.45,
-          ease: 'power2.out',
+          duration: 0.55,
+          ease: 'cinematic',
           overwrite: 'auto',
         });
       } else if (isScrolling) {
+        // Recedes during scroll — signals "navigating, not pointing."
         gsap.to(cursor, {
           scale: 0.6,
           opacity: 0.3,
-          duration: 0.2,
-          ease: 'power2.out',
+          duration: 0.28,
+          ease: 'cinematic',
           overwrite: 'auto',
         });
       } else {
         gsap.to(cursor, {
           scale: 1,
           opacity: 1,
-          duration: 0.4,
-          ease: 'power2.out',
+          duration: 0.5,
+          ease: 'cinematic',
           overwrite: 'auto',
         });
       }

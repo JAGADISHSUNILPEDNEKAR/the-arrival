@@ -19,16 +19,16 @@ const GlobalNav = () => {
         gsap.to(navRef.current, {
           opacity: 1,
           pointerEvents: 'auto',
-          duration: 1,
-          ease: 'power2.out',
+          duration: 1.4,
+          ease: 'cinematic',
         });
       },
       onLeaveBack: () => {
         gsap.to(navRef.current, {
           opacity: 0,
           pointerEvents: 'none',
-          duration: 0.8,
-          ease: 'power2.in',
+          duration: 1.0,
+          ease: 'cinematic',
         });
       },
     });
@@ -37,7 +37,7 @@ const GlobalNav = () => {
   }, []);
 
   const handleReserve = () => {
-    scrollToElement('#moment-11');
+    scrollToElement('#chapter-07-invitation');
   };
 
   return (
@@ -67,7 +67,7 @@ const GlobalNav = () => {
           style={{
             fontFamily: 'var(--font-serif)',
             fontSize: 'clamp(1rem, 1.4vw, 1.4rem)',
-            letterSpacing: '-0.01em',
+            letterSpacing: '-0.005em',
             color: 'rgba(245,240,232,0.85)',
           }}
           aria-label="Reserve — scroll to the reservation"

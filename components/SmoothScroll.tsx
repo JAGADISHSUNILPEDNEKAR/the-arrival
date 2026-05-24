@@ -24,13 +24,20 @@ export default function SmoothScroll({ children }: { children: React.ReactNode }
       return () => clearTimeout(refreshTimer);
     }
 
+    // Scroll physics tuned for cinematic resistance, not snappy navigation.
+    // Longer duration + lower lerp = the page glides under inertial weight,
+    // so each chapter feels arrived-at, not jumped-to. Mobile keeps slightly
+    // shorter values so touch flings don't feel laggy.
     const lenis = new Lenis({
-      duration: isMobile ? 1.4 : 2.2,
-      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+      duration: isMobile ? 1.6 : 2.8,
+      // Slower-decaying expo gives a longer tail on each scroll burst, so
+      // momentum lingers a beat past the last wheel tick — the "resistance"
+      // half of the brief's motion language.
+      easing: (t) => Math.min(1, 1.001 - Math.pow(2, -8 * t)),
       smoothWheel: true,
-      wheelMultiplier: isMobile ? 1.1 : 0.8,
-      lerp: isMobile ? 0.08 : 0.035,
-      touchMultiplier: isMobile ? 1.8 : 2.2,
+      wheelMultiplier: isMobile ? 1.0 : 0.7,
+      lerp: isMobile ? 0.07 : 0.025,
+      touchMultiplier: isMobile ? 1.6 : 2.0,
     });
 
     lenis.on("scroll", ScrollTrigger.update);

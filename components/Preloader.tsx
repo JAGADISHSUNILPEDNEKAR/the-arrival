@@ -197,8 +197,15 @@ const Preloader = () => {
         >
           From the Maldives
         </span>
+        {/* aria-hidden because the GSAP onUpdate writes new lat/lon strings
+            ~60×/sec during the 2.2s count-up. Without hiding it, screen
+            readers announce every intermediate value as the counter climbs
+            from 00°00' to 03°15'N · 73°00'E — pure noise. The visual ritual
+            is decorative; the page's narrative coord "From the Maldives" is
+            already announced via the label above. */}
         <div
           ref={coordValueRef}
+          aria-hidden
           className="font-light"
           style={{
             fontFamily: 'var(--font-sans)',

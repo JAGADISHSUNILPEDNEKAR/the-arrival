@@ -50,19 +50,29 @@ export const viewport: Viewport = {
   colorScheme: 'dark',
 };
 
-// Restaurant schema for rich results.
+// Restaurant schema for rich results. The geo coordinates (3.25, 73.0) are
+// the same deliberately-rounded Maldives-center lat/lon the Preloader counts
+// up to — kept consistent so the structured data tells the same story the
+// page tells. The image links to the procedural og image card so search
+// previews carry the editorial title-card aesthetic.
 const restaurantSchema = {
   '@context': 'https://schema.org',
   '@type': 'Restaurant',
   name: 'The Arrival',
   description: SITE_DESCRIPTION,
   url: SITE_URL,
+  image: `${SITE_URL}/opengraph-image`,
   servesCuisine: ['Maldivian', 'Contemporary', 'Seafood'],
   acceptsReservations: 'https://schema.org/ReservationRequired',
   priceRange: '$$$$',
   address: {
     '@type': 'PostalAddress',
     addressCountry: 'MV',
+  },
+  geo: {
+    '@type': 'GeoCoordinates',
+    latitude: 3.25,
+    longitude: 73.0,
   },
 };
 
