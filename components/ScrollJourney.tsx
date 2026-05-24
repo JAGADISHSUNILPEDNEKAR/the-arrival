@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import { ScrollTrigger } from '@/lib/gsap';
 
 import FilmHomepage from './FilmHomepage';
@@ -12,9 +13,18 @@ import ChapterEvening from './chapters/ChapterEvening';
 import ChapterInvitation from './chapters/ChapterInvitation';
 import Preloader from './Preloader';
 import GlobalNav from './GlobalNav';
-import AtmosphereLayer from './Atmosphere/AtmosphereLayer';
 import AudioToggle from './AudioToggle';
 import WebGLContentLayer from './WebGL/WebGLContentLayer';
+
+// AtmosphereLayer pulls in three.js (~131 KB gz) and its own GLSL shader.
+// It's purely client-side decoration (no SSR value — the canvas only paints
+// after WebGL initialises), so we defer the import. The Preloader veil at
+// z-[10000] opacity 0.88 sits on top of frame zero and masks the brief
+// moment before the shader paints. By the time the veil lifts (~3s into
+// the entry ritual), the atmosphere is fully alive underneath.
+const AtmosphereLayer = dynamic(() => import('./Atmosphere/AtmosphereLayer'), {
+  ssr: false,
+});
 
 const ScrollJourney = () => {
   const containerRef = useRef<HTMLDivElement>(null);
