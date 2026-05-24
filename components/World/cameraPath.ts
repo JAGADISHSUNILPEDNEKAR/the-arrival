@@ -37,36 +37,48 @@ export interface CameraWaypoint {
 // atoll.ts ringRadius default). Sun direction is roughly +X/+Z. So
 // the camera arcs from a NW-ish aerial down to a south-of-ring position
 // facing the sun, then settles at table level on the inner ring.
+// Five waypoints, each a distinct cinematographic composition. The sun
+// lives in the +X +Y +Z octant so chapters 1-3 (camera arriving from a
+// similar quadrant) see the atoll's camera-facing side lit; chapters 4-5
+// face out to sea toward that warm horizon.
 export const WAYPOINTS: CameraWaypoint[] = [
   {
     chapter: 1,
     title: "Approach",
-    position: new Vector3(-420, 380, 520),
-    lookAt: new Vector3(0, -10, 60),
+    // High aerial NE — atoll fills ~55% of frame, lit from above-right.
+    position: new Vector3(280, 320, 380),
+    lookAt: new Vector3(-10, -8, -10),
   },
   {
     chapter: 2,
     title: "Lagoon",
-    position: new Vector3(-180, 140, 320),
-    lookAt: new Vector3(0, -4, 40),
+    // Mid-altitude descending — atoll ring rising around camera frame.
+    position: new Vector3(140, 165, 240),
+    lookAt: new Vector3(-10, -2, -10),
   },
   {
     chapter: 3,
     title: "Tide",
-    position: new Vector3(-40, 28, 200),
-    lookAt: new Vector3(0, 6, 60),
+    // Low water-skim — waves dominate lower half, atoll ring on horizon.
+    position: new Vector3(60, 14, 180),
+    lookAt: new Vector3(-40, 18, -60),
   },
   {
     chapter: 4,
     title: "Table",
-    position: new Vector3(0, 18, 60),
-    lookAt: new Vector3(180, 16, 540),
+    // Standing on the inner edge of the ring near the pavilion position,
+    // looking across the lagoon toward the warm horizon and the far ring.
+    position: new Vector3(230, 22, 210),
+    lookAt: new Vector3(-260, 14, -240),
   },
   {
     chapter: 5,
     title: "Lantern",
-    position: new Vector3(0, 18, 60),
-    lookAt: new Vector3(220, 24, 600),
+    // Same standing position as Table; gaze rotates slightly out to sea
+    // so the camera ends facing the open horizon (the Lantern moment is
+    // the page's closing breath out to sea).
+    position: new Vector3(230, 22, 210),
+    lookAt: new Vector3(-340, 18, 80),
   },
 ];
 

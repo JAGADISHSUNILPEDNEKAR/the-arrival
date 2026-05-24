@@ -14,6 +14,8 @@ import { gsap } from "@/lib/gsap";
 import { createSky } from "./scene/sky";
 import { createOcean } from "./scene/ocean";
 import { createAtoll } from "./scene/atoll";
+import { createPalms } from "./scene/palms";
+import { createPavilion } from "./scene/pavilion";
 import { createCameraPath, WAYPOINTS } from "./cameraPath";
 
 /**
@@ -91,18 +93,36 @@ export default function WorldScene() {
       lagoonDepth: -6,
       segments: 220,
     });
+    const palms = createPalms(scene, {
+      count: 36,
+      ringRadius: 235,
+      ringJitter: 24,
+      inletAngle: 0.8,
+      inletWidth: 0.7,
+    });
+    const pavilion = createPavilion(scene, {
+      // Sits on the inner ring of the atoll at the Table waypoint anchor,
+      // facing across the lagoon toward the warm horizon (the sunset).
+      position: { x: 222, y: 14, z: 200 },
+      rotationY: -Math.PI * 0.6,
+      scale: 1,
+    });
 
     // ============== Lighting =============================================
-    // Warm directional sun — angle matches the ocean shader's uSunDir so the
-    // ocean's sun-streak lines up with where the atoll's lit face is.
-    const sun = new DirectionalLight(0xffc89a, 1.1);
-    sun.position.set(450, 150, 880);
+    // Sun in +X+Y+Z octant so chapter 1's camera (which arrives from a
+    // similar quadrant) sees the atoll's camera-facing side lit. The ocean
+    // shader's uSunDir uniform matches, so the sun-streak runs along the
+    // same azimuth as the lit terrain.
+    const sun = new DirectionalLight(0xffd7a8, 1.7);
+    sun.position.set(560, 280, 720);
     sun.target.position.set(0, 0, 0);
     scene.add(sun);
     scene.add(sun.target);
 
     // Cool ambient fill — keeps shadowed faces from going to absolute black.
-    const ambient = new AmbientLight(0x6a82a0, 0.45);
+    // Slightly warmer + brighter than Phase 1 so the atoll's lit form reads
+    // against the deep ocean.
+    const ambient = new AmbientLight(0x7d92ab, 0.6);
     scene.add(ambient);
 
     // ============== Camera path ==========================================
@@ -199,6 +219,8 @@ export default function WorldScene() {
       sky.dispose();
       ocean.dispose();
       atoll.dispose();
+      palms.dispose();
+      pavilion.dispose();
       // Lights don't need explicit disposal but removing them from the
       // scene is good hygiene against HMR leaks.
       scene.remove(sun);
@@ -215,8 +237,10 @@ export default function WorldScene() {
         aria-hidden
         className="fixed inset-0 w-full h-full z-0"
       />
-      {/* Phase 1 HUD — temporary. Phase 3 replaces this with in-scene
-          troika-three-text typography. */}
+      {/* Phase 2 HUD — restrained, but more present than Phase 1. The
+          chapter counter sits as a corner frame-mark; the chapter NAME
+          appears mid-frame as italic serif. Phase 3 moves the name into
+          the 3D scene as troika-three-text. */}
       <div className="fixed top-0 left-0 w-full p-6 md:p-10 z-10 pointer-events-none flex justify-between items-start">
         <span
           ref={chapterLabelRef}
@@ -244,17 +268,38 @@ export default function WorldScene() {
           000%
         </span>
       </div>
-      <div className="fixed bottom-8 left-0 right-0 z-10 flex justify-center pointer-events-none">
+      {/* Scroll cue — only meaningful at the start; fades out as the user
+          begins to scroll. Phase 1 just kept it always visible. */}
+      <div className="fixed bottom-10 left-0 right-0 z-10 flex flex-col items-center gap-2 pointer-events-none">
         <span
           className="uppercase"
           style={{
             fontFamily: "var(--font-sans)",
             fontSize: "clamp(0.625rem, 0.7vw, 0.75rem)",
             letterSpacing: "0.5em",
-            color: "rgba(245,240,232,0.4)",
+            color: "rgba(245,240,232,0.45)",
           }}
         >
           Scroll
+        </span>
+        <span
+          aria-hidden
+          className="scroll-hint-chevron"
+          style={{ color: "rgba(245,240,232,0.7)", lineHeight: 0 }}
+        >
+          <svg
+            width="12"
+            height="18"
+            viewBox="0 0 14 22"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.25"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden
+          >
+            <path d="M3 8 L7 14 L11 8" />
+          </svg>
         </span>
       </div>
     </>

@@ -128,13 +128,18 @@ export function createOcean(scene: Scene): OceanHandle {
     uTime: { value: 0 },
     uWaveAmp: { value: 0.7 },
     uWaveFreq: { value: 0.05 },
-    // Deep teal (Convex Seascape lineage) → lifted teal-grey on crests.
-    uDeepColor: { value: new Color(0.025, 0.062, 0.090) },
-    uShallowColor: { value: new Color(0.075, 0.150, 0.165) },
+    // Two-tone palette: deep ocean teal in the body, lifted teal-grey on
+    // crests where waves shoulder up. Brighter than Phase 1 so the surface
+    // reads against the deeper sky — the scene wants visible water, not a
+    // dark floor.
+    uDeepColor: { value: new Color(0.040, 0.105, 0.135) },
+    uShallowColor: { value: new Color(0.115, 0.215, 0.225) },
     // Warm dusk amber — the second palette tone, anchored at the sun.
-    uSunColor: { value: new Color(0.85, 0.55, 0.30) },
-    // Sun pointing toward the camera at ~+Z, lifted ~10° above the horizon.
-    uSunDir: { value: new Vector3(0.45, 0.15, 0.88).normalize() },
+    uSunColor: { value: new Color(0.95, 0.62, 0.32) },
+    // Sun direction matches the DirectionalLight in WorldScene at
+    // (560, 280, 720) — normalised. Sun-streak in the ocean shader runs
+    // along this azimuth.
+    uSunDir: { value: new Vector3(560, 280, 720).normalize() },
     uHorizonY: { value: 0 },
   };
 
