@@ -41,6 +41,28 @@ float hash(vec2 p) {
   return fract(p.x * p.y);
 }
 
+// Two-octave value noise — used by clouds + starField for cell-distance.
+float vnoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i),               hash(i + vec2(1.0, 0.0)), u.x),
+             mix(hash(i + vec2(0.0, 1.0)), hash(i + vec2(1.0, 1.0)), u.x), u.y);
+}
+
+// FBM for the cloud body — three octaves give a "puffy stratus" feel
+// without the cost of a real volumetric cloud.
+float fbm3(vec2 p) {
+  float v = 0.0;
+  float a = 0.5;
+  for (int i = 0; i < 3; i++) {
+    v += a * vnoise(p);
+    p *= 2.0;
+    a *= 0.5;
+  }
+  return v;
+}
+
 // Star field — high-frequency hash thresholded to leave only the brightest
 // 0.3% of cells as stars. A second hash drives per-star twinkle phase.
 // Cell size ~12 world units in dome-projected coords, so the field reads
@@ -73,6 +95,32 @@ void main() {
   // warm scatter disappears with the sun.
   float halo = exp(-pow(yNorm * 4.5, 2.0));
   col += vec3(0.45, 0.34, 0.22) * halo * 0.32 * (1.0 - uNight);
+
+  // Clouds — FBM noise body drifting slowly across the sky, biased to
+  // mid-altitude (smoothstep falloff toward zenith + horizon). Tint
+  // depends on day/night: warm-ivory at dusk, cool grey by night.
+  // Sampling uses the dome's normalized direction so clouds wrap
+  // around the dome consistently.
+  if (yNorm > -0.05) {
+    vec3 dir = normalize(vWorldPos);
+    // Spherical projection for cloud sampling, slow drift over time.
+    vec2 cloudUv = vec2(atan(dir.z, dir.x), dir.y) * 1.8;
+    cloudUv += vec2(uTime * 0.018, uTime * 0.006);
+    float cloud = fbm3(cloudUv);
+    // Threshold + soft contrast — the lower threshold sets where clouds
+    // start to appear; the smoothstep upper bound is the dense body.
+    cloud = smoothstep(0.42, 0.78, cloud);
+    // Altitude mask: peak density in the middle of the sky, fading out
+    // at both horizon and zenith so clouds don't crowd the frame.
+    float altMask = smoothstep(0.0, 0.18, yNorm) * (1.0 - smoothstep(0.7, 1.4, yNorm));
+    cloud *= altMask;
+    // Cloud tone — at dusk picks up the warm horizon glow; at night
+    // cools to grey-blue moonlit body.
+    vec3 cloudDay = mix(vec3(0.78, 0.75, 0.68), uHorizonColor * 2.2, 0.35);
+    vec3 cloudNight = vec3(0.18, 0.20, 0.26);
+    vec3 cloudCol = mix(cloudDay, cloudNight, uNight);
+    col = mix(col, cloudCol, cloud * 0.55);
+  }
 
   // Stars — only above the horizon, only as night ramps up. Intensity is
   // proportional to skyT so stars are brightest at zenith, fade toward

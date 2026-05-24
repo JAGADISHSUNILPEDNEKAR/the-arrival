@@ -26,6 +26,9 @@ import { createAtoll } from "./scene/atoll";
 import { createPalms } from "./scene/palms";
 import { createPavilion } from "./scene/pavilion";
 import { createSceneText } from "./scene/sceneText";
+import { createDistantIslands } from "./scene/distantIslands";
+import { createJetty } from "./scene/jetty";
+import { createBoat } from "./scene/boat";
 import { createCameraPath, WAYPOINTS } from "./cameraPath";
 
 /**
@@ -186,13 +189,20 @@ export default function WorldScene() {
       lagoonDepth: -6,
       segments: 220,
     });
+    // Denser palm grove than Phase 2 — 36 → 64. Slightly tighter to the
+    // ring so the silhouette reads as a continuous treeline broken only
+    // by the inlet. Per-palm scale/lean variation already gives the
+    // grove an organic, non-uniform feel.
     const palms = createPalms(scene, {
-      count: 36,
+      count: 64,
       ringRadius: 235,
-      ringJitter: 24,
+      ringJitter: 28,
       inletAngle: 0.8,
-      inletWidth: 0.7,
+      inletWidth: 0.6,
     });
+    const distantIslands = createDistantIslands(scene);
+    const jetty = createJetty(scene);
+    const boat = createBoat(scene);
     const pavilion = createPavilion(scene, {
       // Sits on the inner ring of the atoll at the Table waypoint anchor,
       // facing across the lagoon toward the warm horizon (the sunset).
@@ -401,13 +411,17 @@ export default function WorldScene() {
       // translate to twitchy camera jumps.
       const rawProgress =
         cachedMaxScroll > 0 ? window.scrollY / cachedMaxScroll : 0;
-      smoothedProgress += (rawProgress - smoothedProgress) * 0.06;
+      // Slower lerp (0.06 → 0.04) so the camera glides under more weight.
+      // Combined with the longer document runway in app/page.tsx the journey
+      // feels deliberate, not skimmed.
+      smoothedProgress += (rawProgress - smoothedProgress) * 0.04;
 
       const progress = reducedMotion ? rawProgress : smoothedProgress;
       cachedProgress = progress;
       cameraPath.update(progress);
       ocean.tick(reducedMotion ? 0 : t);
       sky.tick(reducedMotion ? 0 : t);
+      boat.tick(reducedMotion ? 0 : t);
       sceneText.tick(progress, camera.position);
       applyNightMood(progress);
 
@@ -505,6 +519,9 @@ export default function WorldScene() {
       palms.dispose();
       pavilion.dispose();
       sceneText.dispose();
+      distantIslands.dispose();
+      jetty.dispose();
+      boat.dispose();
       // Lights don't need explicit disposal but removing them from the
       // scene is good hygiene against HMR leaks.
       scene.remove(sun);
