@@ -36,18 +36,19 @@ float hash(vec2 p) {
   return fract(p.x * p.y);
 }
 
-// Palette tracks the existing 11-moment narrative arc:
-//   0.0 night arrival  -> 0.2 dawn break  -> 0.4 midday lagoon
-//   0.6 golden warm    -> 0.8 intimate dining dark  -> 1.0 moonlit ocean
-// Mid-page intentionally darkens for the dining acts (Moment06-09) so the
-// world below intimate scenes feels warm and close, not bright tropical.
+// Cinematic film-stock palette: the day-arc is preserved (arrival → lagoon →
+// golden → intimate → moonlit) but every stop is desaturated and the midday
+// "lagoon" point is pushed toward muted organic green instead of tropical
+// turquoise. The intent is a Roger Deakins / Villeneuve grade, not a postcard.
+//   0.0 night arrival  -> 0.2 cool dawn  -> 0.4 muted lagoon-green
+//   0.6 restrained gold -> 0.8 intimate close -> 1.0 muted moonlit
 vec3 paletteSky(float t) {
-  vec3 c0 = vec3(0.024, 0.055, 0.102); // night arrival
-  vec3 c1 = vec3(0.150, 0.220, 0.310); // dawn break
-  vec3 c2 = vec3(0.510, 0.760, 0.820); // midday sky
-  vec3 c3 = vec3(0.540, 0.380, 0.310); // golden warm
-  vec3 c4 = vec3(0.140, 0.090, 0.060); // intimate dining dark
-  vec3 c5 = vec3(0.110, 0.140, 0.230); // moonlit
+  vec3 c0 = vec3(0.024, 0.055, 0.102); // night arrival — deep navy
+  vec3 c1 = vec3(0.110, 0.180, 0.200); // cool dawn — slate teal
+  vec3 c2 = vec3(0.180, 0.360, 0.310); // muted organic green (was bright lagoon)
+  vec3 c3 = vec3(0.380, 0.300, 0.220); // restrained gold — pulled saturation
+  vec3 c4 = vec3(0.080, 0.055, 0.040); // intimate close — deeper warm dark
+  vec3 c5 = vec3(0.090, 0.130, 0.160); // moonlit — muted slate
   if (t < 0.2) return mix(c0, c1, t / 0.2);
   if (t < 0.4) return mix(c1, c2, (t - 0.2) / 0.2);
   if (t < 0.6) return mix(c2, c3, (t - 0.4) / 0.2);
@@ -55,12 +56,12 @@ vec3 paletteSky(float t) {
   return mix(c4, c5, (t - 0.8) / 0.2);
 }
 vec3 paletteOcean(float t) {
-  vec3 c0 = vec3(0.012, 0.027, 0.055); // night ocean
-  vec3 c1 = vec3(0.060, 0.140, 0.240); // pre-dawn ocean
-  vec3 c2 = vec3(0.090, 0.460, 0.560); // midday lagoon
-  vec3 c3 = vec3(0.360, 0.260, 0.220); // golden ocean
-  vec3 c4 = vec3(0.080, 0.050, 0.030); // intimate close
-  vec3 c5 = vec3(0.039, 0.063, 0.118); // moonlit
+  vec3 c0 = vec3(0.012, 0.027, 0.055); // night ocean — kept
+  vec3 c1 = vec3(0.045, 0.095, 0.115); // cool dawn ocean — deep teal
+  vec3 c2 = vec3(0.090, 0.220, 0.180); // muted lagoon-green
+  vec3 c3 = vec3(0.220, 0.180, 0.140); // restrained golden ocean
+  vec3 c4 = vec3(0.045, 0.030, 0.020); // intimate close — deeper
+  vec3 c5 = vec3(0.040, 0.060, 0.085); // moonlit ocean — muted
   if (t < 0.2) return mix(c0, c1, t / 0.2);
   if (t < 0.4) return mix(c1, c2, (t - 0.2) / 0.2);
   if (t < 0.6) return mix(c2, c3, (t - 0.4) / 0.2);
@@ -68,12 +69,12 @@ vec3 paletteOcean(float t) {
   return mix(c4, c5, (t - 0.8) / 0.2);
 }
 vec3 paletteGlow(float t) {
-  vec3 c0 = vec3(0.04, 0.06, 0.10);
-  vec3 c1 = vec3(0.55, 0.40, 0.30); // pre-dawn glow
-  vec3 c2 = vec3(0.85, 0.65, 0.45); // midday warm horizon
-  vec3 c3 = vec3(0.95, 0.55, 0.35); // sunset peak
-  vec3 c4 = vec3(0.65, 0.40, 0.25); // ember
-  vec3 c5 = vec3(0.20, 0.25, 0.35); // moonlit cool
+  vec3 c0 = vec3(0.040, 0.055, 0.080); // pale night glow
+  vec3 c1 = vec3(0.350, 0.290, 0.220); // muted pre-dawn warmth
+  vec3 c2 = vec3(0.480, 0.470, 0.340); // pale ivory haze (was bright midday warm)
+  vec3 c3 = vec3(0.620, 0.420, 0.300); // restrained sunset
+  vec3 c4 = vec3(0.380, 0.230, 0.150); // restrained ember
+  vec3 c5 = vec3(0.180, 0.220, 0.280); // moonlit cool
   if (t < 0.2) return mix(c0, c1, t / 0.2);
   if (t < 0.4) return mix(c1, c2, (t - 0.2) / 0.2);
   if (t < 0.6) return mix(c2, c3, (t - 0.4) / 0.2);
@@ -81,14 +82,29 @@ vec3 paletteGlow(float t) {
   return mix(c4, c5, (t - 0.8) / 0.2);
 }
 
+// Two-octave value noise for the atmospheric haze. Stays cheap (4 hash
+// calls); the layered scale gives the fog body more "drift" than a single
+// sin/cos band without the cost of a true FBM.
+float vnoise(vec2 p) {
+  vec2 i = floor(p);
+  vec2 f = fract(p);
+  vec2 u = f * f * (3.0 - 2.0 * f);
+  return mix(mix(hash(i),               hash(i + vec2(1.0,0.0)), u.x),
+             mix(hash(i + vec2(0.0,1.0)), hash(i + vec2(1.0,1.0)), u.x), u.y);
+}
+
 void main() {
   vec2 uv = vUv;
 
   // Velocity-driven warp — heat-shimmer feel while scrolling, decays fast.
-  float vel = clamp(uVelocity * 0.0006, -0.04, 0.04);
+  // Slightly stronger amplitude than before (0.0006 → 0.0008) so the world
+  // visibly "breathes" under inertial scroll without ever crossing into
+  // distortion.
+  float vel = clamp(uVelocity * 0.0008, -0.05, 0.05);
   uv.x += vel * (0.5 - uv.y) * sin(uv.y * 12.0 + uTime * 0.3);
 
-  // Sub-pixel mouse parallax.
+  // Sub-pixel mouse parallax — keeps the world feeling spatial without
+  // ever drawing attention to the input.
   vec2 mDelta = uMouse - 0.5;
   uv += mDelta * 0.008;
 
@@ -101,7 +117,7 @@ void main() {
   // Sky: horizon -> top
   float skyT = clamp((uv.y - horizon) / max(1.0 - horizon, 0.001), 0.0, 1.0);
   vec3 skyTop = paletteSky(p);
-  vec3 skyHorz = mix(paletteSky(p), paletteGlow(p), 0.65);
+  vec3 skyHorz = mix(paletteSky(p), paletteGlow(p), 0.55);
   vec3 sky = mix(skyHorz, skyTop, pow(skyT, 1.3));
 
   // Ocean: bottom -> horizon, with layered shimmer.
@@ -116,9 +132,24 @@ void main() {
   // Composite sky + ocean across the horizon line.
   vec3 col = mix(ocean, sky, skyMask);
 
-  // Warm/cool glow band at the horizon.
-  float glowMask = exp(-pow((uv.y - horizon) * 12.0, 2.0));
+  // Warm/cool glow band at the horizon — slightly wider falloff than before
+  // (12.0 → 9.5) so the band reads as soft volumetric bloom rather than a
+  // hard band. Intensity unchanged.
+  float glowMask = exp(-pow((uv.y - horizon) * 9.5, 2.0));
   col += paletteGlow(p) * glowMask * 0.18;
+
+  // === Volumetric atmospheric haze ============================================
+  // A drifting fog body biased toward the top of the frame. Pulls everything
+  // toward an ivory-tinted glow color (so it reads as light-in-air, not flat
+  // grey wash). Scroll velocity nudges the drift — the world "breathes" with
+  // momentum. Amount peaks at ~6% so the underlying scene is never veiled.
+  vec2 hazeUv = uv * vec2(2.4, 1.6) + vec2(uTime * 0.012, uTime * 0.008 + vel * 1.8);
+  float hazeBody = vnoise(hazeUv) * 0.65 + vnoise(hazeUv * 2.3 + 17.0) * 0.35;
+  float hazeBand = smoothstep(0.30, 0.95, uv.y);
+  // Glow-tinted haze, lifted toward ivory for atmospheric perspective.
+  vec3 hazeTint = mix(paletteGlow(p), vec3(0.85, 0.84, 0.78), 0.55);
+  float hazeAmt = hazeBody * hazeBand * 0.075;
+  col = mix(col, hazeTint, hazeAmt);
 
   // Stars at the dark ends of the arc (arrival + moonlit).
   float nightAmt = max(smoothstep(0.18, 0.0, p), smoothstep(0.80, 1.0, p));
@@ -129,14 +160,32 @@ void main() {
     col += vec3(0.85, 0.90, 1.0) * star * twinkle * nightAmt * 0.6 * skyT;
   }
 
-  // Film grain — keeps the surface alive, never plastic.
-  float grain = (hash(uv * uResolution + uTime * 13.0) - 0.5) * 0.025;
+  // === Subtle chromatic aberration at the frame edges =========================
+  // Real anamorphic lenses fringe near the edges. The shift is fixed at one
+  // sub-pixel max so the effect reads as "this is a captured frame, not a
+  // computer image" without ever being legible as RGB split.
+  vec2 caCoord = vUv - 0.5;
+  float caStrength = pow(length(caCoord) * 1.4, 2.5) * 0.012;
+  float fringeR = paletteGlow(p).r * caStrength;
+  float fringeB = paletteSky(p).b * caStrength;
+  col.r += fringeR;
+  col.b += fringeB;
+
+  // Film grain — slightly denser than before (0.025 → 0.032) for tactile
+  // celluloid weight. Keeps the surface alive, never plastic.
+  float grain = (hash(uv * uResolution + uTime * 13.0) - 0.5) * 0.032;
   col += grain;
 
-  // Editorial vignette.
+  // === Glow-tinted editorial vignette =========================================
+  // Instead of flat darkening, the corner falloff is tinted toward the
+  // current palette's complementary cool/warm so the frame edges read as
+  // environmental light rather than mask. Slight overall darken (0.85 → 0.88)
+  // because the haze already mutes the top half.
   vec2 vCoord = vUv - 0.5;
-  float vig = 1.0 - dot(vCoord, vCoord) * 0.85;
-  col *= vig;
+  float vigDist = dot(vCoord, vCoord);
+  float vig = 1.0 - vigDist * 0.88;
+  vec3 vigTint = mix(paletteSky(p), vec3(0.0), 0.35);
+  col = mix(vigTint, col, vig);
 
   gl_FragColor = vec4(col, 1.0);
 }

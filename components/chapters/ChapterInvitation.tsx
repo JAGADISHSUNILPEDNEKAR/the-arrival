@@ -55,23 +55,23 @@ export default function ChapterInvitation({}: { index: number }) {
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const headlineEl = headlineRef.current;
+    // Line-only split — no per-word reveal. The headline lands as a single
+    // quiet block, not as a typographic flourish.
     const splitHeadline = headlineEl
       ? new SplitText(headlineEl, {
-          type: "lines,words",
-          linesClass: "overflow-hidden inline-flex",
-          wordsClass: "word",
+          type: "lines",
+          linesClass: "chapter-line",
         })
       : null;
 
-    if (splitHeadline?.words) {
-      gsap.set(splitHeadline.words, {
-        y: "110%",
-        filter: "blur(6px)",
-        opacity: 0,
-      });
+    if (splitHeadline?.lines) {
+      gsap.set(splitHeadline.lines, { opacity: 0 });
     }
-    gsap.set([subRef.current, formRef.current], { opacity: 0, y: 30 });
-    gsap.set(reassureRef.current, { opacity: 0, y: 30 });
+    if (headlineEl) {
+      gsap.set(headlineEl, { letterSpacing: "0.04em" });
+    }
+    gsap.set([subRef.current, formRef.current], { opacity: 0 });
+    gsap.set(reassureRef.current, { opacity: 0 });
     gsap.set(ceremonyRef.current, { opacity: 1, pointerEvents: "none" });
     gsap.set(ceremonyBlackoutRef.current, { opacity: 0 });
     gsap.set([thankYouTitleRef.current, thankYouNoteRef.current], {
@@ -83,15 +83,14 @@ export default function ChapterInvitation({}: { index: number }) {
     if (reducedMotion) {
       sectionEl.classList.add("active");
       gsap.set(sectionEl, { opacity: 1, scale: 1 });
-      if (splitHeadline?.words) {
-        gsap.set(splitHeadline.words, {
-          y: "0%",
-          filter: "none",
-          opacity: 1,
-        });
+      if (splitHeadline?.lines) {
+        gsap.set(splitHeadline.lines, { opacity: 1 });
       }
-      gsap.set([subRef.current, formRef.current], { opacity: 1, y: 0 });
+      if (headlineEl) {
+        gsap.set(headlineEl, { letterSpacing: "-0.01em" });
+      }
       gsap.set(subRef.current, { opacity: 0.7 });
+      gsap.set(formRef.current, { opacity: 1 });
       return () => splitHeadline?.revert();
     }
 
@@ -99,46 +98,56 @@ export default function ChapterInvitation({}: { index: number }) {
       scrollTrigger: {
         trigger: sectionEl,
         start: "top top",
-        end: isMobile ? "+=150%" : "+=250%",
+        end: isMobile ? "+=170%" : "+=270%",
         pin: true,
         pinSpacing: true,
-        scrub: isMobile ? 0.8 : 1.2,
+        scrub: isMobile ? 0.9 : 1.4,
         onToggle: (self) =>
           sectionEl.classList.toggle("active", self.isActive),
       },
     });
 
+    // Section settles in. Removed the scale wobble — pure opacity is calmer.
     tl.fromTo(
       sectionEl,
-      { opacity: 0, scale: 1.02 },
-      { opacity: 1, scale: 1, ease: "cinematic", duration: 0.5 },
-      0.1
+      { opacity: 0 },
+      { opacity: 1, ease: "cinematic", duration: 0.40 },
+      0.05
     );
 
-    if (splitHeadline?.words) {
+    // Headline reveals line-by-line, paired with tracking settle.
+    if (splitHeadline?.lines) {
       tl.to(
-        splitHeadline.words,
+        splitHeadline.lines,
         {
-          y: "0%",
-          filter: "blur(0px)",
           opacity: 1,
-          stagger: 0.025,
-          duration: 0.8,
+          stagger: 0.16,
+          duration: 0.40,
           ease: "cinematic",
         },
-        0.3
+        0.28
+      );
+    }
+    if (headlineEl) {
+      tl.to(
+        headlineEl,
+        { letterSpacing: "-0.01em", duration: 0.70, ease: "cinematic" },
+        0.28
       );
     }
 
+    // Sub line — opacity only, no y. Lands after headline settles.
     tl.to(
       subRef.current,
-      { opacity: 0.7, y: 0, duration: 0.6, ease: "cinematic" },
+      { opacity: 0.75, duration: 0.30, ease: "cinematic" },
       0.55
     );
+    // Form — opacity only, slow. Reads as the section opening itself,
+    // not as a "form appearing".
     tl.to(
       formRef.current,
-      { opacity: 1, y: 0, duration: 0.8, ease: "cinematic" },
-      0.7
+      { opacity: 1, duration: 0.50, ease: "cinematic" },
+      0.66
     );
 
     return () => {
@@ -153,10 +162,10 @@ export default function ChapterInvitation({}: { index: number }) {
   useEffect(() => {
     if (sent) return;
     if (!nameBlurred || !name.trim()) return;
+    // Opacity-only fade; the line acknowledges the user's name, not their scroll.
     gsap.to(reassureRef.current, {
       opacity: 0.5,
-      y: 0,
-      duration: 1.1,
+      duration: 1.4,
       ease: "cinematic",
     });
   }, [nameBlurred, name, sent]);

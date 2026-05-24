@@ -33,30 +33,36 @@ export default function ChapterShore({}: { index: number }) {
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    // SplitText('lines') only — no per-word animation. Each visual line is a
+    // single element we fade in as one body. For single-line headlines this
+    // is one node; for headlines that wrap to two lines on smaller widths,
+    // the stagger between lines reads as a gentle editorial pulse.
     const splitTitle = titleRef.current
       ? new SplitText(titleRef.current, {
-          type: "lines,words",
-          linesClass: "overflow-hidden inline-flex",
-          wordsClass: "word",
+          type: "lines",
+          linesClass: "chapter-line",
         })
       : null;
 
-    gsap.set([indexRef.current, subRef.current], { opacity: 0, y: 24 });
-    if (splitTitle?.words) {
-      gsap.set(splitTitle.words, {
-        y: "110%",
-        filter: "blur(6px)",
-        opacity: 0,
-      });
+    gsap.set([indexRef.current, subRef.current], { opacity: 0 });
+    if (splitTitle?.lines) {
+      gsap.set(splitTitle.lines, { opacity: 0 });
+    }
+    // Tracking starts wide — settles tight. A "focus pull" on the type.
+    if (titleRef.current) {
+      gsap.set(titleRef.current, { letterSpacing: "0.04em" });
     }
 
     if (reducedMotion) {
       sectionEl.classList.add("active");
       gsap.set(sectionEl, { opacity: 1 });
-      gsap.set(indexRef.current, { opacity: 0.4, y: 0 });
-      gsap.set(subRef.current, { opacity: 0.85, y: 0 });
-      if (splitTitle?.words) {
-        gsap.set(splitTitle.words, { y: "0%", filter: "none", opacity: 1 });
+      gsap.set(indexRef.current, { opacity: 0.4 });
+      gsap.set(subRef.current, { opacity: 0.85 });
+      if (splitTitle?.lines) {
+        gsap.set(splitTitle.lines, { opacity: 1 });
+      }
+      if (titleRef.current) {
+        gsap.set(titleRef.current, { letterSpacing: "-0.01em" });
       }
       return () => splitTitle?.revert();
     }
@@ -65,60 +71,62 @@ export default function ChapterShore({}: { index: number }) {
       scrollTrigger: {
         trigger: sectionEl,
         start: "top top",
-        end: isMobile ? "+=150%" : "+=220%",
+        end: isMobile ? "+=170%" : "+=240%",
         pin: true,
         pinSpacing: true,
-        scrub: isMobile ? 0.8 : 1.2,
+        scrub: isMobile ? 0.9 : 1.4,
         onToggle: (self) =>
           sectionEl.classList.toggle("active", self.isActive),
       },
     });
 
+    // Section breathes in — single slow opacity reveal, no kinetic noise.
     tl.fromTo(
       sectionEl,
       { opacity: 0 },
-      { opacity: 1, ease: "cinematic", duration: 0.08 },
+      { opacity: 1, ease: "cinematic", duration: 0.16 },
       0
     );
+    // Roman numeral — restrained marker. Opacity only.
     tl.to(
       indexRef.current,
-      { opacity: 0.4, y: 0, duration: 0.08, ease: "cinematic" },
-      0.12
+      { opacity: 0.4, duration: 0.18, ease: "cinematic" },
+      0.18
     );
-    if (splitTitle?.words) {
+    // Headline reveals line-by-line, paired with a slow tracking settle on
+    // the parent — the eye reads a focus-pull on the type rather than a
+    // letter-by-letter SplitText reveal. Two moves, one direction.
+    if (splitTitle?.lines) {
       tl.to(
-        splitTitle.words,
+        splitTitle.lines,
         {
-          y: "0%",
-          filter: "blur(0px)",
           opacity: 1,
-          stagger: 0.04,
-          duration: 0.16,
+          stagger: 0.10,
+          duration: 0.30,
           ease: "cinematic",
         },
-        0.15
+        0.28
       );
     }
     tl.to(
-      subRef.current,
-      { opacity: 0.85, y: 0, duration: 0.10, ease: "cinematic" },
-      0.45
+      titleRef.current,
+      { letterSpacing: "-0.01em", duration: 0.55, ease: "cinematic" },
+      0.28
     );
+    // Sub line — opacity only, lands after the headline has settled.
+    tl.to(
+      subRef.current,
+      { opacity: 0.85, duration: 0.22, ease: "cinematic" },
+      0.66
+    );
+
+    // Long dwell 0.88 → 0.92 — the chapter sits in stillness before exit.
+
+    // Exit: opacity only. No blur, no y. The atmosphere shader carries the
+    // continuity to the next chapter; the editorial column simply hands off.
     tl.to(
       textRef.current,
-      {
-        opacity: 0,
-        y: -50,
-        filter: "blur(2px)",
-        force3D: true,
-        duration: 0.12,
-        ease: "cinematic",
-      },
-      0.88
-    );
-    tl.to(
-      sectionEl,
-      { opacity: 0, duration: 0.08, ease: "cinematic" },
+      { opacity: 0, duration: 0.18, ease: "cinematic" },
       0.92
     );
 

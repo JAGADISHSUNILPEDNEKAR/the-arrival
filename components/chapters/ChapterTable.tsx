@@ -34,21 +34,26 @@ export default function ChapterTable({}: { index: number }) {
       typeof window !== "undefined" &&
       window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
+    // Line-only split. The testimonial line wraps to two lines at most
+    // widths; the line stagger reads as a quiet pulse — line 1, breath,
+    // line 2 — rather than a per-word reveal that would compete with the
+    // intimacy of the moment.
     const splitTitle = titleRef.current
       ? new SplitText(titleRef.current, {
-          type: "lines,words",
-          linesClass: "overflow-hidden inline-flex",
-          wordsClass: "word",
+          type: "lines",
+          linesClass: "chapter-line",
         })
       : null;
 
-    gsap.set([indexRef.current, subRef.current], { opacity: 0, y: 24 });
-    if (splitTitle?.words) {
-      gsap.set(splitTitle.words, {
-        y: "120%",
-        filter: "blur(8px)",
-        opacity: 0,
-      });
+    gsap.set([indexRef.current, subRef.current], { opacity: 0 });
+    if (splitTitle?.lines) {
+      gsap.set(splitTitle.lines, { opacity: 0 });
+    }
+    if (titleRef.current) {
+      // Wider tracking start than the standard chapters (0.06em vs 0.04em)
+      // — the testimonial line gets a slightly more pronounced focus-pull
+      // because it's the narrative's emotional center.
+      gsap.set(titleRef.current, { letterSpacing: "0.06em" });
     }
     gsap.set(blackoutRef.current, { opacity: 0 });
 
@@ -56,10 +61,13 @@ export default function ChapterTable({}: { index: number }) {
       sectionEl.classList.add("active");
       gsap.set(sectionEl, { opacity: 1 });
       gsap.set(blackoutRef.current, { opacity: 0.72 });
-      gsap.set(indexRef.current, { opacity: 0.45, y: 0 });
-      gsap.set(subRef.current, { opacity: 0.7, y: 0 });
-      if (splitTitle?.words) {
-        gsap.set(splitTitle.words, { y: "0%", filter: "none", opacity: 1 });
+      gsap.set(indexRef.current, { opacity: 0.45 });
+      gsap.set(subRef.current, { opacity: 0.7 });
+      if (splitTitle?.lines) {
+        gsap.set(splitTitle.lines, { opacity: 1 });
+      }
+      if (titleRef.current) {
+        gsap.set(titleRef.current, { letterSpacing: "-0.01em" });
       }
       return () => splitTitle?.revert();
     }
@@ -68,72 +76,77 @@ export default function ChapterTable({}: { index: number }) {
       scrollTrigger: {
         trigger: sectionEl,
         start: "top top",
-        end: isMobile ? "+=180%" : "+=300%",
+        end: isMobile ? "+=200%" : "+=320%",
         pin: true,
         pinSpacing: true,
-        scrub: isMobile ? 0.8 : 1.2,
+        scrub: isMobile ? 0.9 : 1.4,
         onToggle: (self) =>
           sectionEl.classList.toggle("active", self.isActive),
       },
     });
 
-    // Section opacity reveal
+    // Section opacity reveal — slower than the standard chapters so the
+    // entry into the testimonial feels like a stillness, not an arrival.
     tl.fromTo(
       sectionEl,
       { opacity: 0 },
-      { opacity: 1, ease: "cinematic", duration: 0.06 },
+      { opacity: 1, ease: "cinematic", duration: 0.10 },
       0
     );
 
-    // Blackout overlay rises slowly — the photo is intentionally muted
-    // so the line lands without the room competing. Peak 0.72 (deeper
-    // than the corner-vignette already in the WebGL layer) because the
-    // testimonial is centered and the vignette doesn't reach the middle.
+    // Blackout overlay rises slowly. Peak 0.72 — the room is muted, the
+    // line will be the only thing in it. Slightly slower onset (0.12 → 0.16
+    // duration) to extend the silence.
     tl.to(
       blackoutRef.current,
-      { opacity: 0.72, ease: "cinematic", duration: 0.12 },
-      0.08
+      { opacity: 0.72, ease: "cinematic", duration: 0.16 },
+      0.10
     );
 
-    // 0.18 → 0.30 — silence beat before the words arrive.
+    // Long silence beat — 0.26 → 0.42 (0.16 of pure dark) — before the
+    // line lands. The brief asked for "intentional silence between moments";
+    // this is the literal silence beat.
     tl.to(
       indexRef.current,
-      { opacity: 0.45, y: 0, duration: 0.06, ease: "cinematic" },
-      0.32
+      { opacity: 0.45, duration: 0.18, ease: "cinematic" },
+      0.42
     );
-    if (splitTitle?.words) {
+
+    // Headline reveals line-by-line with a slow tracking settle.
+    if (splitTitle?.lines) {
       tl.to(
-        splitTitle.words,
+        splitTitle.lines,
         {
-          y: "0%",
-          filter: "blur(0px)",
           opacity: 1,
-          stagger: 0.05,
-          duration: 0.22,
+          stagger: 0.18,
+          duration: 0.36,
           ease: "cinematic",
         },
-        0.36
+        0.46
       );
     }
     tl.to(
-      subRef.current,
-      { opacity: 0.7, y: 0, duration: 0.10, ease: "cinematic" },
-      0.65
+      titleRef.current,
+      { letterSpacing: "-0.01em", duration: 0.80, ease: "cinematic" },
+      0.46
     );
 
-    // Dwell 0.65 → 0.92 — the line lingers.
+    // Source attribution lands after the line has fully settled.
+    tl.to(
+      subRef.current,
+      { opacity: 0.7, duration: 0.20, ease: "cinematic" },
+      0.74
+    );
 
+    // Long dwell 0.78 → 0.94 — the testimonial sits in its own silence
+    // longer than any other chapter. This is the climax of the scroll.
+
+    // Exit: opacity only, slow. The blackout itself stays — the next
+    // chapter has its own atmosphere; we just fade the words.
     tl.to(
       textRef.current,
-      {
-        opacity: 0,
-        y: -50,
-        filter: "blur(3px)",
-        force3D: true,
-        duration: 0.10,
-        ease: "cinematic",
-      },
-      0.92
+      { opacity: 0, duration: 0.20, ease: "cinematic" },
+      0.94
     );
 
     return () => {

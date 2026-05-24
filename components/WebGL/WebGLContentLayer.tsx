@@ -138,34 +138,63 @@ vec2 coverUv(vec2 uv, vec2 texRes, vec2 viewRes) {
 void main() {
   vec2 uv = vUv;
 
-  // Velocity-driven liquid drift. Clamp prevents jitter on touchpad flings.
+  // Velocity-driven liquid drift. Stronger amplitude (0.5 → 0.85) so the
+  // photography feels submerged in resistance under inertial scroll — the
+  // brief asks for "underwater resistance" and "drifting smoke" as motion
+  // language. Clamp still prevents touchpad-fling jitter.
   float vel = clamp(uVelocity * 0.0008, -0.05, 0.05);
   float n = vnoise(uv * 4.0 + vec2(uTime * 0.08, uTime * 0.06));
   vec2 dispDir = vec2(cos(n * 6.2831), sin(n * 6.2831));
-  vec2 dispOffset = dispDir * vel * 0.5;
+  vec2 dispOffset = dispDir * vel * 0.85;
 
-  vec2 uvA = coverUv(uv + dispOffset, uResA, uResolution);
-  vec2 uvB = coverUv(uv + dispOffset * 1.10, uResB, uResolution);
+  // Slow constant micro-drift on idle — keeps the frame breathing even when
+  // the user pauses. Amplitude is well below perceptual threshold; only
+  // visible as a faint living surface, never as motion.
+  vec2 idleDrift = vec2(
+    sin(uTime * 0.08) * 0.0015,
+    cos(uTime * 0.05) * 0.0012
+  );
+
+  vec2 uvA = coverUv(uv + dispOffset + idleDrift, uResA, uResolution);
+  vec2 uvB = coverUv(uv + dispOffset * 1.10 + idleDrift, uResB, uResolution);
 
   vec4 colA = texture2D(uTexA, clamp(uvA, vec2(0.001), vec2(0.999)));
   vec4 colB = texture2D(uTexB, clamp(uvB, vec2(0.001), vec2(0.999)));
 
-  // Noise-edge dissolve — the organimo signature. Instead of a flat
-  // crossfade, threshold a noise field against the morph progress so the
-  // transition reads as one scene "blooming through" the other.
+  // Noise-edge dissolve — the organimo signature. Threshold a noise field
+  // against the morph progress so the transition reads as one scene
+  // "blooming through" the other. Wider band (0.18 → 0.24) so the dissolve
+  // is slower and the seam between two chapters reads as atmospheric
+  // continuity, not a wipe.
   float dissolveNoise = vnoise(uv * 6.0 + uTime * 0.03);
-  float edge = smoothstep(uMorphT - 0.18, uMorphT + 0.18, dissolveNoise);
+  float edge = smoothstep(uMorphT - 0.24, uMorphT + 0.24, dissolveNoise);
   vec4 col = mix(colB, colA, edge);
 
-  // Cinematic vignette pulls focus inward, mutes the corners. Deeper
-  // multiplier (0.62) gives editorial text overlays enough contrast
-  // against bright tropical photography.
-  vec2 vc = uv - 0.5;
-  float vig = smoothstep(0.95, 0.30, length(vc));
-  col.rgb *= mix(0.62, 1.0, vig);
+  // === Cinematic film-stock grading ==========================================
+  // The Maldives photography reads as bright stock by default. We pull it
+  // into the same restrained palette as the atmosphere shader: gentle
+  // desaturation toward luminance, shadow lift, a subtle teal-green cast on
+  // midtones, and a soft warm bloom on highlights. Total grade ~12% so the
+  // photograph still feels like a photograph, just one that's been printed.
+  float lum = dot(col.rgb, vec3(0.299, 0.587, 0.114));
+  col.rgb = mix(col.rgb, vec3(lum), 0.14);                // desaturate 14%
+  col.rgb = mix(vec3(0.03, 0.035, 0.045), col.rgb, 0.96); // shadow lift
+  float midMask = smoothstep(0.18, 0.55, lum) * (1.0 - smoothstep(0.55, 0.92, lum));
+  col.rgb += vec3(-0.012, 0.018, 0.005) * midMask;        // teal-green midtones
+  float hiMask = smoothstep(0.78, 0.98, lum);
+  col.rgb += vec3(0.030, 0.022, 0.012) * hiMask;          // warm highlight bloom
 
-  // Light film grain so the photo never reads as plastic stock.
-  float grain = (hash(uv * uResolution + uTime * 17.0) - 0.5) * 0.035;
+  // === Deeper cinematic vignette =============================================
+  // The corner falloff was 0.62; pull it to 0.46 so editorial type set
+  // against bright tropical photography reads with more weight. Curve also
+  // widened (0.95 → 1.05 outer) for a softer-edged falloff.
+  vec2 vc = uv - 0.5;
+  float vig = smoothstep(1.05, 0.28, length(vc));
+  col.rgb *= mix(0.46, 1.0, vig);
+
+  // Film grain — slightly denser than before (0.035 → 0.042) to match the
+  // tactile celluloid feel of the AtmosphereLayer underneath.
+  float grain = (hash(uv * uResolution + uTime * 17.0) - 0.5) * 0.042;
   col.rgb += grain;
 
   gl_FragColor = vec4(col.rgb, col.a * uPresence);
