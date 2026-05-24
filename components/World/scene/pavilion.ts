@@ -109,6 +109,75 @@ export function createPavilion(
   roof.castShadow = true;
   group.add(roof);
 
+  // Dining table on the platform — the literal "Table" the chapter is
+  // named for. Centred on the platform, low enough that the camera
+  // arriving at chapter 4 sees it as the destination it's been
+  // walking toward.
+  const tableTopGeom = new BoxGeometry(3.4, 0.18, 1.8);
+  const tableMat = new MeshStandardMaterial({
+    color: new Color(0.18, 0.11, 0.07),
+    roughness: 0.85,
+    metalness: 0,
+  });
+  const tableTop = new Mesh(tableTopGeom, tableMat);
+  tableTop.position.set(0, 1.95, 0);
+  tableTop.castShadow = true;
+  tableTop.receiveShadow = true;
+  group.add(tableTop);
+
+  // Table base — single central pedestal box.
+  const tableBaseGeom = new BoxGeometry(0.5, 1.6, 0.5);
+  const tableBase = new Mesh(tableBaseGeom, tableMat);
+  tableBase.position.set(0, 1.15, 0);
+  tableBase.castShadow = true;
+  group.add(tableBase);
+
+  // Four chairs around the table — two on each long side.
+  const chairSeatGeom = new BoxGeometry(0.7, 0.12, 0.7);
+  const chairBackGeom = new BoxGeometry(0.7, 0.8, 0.08);
+  const chairMat = new MeshStandardMaterial({
+    color: new Color(0.22, 0.14, 0.085),
+    roughness: 0.88,
+    metalness: 0,
+  });
+  const chairPositions: Array<[number, number, number]> = [
+    [-1.1, 0, 1.4],
+    [1.1, 0, 1.4],
+    [-1.1, Math.PI, -1.4],
+    [1.1, Math.PI, -1.4],
+  ];
+  for (const [cx, ry, cz] of chairPositions) {
+    const seat = new Mesh(chairSeatGeom, chairMat);
+    seat.position.set(cx, 1.5, cz);
+    seat.castShadow = true;
+    seat.receiveShadow = true;
+    group.add(seat);
+
+    const back = new Mesh(chairBackGeom, chairMat);
+    // Back faces inward toward the table — rotate around center.
+    back.position.set(cx, 1.95, cz + (cz > 0 ? 0.32 : -0.32));
+    back.rotation.y = ry;
+    back.castShadow = true;
+    group.add(back);
+  }
+
+  // Two table-candle emissive accents on top of the table — small but
+  // bright enough that the bloom pass catches them as a pair of warm
+  // points sitting on the table even when the room is dim.
+  const candleGeom = new BoxGeometry(0.12, 0.34, 0.12);
+  const candleMat = new MeshStandardMaterial({
+    color: new Color(0.95, 0.85, 0.7),
+    roughness: 0.5,
+    metalness: 0,
+    emissive: new Color(0.98, 0.6, 0.25),
+    emissiveIntensity: 2.4,
+  });
+  for (const offset of [-0.85, 0.85]) {
+    const candle = new Mesh(candleGeom, candleMat);
+    candle.position.set(offset, 2.21, 0);
+    group.add(candle);
+  }
+
   // Emissive lantern under the roof — visual anchor for the "Lantern"
   // chapter and the world-moment hover target. Baseline emissive is mild;
   // setGlow ramps it up toward a full bloom that triggers UnrealBloomPass.
@@ -147,10 +216,18 @@ export function createPavilion(
       postGeom.dispose();
       roofGeom.dispose();
       lanternGeom.dispose();
+      tableTopGeom.dispose();
+      tableBaseGeom.dispose();
+      chairSeatGeom.dispose();
+      chairBackGeom.dispose();
+      candleGeom.dispose();
       platformMat.dispose();
       postMat.dispose();
       roofMat.dispose();
       lanternMat.dispose();
+      tableMat.dispose();
+      chairMat.dispose();
+      candleMat.dispose();
       scene.remove(group);
     },
   };

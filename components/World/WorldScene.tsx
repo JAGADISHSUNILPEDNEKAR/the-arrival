@@ -29,6 +29,12 @@ import { createSceneText } from "./scene/sceneText";
 import { createDistantIslands } from "./scene/distantIslands";
 import { createJetty } from "./scene/jetty";
 import { createBoat } from "./scene/boat";
+import { createVillas } from "./scene/villas";
+import { createLoungers } from "./scene/loungers";
+import { createLanterns } from "./scene/lanterns";
+import { createFirePit } from "./scene/firePit";
+import { createBirds } from "./scene/birds";
+import { createCoral } from "./scene/coral";
 import { createCameraPath, WAYPOINTS } from "./cameraPath";
 
 /**
@@ -203,6 +209,15 @@ export default function WorldScene() {
     const distantIslands = createDistantIslands(scene);
     const jetty = createJetty(scene);
     const boat = createBoat(scene);
+    // Resort dressing — turns the atoll from "deserted island" into a
+    // working private resort. Order matters only for legibility; none of
+    // these need to mount before their neighbours.
+    const villas = createVillas(scene);
+    const loungers = createLoungers(scene);
+    const lanterns = createLanterns(scene);
+    const firePit = createFirePit(scene);
+    const birds = createBirds(scene);
+    const coral = createCoral(scene);
     const pavilion = createPavilion(scene, {
       // Sits on the inner ring of the atoll at the Table waypoint anchor,
       // facing across the lagoon toward the warm horizon (the sunset).
@@ -419,9 +434,12 @@ export default function WorldScene() {
       const progress = reducedMotion ? rawProgress : smoothedProgress;
       cachedProgress = progress;
       cameraPath.update(progress);
-      ocean.tick(reducedMotion ? 0 : t);
-      sky.tick(reducedMotion ? 0 : t);
-      boat.tick(reducedMotion ? 0 : t);
+      const animT = reducedMotion ? 0 : t;
+      ocean.tick(animT);
+      sky.tick(animT);
+      boat.tick(animT);
+      firePit.tick(animT);
+      birds.tick(animT);
       sceneText.tick(progress, camera.position);
       applyNightMood(progress);
 
@@ -522,6 +540,12 @@ export default function WorldScene() {
       distantIslands.dispose();
       jetty.dispose();
       boat.dispose();
+      villas.dispose();
+      loungers.dispose();
+      lanterns.dispose();
+      firePit.dispose();
+      birds.dispose();
+      coral.dispose();
       // Lights don't need explicit disposal but removing them from the
       // scene is good hygiene against HMR leaks.
       scene.remove(sun);
